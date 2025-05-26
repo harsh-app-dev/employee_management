@@ -1,6 +1,6 @@
+import 'package:employee_management/core/network/network_monitor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
-import '../network/network_monitor.dart';
 
 @injectable
 class NetworkController {

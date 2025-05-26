@@ -15,10 +15,17 @@ import 'package:employee_management/core/network/client/network_client.dart'
     as _i431;
 import 'package:employee_management/core/network/network_monitor.dart'
     as _i1007;
+import 'package:employee_management/core/storage/local_storage.dart' as _i1007;
 import 'package:employee_management/features/data/repositories/auth_repository.dart'
     as _i106;
+import 'package:employee_management/features/data/repositories/task_repository.dart'
+    as _i498;
 import 'package:employee_management/features/domain/use_cases/login_use_case.dart'
     as _i255;
+import 'package:employee_management/features/domain/use_cases/task_use_case.dart'
+    as _i238;
+import 'package:employee_management/features/presentation/state/dashboard_controller.dart'
+    as _i297;
 import 'package:employee_management/features/presentation/state/login_controller.dart'
     as _i47;
 import 'package:get_it/get_it.dart' as _i174;
@@ -31,6 +38,7 @@ extension GetItInjectableX on _i174.GetIt {
     _i526.EnvironmentFilter? environmentFilter,
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
+    gh.factory<_i1007.LocalStorage>(() => _i1007.LocalStorage());
     gh.lazySingleton<_i1007.NetworkMonitor>(() => _i1007.NetworkMonitor());
     gh.factory<_i347.NetworkController>(
       () => _i347.NetworkController(gh<_i1007.NetworkMonitor>()),
@@ -39,7 +47,22 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i431.NetworkClient(baseUrl: gh<String>()),
     );
     gh.factory<_i106.AuthRepository>(
-      () => _i106.AuthRepository(gh<_i431.NetworkClient>()),
+      () => _i106.AuthRepository(
+        gh<_i431.NetworkClient>(),
+        gh<_i1007.LocalStorage>(),
+      ),
+    );
+    gh.factory<_i498.TaskRepository>(
+      () => _i498.TaskRepository(
+        gh<_i431.NetworkClient>(),
+        gh<_i1007.LocalStorage>(),
+      ),
+    );
+    gh.factory<_i238.TaskUseCase>(
+      () => _i238.TaskUseCase(gh<_i498.TaskRepository>()),
+    );
+    gh.factory<_i297.DashboardController>(
+      () => _i297.DashboardController(gh<_i238.TaskUseCase>()),
     );
     gh.factory<_i255.LoginUseCase>(
       () => _i255.LoginUseCase(gh<_i106.AuthRepository>()),

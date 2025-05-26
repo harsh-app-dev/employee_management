@@ -1,9 +1,9 @@
+import 'package:employee_management/core/api/api_state.dart';
+import 'package:employee_management/core/utils/network_result.dart';
+import 'package:employee_management/features/data/models/login/login_response.dart';
+import 'package:employee_management/features/domain/use_cases/login_use_case.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
-import '../../../core/api/api_state.dart';
-import '../../data/models/login_response.dart';
-import '../../domain/use_cases/login_use_case.dart';
-import '../../../core/utils/network_result.dart';
 
 @injectable
 class LoginController {

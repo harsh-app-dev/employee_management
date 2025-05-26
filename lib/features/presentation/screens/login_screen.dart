@@ -1,16 +1,33 @@
+import 'package:employee_management/core/di/injectable_module.dart';
+import 'package:employee_management/core/utils/util.dart';
+import 'package:employee_management/features/presentation/state/login_controller.dart';
 import 'package:flutter/material.dart';
-import '../../../core/utils/util.dart';
-import '../state/login_controller.dart';
-import '../../../../core/di/injectable_module.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  late final LoginController _controller;
 
-  final LoginController controller = getIt<LoginController>();
+  @override
+  void initState() {
+    super.initState();
+    _controller = getIt<LoginController>();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +36,7 @@ class LoginScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: ValueListenableBuilder(
-            valueListenable: controller.loginApiState,
+            valueListenable: _controller.loginApiState,
             builder: (context, loginApiState, _) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -29,15 +46,12 @@ class LoginScreen extends StatelessWidget {
                     child: Image.asset(themedAsset(context, 'logo.png')),
                   ),
                   const SizedBox(height: 24),
-
-                  // --- Form ---
                   Form(
                     key: _formKey,
                     child: Column(
                       children: [
-                        // Email
                         ValueListenableBuilder<String?>(
-                          valueListenable: controller.emailError,
+                          valueListenable: _controller.emailError,
                           builder: (context, emailError, _) {
                             return TextFormField(
                               controller: _emailController,
@@ -48,7 +62,9 @@ class LoginScreen extends StatelessWidget {
                               decoration: InputDecoration(
                                 labelText: 'Email',
                                 border: const OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(12),
+                                  ),
                                 ),
                                 errorText: emailError,
                                 prefixIcon: const Icon(Icons.email_outlined),
@@ -56,15 +72,12 @@ class LoginScreen extends StatelessWidget {
                             );
                           },
                         ),
-
                         const SizedBox(height: 16),
-
-                        // Password
                         ValueListenableBuilder<String?>(
-                          valueListenable: controller.passwordError,
+                          valueListenable: _controller.passwordError,
                           builder: (context, passwordError, _) {
                             return ValueListenableBuilder<bool>(
-                              valueListenable: controller.isPasswordVisible,
+                              valueListenable: _controller.isPasswordVisible,
                               builder: (context, isPasswordVisible, _) {
                                 return TextFormField(
                                   controller: _passwordController,
@@ -75,7 +88,9 @@ class LoginScreen extends StatelessWidget {
                                   decoration: InputDecoration(
                                     labelText: 'Password',
                                     border: const OutlineInputBorder(
-                                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(12),
+                                      ),
                                     ),
                                     errorText: passwordError,
                                     prefixIcon: const Icon(Icons.lock_outline),
@@ -85,7 +100,7 @@ class LoginScreen extends StatelessWidget {
                                             ? Icons.visibility
                                             : Icons.visibility_off,
                                       ),
-                                      onPressed: controller.togglePasswordVisibility,
+                                      onPressed: _controller.togglePasswordVisibility,
                                     ),
                                   ),
                                   obscureText: !isPasswordVisible,
@@ -94,10 +109,7 @@ class LoginScreen extends StatelessWidget {
                             );
                           },
                         ),
-
                         const SizedBox(height: 24),
-
-                        // Login Button
                         SizedBox(
                           height: 52,
                           width: double.infinity,
@@ -107,16 +119,13 @@ class LoginScreen extends StatelessWidget {
                                 : () async {
                               final email = _emailController.text.trim();
                               final password = _passwordController.text;
-                              await controller.login(email, password);
+                              await _controller.login(email, password);
 
-                              final error = controller.submissionError.value;
+                              final error = _controller.submissionError.value;
                               if (error != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(error),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                showGlobalSnackBar(error);
+                              } else if (_controller.loginApiState.value.isSuccess) {
+                                // Success logic here
                               }
                             },
                             child: loginApiState.isLoading

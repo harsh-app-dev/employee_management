@@ -1,8 +1,7 @@
 import 'package:employee_management/core/utils/network_result.dart';
+import 'package:employee_management/features/data/models/login/login_response.dart';
+import 'package:employee_management/features/data/repositories/auth_repository.dart';
 import 'package:injectable/injectable.dart';
-
-import '../../data/models/login_response.dart';
-import '../../data/repositories/auth_repository.dart';
 
 @injectable
 class LoginUseCase {

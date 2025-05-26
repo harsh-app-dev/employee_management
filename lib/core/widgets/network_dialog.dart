@@ -1,8 +1,8 @@
+import 'package:employee_management/core/controllers/network_controller.dart';
+import 'package:employee_management/core/di/injectable_module.dart';
+import 'package:employee_management/core/network/network_monitor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../network/network_monitor.dart';
-import '../controllers/network_controller.dart';
-import '../../core/di/injectable_module.dart';
 
 class NetworkDialogHandler extends StatefulWidget {
   const NetworkDialogHandler({super.key});

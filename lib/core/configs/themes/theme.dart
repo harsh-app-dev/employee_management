@@ -1,7 +1,6 @@
+import 'package:employee_management/core/utils/util.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import '../../utils/util.dart';
 
 class AppTheme {
   static ThemeData light([BuildContext? context]) {

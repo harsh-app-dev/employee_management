@@ -1,3 +1,4 @@
+import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -23,3 +24,9 @@ String themedAsset(BuildContext context, String assetName) {
   return 'assets/images/${isDark ? 'dark' : 'light'}/$assetName';
 }
 
+void showGlobalSnackBar(String message) {
+  final key = getIt<GlobalKey<ScaffoldMessengerState>>();
+  key.currentState?.showSnackBar(
+    SnackBar(content: Text(message)),
+  );
+}
