@@ -1,11 +1,63 @@
 import 'dart:convert';
 
-TasksResponse tasksResponseFromJson(String str) => TasksResponse.fromJson(json.decode(str));
-String tasksResponseToJson(TasksResponse data) => json.encode(data.toJson());
-class TasksResponse {
-  TasksResponse({
+TaskResponse taskResponseFromJson(String str) => TaskResponse.fromJson(json.decode(str));
+String taskResponseToJson(TaskResponse data) => json.encode(data.toJson());
+class TaskResponse {
+  TaskResponse({
+      List<Data>? data, 
+      bool? submitTask, 
+      bool? canSubmit,}){
+    _data = data;
+    _submitTask = submitTask;
+    _canSubmit = canSubmit;
+}
+
+  TaskResponse.fromJson(dynamic json) {
+    if (json['data'] != null) {
+      _data = [];
+      json['data'].forEach((v) {
+        _data?.add(Data.fromJson(v));
+      });
+      // Sort so that isEdited == true are at the end
+      _data?.sort((a, b) {
+        if ((a.isEdited == true) && (b.isEdited != true)) return 1;
+        if ((a.isEdited != true) && (b.isEdited == true)) return -1;
+        return 0;
+      });
+    }
+    _submitTask = json['submit_task'];
+    _canSubmit = json['can_submit'];
+  }
+  List<Data>? _data;
+  bool? _submitTask;
+  bool? _canSubmit;
+TaskResponse copyWith({  List<Data>? data,
+  bool? submitTask,
+  bool? canSubmit,
+}) => TaskResponse(  data: data ?? _data,
+  submitTask: submitTask ?? _submitTask,
+  canSubmit: canSubmit ?? _canSubmit,
+);
+  List<Data>? get data => _data;
+  bool? get submitTask => _submitTask;
+  bool? get canSubmit => _canSubmit;
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    if (_data != null) {
+      map['data'] = _data?.map((v) => v.toJson()).toList();
+    }
+    map['submit_task'] = _submitTask;
+    map['can_submit'] = _canSubmit;
+    return map;
+  }
+}
+
+Data dataFromJson(String str) => Data.fromJson(json.decode(str));
+String dataToJson(Data data) => json.encode(data.toJson());
+class Data {
+  Data({
       String? id, 
-      String? organizationPrefix, 
       String? updatedAt, 
       String? taskPhase, 
       bool? isCompleted, 
@@ -15,12 +67,8 @@ class TasksResponse {
       String? taskDescription, 
       String? createdAt, 
       String? taskTimeSpend, 
-      String? totalHours, 
-      String? parentTask, 
-      String? user, 
-      num? ticket,}){
+      String? totalHours,}){
     _id = id;
-    _organizationPrefix = organizationPrefix;
     _updatedAt = updatedAt;
     _taskPhase = taskPhase;
     _isCompleted = isCompleted;
@@ -31,14 +79,10 @@ class TasksResponse {
     _createdAt = createdAt;
     _taskTimeSpend = taskTimeSpend;
     _totalHours = totalHours;
-    _parentTask = parentTask;
-    _user = user;
-    _ticket = ticket;
 }
 
-  TasksResponse.fromJson(dynamic json) {
+  Data.fromJson(dynamic json) {
     _id = json['id'];
-    _organizationPrefix = json['organization_prefix'];
     _updatedAt = json['updated_at'];
     _taskPhase = json['task_phase'];
     _isCompleted = json['is_completed'];
@@ -49,12 +93,8 @@ class TasksResponse {
     _createdAt = json['created_at'];
     _taskTimeSpend = json['task_time_spend'];
     _totalHours = json['total_hours'];
-    _parentTask = json['parent_task'];
-    _user = json['user'];
-    _ticket = json['ticket'];
   }
   String? _id;
-  String? _organizationPrefix;
   String? _updatedAt;
   String? _taskPhase;
   bool? _isCompleted;
@@ -65,11 +105,7 @@ class TasksResponse {
   String? _createdAt;
   String? _taskTimeSpend;
   String? _totalHours;
-  String? _parentTask;
-  String? _user;
-  num? _ticket;
-TasksResponse copyWith({  String? id,
-  String? organizationPrefix,
+Data copyWith({  String? id,
   String? updatedAt,
   String? taskPhase,
   bool? isCompleted,
@@ -80,11 +116,7 @@ TasksResponse copyWith({  String? id,
   String? createdAt,
   String? taskTimeSpend,
   String? totalHours,
-  String? parentTask,
-  String? user,
-  num? ticket,
-}) => TasksResponse(  id: id ?? _id,
-  organizationPrefix: organizationPrefix ?? _organizationPrefix,
+}) => Data(  id: id ?? _id,
   updatedAt: updatedAt ?? _updatedAt,
   taskPhase: taskPhase ?? _taskPhase,
   isCompleted: isCompleted ?? _isCompleted,
@@ -95,12 +127,8 @@ TasksResponse copyWith({  String? id,
   createdAt: createdAt ?? _createdAt,
   taskTimeSpend: taskTimeSpend ?? _taskTimeSpend,
   totalHours: totalHours ?? _totalHours,
-  parentTask: parentTask ?? _parentTask,
-  user: user ?? _user,
-  ticket: ticket ?? _ticket,
 );
   String? get id => _id;
-  String? get organizationPrefix => _organizationPrefix;
   String? get updatedAt => _updatedAt;
   String? get taskPhase => _taskPhase;
   bool? get isCompleted => _isCompleted;
@@ -111,14 +139,10 @@ TasksResponse copyWith({  String? id,
   String? get createdAt => _createdAt;
   String? get taskTimeSpend => _taskTimeSpend;
   String? get totalHours => _totalHours;
-  String? get parentTask => _parentTask;
-  String? get user => _user;
-  num? get ticket => _ticket;
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     map['id'] = _id;
-    map['organization_prefix'] = _organizationPrefix;
     map['updated_at'] = _updatedAt;
     map['task_phase'] = _taskPhase;
     map['is_completed'] = _isCompleted;
@@ -129,9 +153,6 @@ TasksResponse copyWith({  String? id,
     map['created_at'] = _createdAt;
     map['task_time_spend'] = _taskTimeSpend;
     map['total_hours'] = _totalHours;
-    map['parent_task'] = _parentTask;
-    map['user'] = _user;
-    map['ticket'] = _ticket;
     return map;
   }
 }

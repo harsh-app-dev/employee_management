@@ -125,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (error != null) {
                                 showGlobalSnackBar(error);
                               } else if (_controller.loginApiState.value.isSuccess) {
-                                // Success logic here
+                                getIt<GlobalKey<NavigatorState>>().currentState?.pushReplacementNamed('/dashboard');
                               }
                             },
                             child: loginApiState.isLoading
@@ -154,3 +154,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

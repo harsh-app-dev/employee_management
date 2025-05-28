@@ -18,16 +18,22 @@ import 'package:employee_management/core/network/network_monitor.dart'
 import 'package:employee_management/core/storage/local_storage.dart' as _i1007;
 import 'package:employee_management/features/data/repositories/auth_repository.dart'
     as _i106;
+import 'package:employee_management/features/data/repositories/punch_repository.dart'
+    as _i730;
 import 'package:employee_management/features/data/repositories/task_repository.dart'
     as _i498;
 import 'package:employee_management/features/domain/use_cases/login_use_case.dart'
     as _i255;
+import 'package:employee_management/features/domain/use_cases/punch_use_case.dart'
+    as _i47;
 import 'package:employee_management/features/domain/use_cases/task_use_case.dart'
     as _i238;
 import 'package:employee_management/features/presentation/state/dashboard_controller.dart'
     as _i297;
 import 'package:employee_management/features/presentation/state/login_controller.dart'
     as _i47;
+import 'package:employee_management/features/presentation/state/punch_controller.dart'
+    as _i72;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
@@ -38,8 +44,8 @@ extension GetItInjectableX on _i174.GetIt {
     _i526.EnvironmentFilter? environmentFilter,
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
-    gh.factory<_i1007.LocalStorage>(() => _i1007.LocalStorage());
     gh.lazySingleton<_i1007.NetworkMonitor>(() => _i1007.NetworkMonitor());
+    gh.lazySingleton<_i1007.LocalStorage>(() => _i1007.LocalStorage());
     gh.factory<_i347.NetworkController>(
       () => _i347.NetworkController(gh<_i1007.NetworkMonitor>()),
     );
@@ -48,6 +54,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i106.AuthRepository>(
       () => _i106.AuthRepository(
+        gh<_i431.NetworkClient>(),
+        gh<_i1007.LocalStorage>(),
+      ),
+    );
+    gh.factory<_i730.PunchRepository>(
+      () => _i730.PunchRepository(
         gh<_i431.NetworkClient>(),
         gh<_i1007.LocalStorage>(),
       ),
@@ -64,8 +76,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i297.DashboardController>(
       () => _i297.DashboardController(gh<_i238.TaskUseCase>()),
     );
+    gh.factory<_i47.PunchUseCase>(
+      () => _i47.PunchUseCase(gh<_i730.PunchRepository>()),
+    );
     gh.factory<_i255.LoginUseCase>(
       () => _i255.LoginUseCase(gh<_i106.AuthRepository>()),
+    );
+    gh.factory<_i72.PunchController>(
+      () => _i72.PunchController(gh<_i47.PunchUseCase>()),
     );
     gh.factory<_i47.LoginController>(
       () => _i47.LoginController(gh<_i255.LoginUseCase>()),

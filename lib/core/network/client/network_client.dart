@@ -35,8 +35,10 @@ class NetworkClient {
     print('Headers: $mergedHeaders');
     try {
       final response = await _client.get(uri, headers: mergedHeaders);
+      print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
     } catch (e) {
+      print('Error: $e');
       return NetworkError<T>(-1, e.toString());
     }
   }
