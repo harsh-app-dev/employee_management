@@ -16,7 +16,7 @@ class PunchRepository {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     return await _networkClient.get<PunchResponse>(
       "punchinout/attendance/punch/",
-      headers: Map.from({"Authorization": "Bearer $token"}),
+      headers: {"Authorization": "Bearer $token"},
       parser: (json) => PunchResponse.fromJson(json),
     );
   }

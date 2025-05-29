@@ -16,7 +16,7 @@ class TaskRepository {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     return await _networkClient.get<TaskResponse>(
       "task/task/",
-      headers: Map.from({"Authorization": "Bearer $token"}),
+      headers: {"Authorization": "Bearer $token"},
       parser: (json) => TaskResponse.fromJson(json),
     );
   }

@@ -1,7 +1,8 @@
 import 'dart:convert';
+
 import 'package:employee_management/core/utils/network_result.dart';
-import 'package:injectable/injectable.dart';
 import 'package:http/http.dart' as http;
+import 'package:injectable/injectable.dart';
 
 @lazySingleton
 class NetworkClient {
@@ -152,9 +153,11 @@ class NetworkClient {
       final data = parser != null ? parser(json) : json as T;
       return NetworkSuccess<T>(data);
     } else {
+      final errorJson = jsonDecode(response.body);
+      final message = errorJson['message'];
       return NetworkError<T>(
         response.statusCode,
-        response.reasonPhrase ?? 'Error',
+        message ?? response.reasonPhrase ?? 'Error',
       );
     }
   }

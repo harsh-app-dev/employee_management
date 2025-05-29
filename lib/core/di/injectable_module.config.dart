@@ -18,12 +18,20 @@ import 'package:employee_management/core/network/network_monitor.dart'
 import 'package:employee_management/core/storage/local_storage.dart' as _i1007;
 import 'package:employee_management/features/data/repositories/auth_repository.dart'
     as _i106;
+import 'package:employee_management/features/data/repositories/logout_repository.dart'
+    as _i1067;
+import 'package:employee_management/features/data/repositories/profile_repository.dart'
+    as _i840;
 import 'package:employee_management/features/data/repositories/punch_repository.dart'
     as _i730;
 import 'package:employee_management/features/data/repositories/task_repository.dart'
     as _i498;
 import 'package:employee_management/features/domain/use_cases/login_use_case.dart'
     as _i255;
+import 'package:employee_management/features/domain/use_cases/logout_use_case.dart'
+    as _i427;
+import 'package:employee_management/features/domain/use_cases/profile_use_case.dart'
+    as _i288;
 import 'package:employee_management/features/domain/use_cases/punch_use_case.dart'
     as _i47;
 import 'package:employee_management/features/domain/use_cases/task_use_case.dart'
@@ -32,6 +40,8 @@ import 'package:employee_management/features/presentation/state/dashboard_contro
     as _i297;
 import 'package:employee_management/features/presentation/state/login_controller.dart'
     as _i47;
+import 'package:employee_management/features/presentation/state/profile_controller.dart'
+    as _i833;
 import 'package:employee_management/features/presentation/state/punch_controller.dart'
     as _i72;
 import 'package:get_it/get_it.dart' as _i174;
@@ -52,8 +62,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i431.NetworkClient>(
       () => _i431.NetworkClient(baseUrl: gh<String>()),
     );
+    gh.factory<_i1067.LogoutRepository>(
+      () => _i1067.LogoutRepository(gh<_i1007.LocalStorage>()),
+    );
+    gh.factory<_i427.LogoutUseCase>(
+      () => _i427.LogoutUseCase(gh<_i1067.LogoutRepository>()),
+    );
     gh.factory<_i106.AuthRepository>(
       () => _i106.AuthRepository(
+        gh<_i431.NetworkClient>(),
+        gh<_i1007.LocalStorage>(),
+      ),
+    );
+    gh.factory<_i840.ProfileRepository>(
+      () => _i840.ProfileRepository(
         gh<_i431.NetworkClient>(),
         gh<_i1007.LocalStorage>(),
       ),
@@ -79,11 +101,23 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i47.PunchUseCase>(
       () => _i47.PunchUseCase(gh<_i730.PunchRepository>()),
     );
+    gh.factory<_i288.ProfileUseCase>(
+      () => _i288.ProfileUseCase(gh<_i840.ProfileRepository>()),
+    );
     gh.factory<_i255.LoginUseCase>(
       () => _i255.LoginUseCase(gh<_i106.AuthRepository>()),
     );
+    gh.factory<_i833.ProfileController>(
+      () => _i833.ProfileController(
+        gh<_i288.ProfileUseCase>(),
+        gh<_i427.LogoutUseCase>(),
+      ),
+    );
     gh.factory<_i72.PunchController>(
-      () => _i72.PunchController(gh<_i47.PunchUseCase>()),
+      () => _i72.PunchController(
+        gh<_i47.PunchUseCase>(),
+        gh<_i1007.LocalStorage>(),
+      ),
     );
     gh.factory<_i47.LoginController>(
       () => _i47.LoginController(gh<_i255.LoginUseCase>()),

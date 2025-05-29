@@ -11,8 +11,9 @@ class LoginController {
 
   LoginController(this._loginUseCase);
 
-  final ValueNotifier<ApiState<bool>> loginApiState =
-  ValueNotifier(ApiState.initial());
+  final ValueNotifier<ApiState<bool>> loginApiState = ValueNotifier(
+    ApiState.initial(),
+  );
   final ValueNotifier<String?> emailError = ValueNotifier(null);
   final ValueNotifier<String?> passwordError = ValueNotifier(null);
   final ValueNotifier<String?> submissionError = ValueNotifier(null);
@@ -31,6 +32,9 @@ class LoginController {
     if (email.isEmpty) {
       emailError.value = 'Please enter your email';
       isValid = false;
+    } else if (!_isValidEmail(email)) {
+      emailError.value = 'Please enter a valid email address';
+      isValid = false;
     }
 
     if (password.isEmpty) {
@@ -38,6 +42,11 @@ class LoginController {
       isValid = false;
     }
     return isValid;
+  }
+
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w-\.]+@[\w-]+(\.[\w-]+)+\s*$');
+    return emailRegex.hasMatch(email.trim());
   }
 
   Future<void> login(String email, String password) async {

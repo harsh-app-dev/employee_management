@@ -22,6 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _controller = getIt<DashboardController>();
     _punchController = getIt<PunchController>();
     _controller.fetchTasks();
+    _punchController.initPunchStatus(); // Initialize punch status
   }
 
   @override
@@ -48,7 +49,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             onPressed: () {
               // Handle profile tap
-              showGlobalSnackBar('Profile tapped !');
+              getIt<GlobalKey<NavigatorState>>().currentState?.pushNamed(
+                '/profile',
+              );
             },
           ),
         ],
@@ -57,46 +60,83 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: ValueListenableBuilder(
-              valueListenable: _punchController.punchApiState,
-              builder: (context, punchState, _) {
-                final isLoading = punchState?.isLoading ?? false;
-                final isSuccess = punchState?.isSuccess ?? false;
-                final isError = punchState?.isError ?? false;
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (isLoading)
-                      const CircularProgressIndicator(),
-                    if (!isLoading && !isSuccess)
-                      ElevatedButton(
-                        onPressed: () async {
-                          await _punchController.punchInOut();
-                        },
-                        child: const Text('Punch In'),
-                      ),
-                    if (!isLoading && isSuccess)
-                      ElevatedButton(
-                        onPressed: () async {
-                          await _punchController.punchInOut();
-                        },
-                        child: const Text('Punch Out'),
-                      ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // TODO: Handle submit action
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _punchController.isPunchedIn,
+              builder: (context, punchedIn, _) {
+                return ValueListenableBuilder<bool>(
+                  valueListenable: _punchController.isPunchedOut,
+                  builder: (context, punchedOut, __) {
+                    return ValueListenableBuilder(
+                      valueListenable: _punchController.punchApiState,
+                      builder: (context, punchState, ___) {
+                        final isLoading = punchState?.isLoading ?? false;
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (isLoading) const CircularProgressIndicator(),
+                            if (!isLoading && !punchedIn)
+                              ElevatedButton(
+                                onPressed: () async {
+                                  await _punchController.punchInOut('In');
+                                  if (_punchController
+                                          .punchApiState
+                                          .value
+                                          ?.isSuccess ??
+                                      false) {
+                                    showGlobalSnackBar('Punch In successful!');
+                                  } else if (_punchController
+                                          .punchApiState
+                                          .value
+                                          ?.isError ??
+                                      false) {
+                                    showGlobalSnackBar(
+                                      _punchController
+                                              .punchApiState
+                                              .value
+                                              ?.error ??
+                                          'Punch In failed!',
+                                    );
+                                  }
+                                },
+                                child: const Text('Punch In'),
+                              ),
+                            if (!isLoading && punchedIn && !punchedOut)
+                              ElevatedButton(
+                                onPressed: () async {
+                                  await _punchController.punchInOut('out');
+                                  if (_punchController
+                                          .punchApiState
+                                          .value
+                                          ?.isSuccess ??
+                                      false) {
+                                    showGlobalSnackBar('Punch Out successful!');
+                                  } else if (_punchController
+                                          .punchApiState
+                                          .value
+                                          ?.isError ??
+                                      false) {
+                                    showGlobalSnackBar(
+                                      _punchController
+                                              .punchApiState
+                                              .value
+                                              ?.error ??
+                                          'Punch Out failed!',
+                                    );
+                                  }
+                                },
+                                child: const Text('Punch Out'),
+                              ),
+                            ElevatedButton(
+                              onPressed: () {
+                                showGlobalSnackBar('Coming soon....');
+                              },
+                              child: const Text('Submit'),
+                            ),
+                          ],
+                        );
                       },
-                      child: const Text('Submit'),
-                    ),
-                    if (isError && punchState?.error != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: Text(
-                          punchState!.error!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-                  ],
+                    );
+                  },
                 );
               },
             ),
@@ -131,7 +171,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   }
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     itemCount: tasks.length,
                     itemBuilder: (context, index) {
                       final task = tasks[index];
@@ -140,72 +183,130 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: task.isEdited == true
                             ? theme.colorScheme.errorContainer
                             : null,
-                        child: ListTile(
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Type: ${task.taskPhase}',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                formatTime(task.taskTimeSpend),
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
                           ),
-                          subtitle: Column(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      task.ticket?.title ?? 'No Title',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    formatTime(task.taskTimeSpend),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
                               Text(
-                                'Description:',
-                                style: TextStyle(
-                                  fontSize: 18,
+                                'Description',
+                                style: const TextStyle(
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              SizedBox(height: 8),
-                              Html(
-                                data:
-                                    task.taskDescription?.trim() ?? 'No Description',
-                                shrinkWrap: true,
-                                style: {
-                                  "body": Style(
-                                    color: theme.colorScheme.onSurface,
-                                    maxLines: 3,
-                                    fontSize: FontSize(16),
-                                    fontFamily:
-                                        theme.textTheme.bodyMedium?.fontFamily,
-                                    textOverflow: TextOverflow.ellipsis,
-                                    padding: HtmlPaddings.only(
-                                      left: 0,
-                                      right: 0,
-                                      top: 0,
-                                      bottom: 0,
+                              const SizedBox(height: 8),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: constraints.maxWidth,
                                     ),
-                                    margin: Margins.zero,
-                                  ),
-                                  "ul": Style(
-                                    padding: HtmlPaddings.only(left: 16),
-                                    margin: Margins.only(bottom: 8),
-                                  ),
-                                  "ol": Style(
-                                    padding: HtmlPaddings.only(left: 16),
-                                    margin: Margins.only(bottom: 8),
-                                  ),
-                                  "li": Style(
-                                    padding: HtmlPaddings.only(left: 8),
-                                    margin: Margins.only(bottom: 4),
-                                  ),
-                                  "p": Style(margin: Margins.only(bottom: 8)),
+                                    child: Html(
+                                      data:
+                                          task.taskDescription ??
+                                          'No Description',
+                                      shrinkWrap: true,
+                                      style: {
+                                        "body": Style(
+                                          color: theme.colorScheme.onSurface,
+                                          maxLines: 3,
+                                          fontSize: FontSize(14),
+                                          fontFamily: theme
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.fontFamily,
+                                          textOverflow: TextOverflow.ellipsis,
+                                          padding: HtmlPaddings.only(
+                                            left: 0,
+                                            right: 0,
+                                            top: 0,
+                                            bottom: 0,
+                                          ),
+                                          margin: Margins.zero,
+                                        ),
+                                        "ul": Style(
+                                          padding: HtmlPaddings.only(left: 16),
+                                          margin: Margins.only(bottom: 8),
+                                        ),
+                                        "ol": Style(
+                                          padding: HtmlPaddings.only(left: 16),
+                                          margin: Margins.only(bottom: 8),
+                                        ),
+                                        "li": Style(
+                                          padding: HtmlPaddings.only(left: 8),
+                                          margin: Margins.only(bottom: 4),
+                                        ),
+                                        "p": Style(
+                                          margin: Margins.only(bottom: 8),
+                                        ),
+                                      },
+                                    ),
+                                  );
                                 },
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(child: Container()),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: task.isEdited == true
+                                          ? theme.colorScheme.onErrorContainer
+                                                .withValues(alpha: 0.6)
+                                          : theme.colorScheme.primary
+                                                .withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      task.taskPhase ?? '',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onPrimary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

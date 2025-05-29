@@ -1,16 +1,16 @@
 import 'dart:convert';
 
-TaskResponse taskResponseFromJson(String str) => TaskResponse.fromJson(json.decode(str));
+TaskResponse taskResponseFromJson(String str) =>
+    TaskResponse.fromJson(json.decode(str));
+
 String taskResponseToJson(TaskResponse data) => json.encode(data.toJson());
+
 class TaskResponse {
-  TaskResponse({
-      List<Data>? data, 
-      bool? submitTask, 
-      bool? canSubmit,}){
+  TaskResponse({List<Data>? data, bool? submitTask, bool? canSubmit}) {
     _data = data;
     _submitTask = submitTask;
     _canSubmit = canSubmit;
-}
+  }
 
   TaskResponse.fromJson(dynamic json) {
     if (json['data'] != null) {
@@ -28,18 +28,25 @@ class TaskResponse {
     _submitTask = json['submit_task'];
     _canSubmit = json['can_submit'];
   }
+
   List<Data>? _data;
   bool? _submitTask;
   bool? _canSubmit;
-TaskResponse copyWith({  List<Data>? data,
-  bool? submitTask,
-  bool? canSubmit,
-}) => TaskResponse(  data: data ?? _data,
-  submitTask: submitTask ?? _submitTask,
-  canSubmit: canSubmit ?? _canSubmit,
-);
+
+  TaskResponse copyWith({
+    List<Data>? data,
+    bool? submitTask,
+    bool? canSubmit,
+  }) => TaskResponse(
+    data: data ?? _data,
+    submitTask: submitTask ?? _submitTask,
+    canSubmit: canSubmit ?? _canSubmit,
+  );
+
   List<Data>? get data => _data;
+
   bool? get submitTask => _submitTask;
+
   bool? get canSubmit => _canSubmit;
 
   Map<String, dynamic> toJson() {
@@ -54,32 +61,35 @@ TaskResponse copyWith({  List<Data>? data,
 }
 
 Data dataFromJson(String str) => Data.fromJson(json.decode(str));
+
 String dataToJson(Data data) => json.encode(data.toJson());
+
 class Data {
   Data({
-      String? id, 
-      String? updatedAt, 
-      String? taskPhase, 
-      bool? isCompleted, 
-      bool? isVerified, 
-      bool? isDeleted, 
-      bool? isEdited, 
-      String? taskDescription, 
-      String? createdAt, 
-      String? taskTimeSpend, 
-      String? totalHours,}){
-    _id = id;
-    _updatedAt = updatedAt;
-    _taskPhase = taskPhase;
-    _isCompleted = isCompleted;
-    _isVerified = isVerified;
-    _isDeleted = isDeleted;
-    _isEdited = isEdited;
-    _taskDescription = taskDescription;
-    _createdAt = createdAt;
-    _taskTimeSpend = taskTimeSpend;
-    _totalHours = totalHours;
-}
+    String? id,
+    String? updatedAt,
+    String? taskPhase,
+    bool? isCompleted,
+    bool? isVerified,
+    bool? isDeleted,
+    bool? isEdited,
+    String? taskDescription,
+    String? createdAt,
+    String? taskTimeSpend,
+    String? totalHours,
+    Ticket? ticket,
+  }) : _id = id,
+       _updatedAt = updatedAt,
+       _taskPhase = taskPhase,
+       _isCompleted = isCompleted,
+       _isVerified = isVerified,
+       _isDeleted = isDeleted,
+       _isEdited = isEdited,
+       _taskDescription = taskDescription,
+       _createdAt = createdAt,
+       _taskTimeSpend = taskTimeSpend,
+       _totalHours = totalHours,
+       _ticket = ticket;
 
   Data.fromJson(dynamic json) {
     _id = json['id'];
@@ -93,7 +103,9 @@ class Data {
     _createdAt = json['created_at'];
     _taskTimeSpend = json['task_time_spend'];
     _totalHours = json['total_hours'];
+    _ticket = json['ticket'] != null ? Ticket.fromJson(json['ticket']) : null;
   }
+
   String? _id;
   String? _updatedAt;
   String? _taskPhase;
@@ -105,40 +117,59 @@ class Data {
   String? _createdAt;
   String? _taskTimeSpend;
   String? _totalHours;
-Data copyWith({  String? id,
-  String? updatedAt,
-  String? taskPhase,
-  bool? isCompleted,
-  bool? isVerified,
-  bool? isDeleted,
-  bool? isEdited,
-  String? taskDescription,
-  String? createdAt,
-  String? taskTimeSpend,
-  String? totalHours,
-}) => Data(  id: id ?? _id,
-  updatedAt: updatedAt ?? _updatedAt,
-  taskPhase: taskPhase ?? _taskPhase,
-  isCompleted: isCompleted ?? _isCompleted,
-  isVerified: isVerified ?? _isVerified,
-  isDeleted: isDeleted ?? _isDeleted,
-  isEdited: isEdited ?? _isEdited,
-  taskDescription: taskDescription ?? _taskDescription,
-  createdAt: createdAt ?? _createdAt,
-  taskTimeSpend: taskTimeSpend ?? _taskTimeSpend,
-  totalHours: totalHours ?? _totalHours,
-);
+  Ticket? _ticket;
+
+  Data copyWith({
+    String? id,
+    String? updatedAt,
+    String? taskPhase,
+    bool? isCompleted,
+    bool? isVerified,
+    bool? isDeleted,
+    bool? isEdited,
+    String? taskDescription,
+    String? createdAt,
+    String? taskTimeSpend,
+    String? totalHours,
+    Ticket? ticket,
+  }) => Data(
+    id: id ?? _id,
+    updatedAt: updatedAt ?? _updatedAt,
+    taskPhase: taskPhase ?? _taskPhase,
+    isCompleted: isCompleted ?? _isCompleted,
+    isVerified: isVerified ?? _isVerified,
+    isDeleted: isDeleted ?? _isDeleted,
+    isEdited: isEdited ?? _isEdited,
+    taskDescription: taskDescription ?? _taskDescription,
+    createdAt: createdAt ?? _createdAt,
+    taskTimeSpend: taskTimeSpend ?? _taskTimeSpend,
+    totalHours: totalHours ?? _totalHours,
+    ticket: ticket ?? _ticket,
+  );
+
   String? get id => _id;
+
   String? get updatedAt => _updatedAt;
+
   String? get taskPhase => _taskPhase;
+
   bool? get isCompleted => _isCompleted;
+
   bool? get isVerified => _isVerified;
+
   bool? get isDeleted => _isDeleted;
+
   bool? get isEdited => _isEdited;
+
   String? get taskDescription => _taskDescription;
+
   String? get createdAt => _createdAt;
+
   String? get taskTimeSpend => _taskTimeSpend;
+
   String? get totalHours => _totalHours;
+
+  Ticket? get ticket => _ticket;
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
@@ -153,6 +184,56 @@ Data copyWith({  String? id,
     map['created_at'] = _createdAt;
     map['task_time_spend'] = _taskTimeSpend;
     map['total_hours'] = _totalHours;
+    if (_ticket != null) {
+      map['ticket'] = _ticket?.toJson();
+    }
+    return map;
+  }
+}
+
+class Ticket {
+  Ticket({String? title, Project? project})
+    : _title = title,
+      _project = project;
+
+  Ticket.fromJson(dynamic json) {
+    _title = json['title'];
+    _project = json['project'] != null
+        ? Project.fromJson(json['project'])
+        : null;
+  }
+
+  String? _title;
+  Project? _project;
+
+  String? get title => _title;
+
+  Project? get project => _project;
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    map['title'] = _title;
+    if (_project != null) {
+      map['project'] = _project?.toJson();
+    }
+    return map;
+  }
+}
+
+class Project {
+  Project({String? title}) : _title = title;
+
+  Project.fromJson(dynamic json) {
+    _title = json['title'];
+  }
+
+  String? _title;
+
+  String? get title => _title;
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    map['title'] = _title;
     return map;
   }
 }
