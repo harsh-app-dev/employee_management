@@ -24,6 +24,8 @@ import 'package:employee_management/features/data/repositories/profile_repositor
     as _i840;
 import 'package:employee_management/features/data/repositories/punch_repository.dart'
     as _i730;
+import 'package:employee_management/features/data/repositories/submit_tasks_repository.dart'
+    as _i802;
 import 'package:employee_management/features/data/repositories/task_repository.dart'
     as _i498;
 import 'package:employee_management/features/domain/use_cases/login_use_case.dart'
@@ -32,8 +34,12 @@ import 'package:employee_management/features/domain/use_cases/logout_use_case.da
     as _i427;
 import 'package:employee_management/features/domain/use_cases/profile_use_case.dart'
     as _i288;
-import 'package:employee_management/features/domain/use_cases/punch_use_case.dart'
-    as _i47;
+import 'package:employee_management/features/domain/use_cases/punch_in_out_use_case.dart'
+    as _i828;
+import 'package:employee_management/features/domain/use_cases/punch_state_use_case.dart'
+    as _i876;
+import 'package:employee_management/features/domain/use_cases/submit_tasks_use_case.dart'
+    as _i124;
 import 'package:employee_management/features/domain/use_cases/task_use_case.dart'
     as _i238;
 import 'package:employee_management/features/presentation/state/dashboard_controller.dart'
@@ -86,6 +92,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1007.LocalStorage>(),
       ),
     );
+    gh.factory<_i802.SubmitTaskRepository>(
+      () => _i802.SubmitTaskRepository(
+        gh<_i431.NetworkClient>(),
+        gh<_i1007.LocalStorage>(),
+      ),
+    );
     gh.factory<_i498.TaskRepository>(
       () => _i498.TaskRepository(
         gh<_i431.NetworkClient>(),
@@ -95,14 +107,23 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i238.TaskUseCase>(
       () => _i238.TaskUseCase(gh<_i498.TaskRepository>()),
     );
-    gh.factory<_i297.DashboardController>(
-      () => _i297.DashboardController(gh<_i238.TaskUseCase>()),
+    gh.factory<_i828.PunchInOutUseCase>(
+      () => _i828.PunchInOutUseCase(gh<_i730.PunchRepository>()),
     );
-    gh.factory<_i47.PunchUseCase>(
-      () => _i47.PunchUseCase(gh<_i730.PunchRepository>()),
+    gh.factory<_i876.PunchStateUseCase>(
+      () => _i876.PunchStateUseCase(gh<_i730.PunchRepository>()),
     );
     gh.factory<_i288.ProfileUseCase>(
       () => _i288.ProfileUseCase(gh<_i840.ProfileRepository>()),
+    );
+    gh.factory<_i124.SubmitTasksUseCase>(
+      () => _i124.SubmitTasksUseCase(gh<_i802.SubmitTaskRepository>()),
+    );
+    gh.factory<_i72.PunchController>(
+      () => _i72.PunchController(
+        gh<_i828.PunchInOutUseCase>(),
+        gh<_i876.PunchStateUseCase>(),
+      ),
     );
     gh.factory<_i255.LoginUseCase>(
       () => _i255.LoginUseCase(gh<_i106.AuthRepository>()),
@@ -113,10 +134,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i427.LogoutUseCase>(),
       ),
     );
-    gh.factory<_i72.PunchController>(
-      () => _i72.PunchController(
-        gh<_i47.PunchUseCase>(),
-        gh<_i1007.LocalStorage>(),
+    gh.factory<_i297.DashboardController>(
+      () => _i297.DashboardController(
+        gh<_i238.TaskUseCase>(),
+        gh<_i124.SubmitTasksUseCase>(),
       ),
     );
     gh.factory<_i47.LoginController>(

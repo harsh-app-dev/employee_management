@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:employee_management/core/utils/network_result.dart';
 import 'package:http/http.dart' as http;
@@ -38,9 +40,21 @@ class NetworkClient {
       final response = await _client.get(uri, headers: mergedHeaders);
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
+    } on http.ClientException catch (e) {
+      print('ClientException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on SocketException catch (e) {
+      print('SocketException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on TimeoutException catch (e) {
+      print('TimeoutException: $e');
+      return NetworkError<T>(-1, 'Request timed out. Please try again.');
     } catch (e) {
       print('Error: $e');
-      return NetworkError<T>(-1, e.toString());
+      return NetworkError<T>(
+        -1,
+        'Something went wrong. Please try again later.',
+      );
     }
   }
 
@@ -63,9 +77,21 @@ class NetworkClient {
       );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
+    } on http.ClientException catch (e) {
+      print('ClientException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on SocketException catch (e) {
+      print('SocketException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on TimeoutException catch (e) {
+      print('TimeoutException: $e');
+      return NetworkError<T>(-1, 'Request timed out. Please try again.');
     } catch (e) {
       print('Error: $e');
-      return NetworkError<T>(-1, e.toString());
+      return NetworkError<T>(
+        -1,
+        'Something went wrong. Please try again later.',
+      );
     }
   }
 
@@ -88,9 +114,21 @@ class NetworkClient {
       );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
+    } on http.ClientException catch (e) {
+      print('ClientException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on SocketException catch (e) {
+      print('SocketException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on TimeoutException catch (e) {
+      print('TimeoutException: $e');
+      return NetworkError<T>(-1, 'Request timed out. Please try again.');
     } catch (e) {
       print('Error: $e');
-      return NetworkError<T>(-1, e.toString());
+      return NetworkError<T>(
+        -1,
+        'Something went wrong. Please try again later.',
+      );
     }
   }
 
@@ -113,9 +151,21 @@ class NetworkClient {
       );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
+    } on http.ClientException catch (e) {
+      print('ClientException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on SocketException catch (e) {
+      print('SocketException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on TimeoutException catch (e) {
+      print('TimeoutException: $e');
+      return NetworkError<T>(-1, 'Request timed out. Please try again.');
     } catch (e) {
       print('Error: $e');
-      return NetworkError<T>(-1, e.toString());
+      return NetworkError<T>(
+        -1,
+        'Something went wrong. Please try again later.',
+      );
     }
   }
 
@@ -138,9 +188,21 @@ class NetworkClient {
       );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
+    } on http.ClientException catch (e) {
+      print('ClientException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on SocketException catch (e) {
+      print('SocketException: $e');
+      return NetworkError<T>(-1, 'No internet connection.');
+    } on TimeoutException catch (e) {
+      print('TimeoutException: $e');
+      return NetworkError<T>(-1, 'Request timed out. Please try again.');
     } catch (e) {
       print('Error: $e');
-      return NetworkError<T>(-1, e.toString());
+      return NetworkError<T>(
+        -1,
+        'Something went wrong. Please try again later.',
+      );
     }
   }
 
@@ -148,16 +210,59 @@ class NetworkClient {
     http.Response response,
     T Function(dynamic json)? parser,
   ) {
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final json = jsonDecode(response.body);
-      final data = parser != null ? parser(json) : json as T;
-      return NetworkSuccess<T>(data);
-    } else {
-      final errorJson = jsonDecode(response.body);
-      final message = errorJson['message'];
+    try {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final json = jsonDecode(response.body);
+        final data = parser != null ? parser(json) : json as T;
+        return NetworkSuccess<T>(data);
+      } else {
+        String userMessage = 'Something went wrong. Please try again later.';
+        String? message;
+        try {
+          final errorJson = jsonDecode(response.body);
+          message =
+              errorJson['message'] ?? errorJson['detail'] ?? errorJson['error'];
+        } catch (_) {
+          message = response.reasonPhrase;
+        }
+        switch (response.statusCode) {
+          case 400:
+            userMessage = message ?? 'Bad request.';
+            break;
+          case 401:
+            userMessage = message ?? 'Unauthorized. Please login again.';
+            break;
+          case 403:
+            userMessage = message ?? 'Forbidden. You do not have permission.';
+            break;
+          case 404:
+            userMessage = message ?? 'Resource not found.';
+            break;
+          case 408:
+            userMessage = 'Request timed out. Please try again.';
+            break;
+          case 422:
+            userMessage = message ?? 'Unprocessable entity.';
+            break;
+          case 500:
+            userMessage = 'Server error. Please try again later.';
+            break;
+          case 502:
+          case 503:
+          case 504:
+            userMessage = 'Server unavailable. Please try again later.';
+            break;
+          default:
+            userMessage = message ?? userMessage;
+        }
+        return NetworkError<T>(response.statusCode, userMessage);
+      }
+    } on FormatException {
+      return NetworkError<T>(-1, 'Invalid response format.');
+    } catch (e) {
       return NetworkError<T>(
-        response.statusCode,
-        message ?? response.reasonPhrase ?? 'Error',
+        -1,
+        'Something went wrong. Please try again later.',
       );
     }
   }

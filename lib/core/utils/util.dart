@@ -48,3 +48,11 @@ String formatTime(String? time) {
   }
 }
 
+String getInitials(String? firstName, String? lastName) {
+  String first = (firstName != null && firstName.isNotEmpty)
+      ? firstName[0]
+      : '';
+  String last = (lastName != null && lastName.isNotEmpty) ? lastName[0] : '';
+  return (first + last).toUpperCase();
+}
+

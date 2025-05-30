@@ -1,4 +1,5 @@
 import 'package:employee_management/core/di/injectable_module.dart';
+import 'package:employee_management/core/utils/util.dart' show getInitials;
 import 'package:employee_management/features/presentation/state/profile_controller.dart';
 import 'package:flutter/material.dart';
 
@@ -63,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         radius: size.width * 0.18,
                         backgroundColor: theme.colorScheme.primaryContainer,
                         child: Text(
-                          _getInitials(profile.firstName, profile.lastName),
+                          getInitials(profile.firstName, profile.lastName),
                           style: TextStyle(
                             fontSize: size.width * 0.10,
                             color: theme.colorScheme.onPrimaryContainer,
@@ -127,14 +128,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
-  }
-
-  String _getInitials(String? firstName, String? lastName) {
-    String first = (firstName != null && firstName.isNotEmpty)
-        ? firstName[0]
-        : '';
-    String last = (lastName != null && lastName.isNotEmpty) ? lastName[0] : '';
-    return (first + last).toUpperCase();
   }
 }
 
