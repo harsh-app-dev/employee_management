@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.dark(context),
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
+      routes: AppPages.routes,
       home: ValueListenableBuilder(
         valueListenable: isLoggedIn,
         builder: (context, isLoggedIn, _) {

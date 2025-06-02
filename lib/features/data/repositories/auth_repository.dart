@@ -24,7 +24,6 @@ class AuthRepository {
     );
 
     if (result is NetworkSuccess<LoginResponse>) {
-      await _localStorage.setString(SharedPreferenceKeys.userDataKey, result.data.toString());
       await _localStorage.setString(SharedPreferenceKeys.tokenKey, result.data.access!);
       await _localStorage.setBool(SharedPreferenceKeys.loggedInKey, true);
     }
