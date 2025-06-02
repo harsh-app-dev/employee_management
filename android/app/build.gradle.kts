@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.sparkbrains.employee_management"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = "35"
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

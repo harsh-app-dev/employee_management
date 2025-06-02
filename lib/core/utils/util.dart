@@ -55,4 +55,3 @@ String getInitials(String? firstName, String? lastName) {
   String last = (lastName != null && lastName.isNotEmpty) ? lastName[0] : '';
   return (first + last).toUpperCase();
 }
-
