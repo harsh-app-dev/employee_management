@@ -213,12 +213,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 padding: EdgeInsets.all(10),
-                                child: Icon(Icons.fingerprint, color: Colors.white, size: 26.sp),
+                                child: Icon(Icons.calendar_today, color: Colors.white, size: 26.sp),
                               ),
                               SizedBox(width: 2.w),
                               Text(
-                                'Attendance',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17.sp, letterSpacing: 0.5),
+                                "Today's Attendance",
+                                style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 24.sp),
                               ),
                             ],
                           ),
@@ -389,6 +389,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   SizedBox(height: 1.h),
+                  // Task Overview Title
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 1.5.h),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.assignment_turned_in_rounded,
+                          color: theme.colorScheme.primary,
+                          size: 28,
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          'Task Overview',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   // Task List with Multiple Cards
                   ListView.builder(
                     shrinkWrap: true,
@@ -406,11 +428,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'icon': Icons.work,
                           'label': 'Project',
                           'value': task['project'],
-                        },
-                        {
-                          'icon': Icons.airplane_ticket,
-                          'label': 'Ticket',
-                          'value': task['ticket'],
                         },
                         // Combine Date and Time in one row
                         {
@@ -473,13 +490,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Row(
                                   children: [
                                     Icon(
-                                      Icons.assignment_turned_in_rounded,
+                                      Icons.confirmation_number,
                                       color: theme.colorScheme.primary,
                                       size: 28,
                                     ),
                                     SizedBox(width: 2.w),
                                     Text(
-                                      'Task Overview',
+                                      task['ticket'] ?? '',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 20,
@@ -504,115 +521,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                               maxChildSize: 0.95,
                                               builder: (context, scrollController) {
                                                 return Padding(
-                                                  padding: EdgeInsets.only(
-                                                    left: 5.w,
-                                                    right: 5.w,
-                                                    top: 3.h,
-                                                    bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                                                  ),
-                                                  child: SingleChildScrollView(
-                                                    controller: scrollController,
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            Icon(
-                                                              Icons.assignment_turned_in_rounded,
-                                                              color: theme.colorScheme.primary,
-                                                              size: 28,
-                                                            ),
-                                                            SizedBox(width: 2.w),
-                                                            Text(
-                                                              'Task Details',
-                                                              style: TextStyle(
-                                                                fontWeight: FontWeight.bold,
-                                                                fontSize: 20,
-                                                                letterSpacing: 0.5,
-                                                              ),
-                                                            ),
-                                                            Spacer(),
-                                                            IconButton(
-                                                              icon: Icon(
-                                                                Icons.close,
+                                                    padding: EdgeInsets.only(
+                                                      left: 5.w,
+                                                      right: 5.w,
+                                                      top: 3.h,
+                                                      bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                                                    ),
+                                                    child: SingleChildScrollView(
+                                                      controller: scrollController,
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              Icon(
+                                                                Icons.assignment,
                                                                 color: theme.colorScheme.primary,
+                                                                size: 28,
                                                               ),
-                                                              onPressed: () => Navigator.of(context).pop(),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        Divider(
-                                                          height: 3.h,
-                                                          thickness: 1.3,
-                                                          color: theme.colorScheme.primary.withOpacity(0.15),
-                                                        ),
-                                                        ...allInfo.map(
-                                                          (info) {
-                                                            if (info['label'] == 'Description') {
-                                                              return Padding(
-                                                                padding: EdgeInsets.symmetric(vertical: 1.2.h),
-                                                                child: Column(
-                                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                                  children: [
-                                                                    Text(
-                                                                      'Description:',
-                                                                      style: TextStyle(
-                                                                        fontWeight: FontWeight.bold,
-                                                                        color: theme.colorScheme.primary,
-                                                                        fontSize: 17,
-                                                                      ),
-                                                                    ),
-                                                                    SizedBox(height: 0.5.h),
-                                                                    Text(
-                                                                      info['value'] ?? '',
-                                                                      style: TextStyle(
-                                                                        fontSize: 15,
-                                                                        color: theme.colorScheme.onSurface,
-                                                                        fontWeight: FontWeight.normal,
-                                                                      ),
-                                                                    ),
-                                                                  ],
+                                                              SizedBox(width: 2.w),
+                                                              Text(
+                                                                'Task Details',
+                                                                style: TextStyle(
+                                                                  fontWeight: FontWeight.bold,
+                                                                  fontSize: 20,
+                                                                  letterSpacing: 0.5,
                                                                 ),
-                                                              );
-                                                            } else if (info['label'] == 'Phase') {
-                                                              // Phase and Time in one line
-                                                              final timeInfo = allInfo.firstWhereOrNull((i) => i['label'] == 'Time');
-                                                              if (timeInfo != null) {
+                                                              ),
+                                                              Spacer(),
+                                                              IconButton(
+                                                                icon: Icon(
+                                                                  Icons.close,
+                                                                  color: theme.colorScheme.primary,
+                                                                ),
+                                                                onPressed: () => Navigator.of(context).pop(),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Divider(
+                                                            height: 3.h,
+                                                            thickness: 1.3,
+                                                            color: theme.colorScheme.primary.withOpacity(0.15),
+                                                          ),
+                                                          ...allInfo.map(
+                                                                (info) {
+                                                              if (info['label'] == 'Description') {
                                                                 return Padding(
                                                                   padding: EdgeInsets.symmetric(vertical: 1.2.h),
-                                                                  child: Row(
+                                                                  child: Column(
                                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                                     children: [
                                                                       Text(
-                                                                        'Phase:',
+                                                                        'Description:',
                                                                         style: TextStyle(
                                                                           fontWeight: FontWeight.bold,
                                                                           color: theme.colorScheme.primary,
                                                                           fontSize: 17,
                                                                         ),
                                                                       ),
-                                                                      SizedBox(width: 2.w),
+                                                                      SizedBox(height: 0.5.h),
                                                                       Text(
                                                                         info['value'] ?? '',
-                                                                        style: TextStyle(
-                                                                          fontSize: 15,
-                                                                          color: theme.colorScheme.onSurface,
-                                                                          fontWeight: FontWeight.normal,
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(width: 4.w),
-                                                                      Text(
-                                                                        'Time:',
-                                                                        style: TextStyle(
-                                                                          fontWeight: FontWeight.bold,
-                                                                          color: theme.colorScheme.primary,
-                                                                          fontSize: 17,
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(width: 2.w),
-                                                                      Text(
-                                                                        timeInfo['value'] ?? '',
                                                                         style: TextStyle(
                                                                           fontSize: 15,
                                                                           color: theme.colorScheme.onSurface,
@@ -622,50 +592,97 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                                     ],
                                                                   ),
                                                                 );
-                                                              } else {
+                                                              } else if (info['label'] == 'Phase') {
+                                                                // Phase and Time in one line
+                                                                final timeInfo = allInfo.firstWhereOrNull((i) => i['label'] == 'Time');
+                                                                if (timeInfo != null) {
+                                                                  return Padding(
+                                                                    padding: EdgeInsets.symmetric(vertical: 1.2.h),
+                                                                    child: Row(
+                                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                                      children: [
+                                                                        Text(
+                                                                          'Phase:',
+                                                                          style: TextStyle(
+                                                                            fontWeight: FontWeight.bold,
+                                                                            color: theme.colorScheme.primary,
+                                                                            fontSize: 17,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(width: 2.w),
+                                                                        Text(
+                                                                          info['value'] ?? '',
+                                                                          style: TextStyle(
+                                                                            fontSize: 15,
+                                                                            color: theme.colorScheme.onSurface,
+                                                                            fontWeight: FontWeight.normal,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(width: 4.w),
+                                                                        Text(
+                                                                          'Time:',
+                                                                          style: TextStyle(
+                                                                            fontWeight: FontWeight.bold,
+                                                                            color: theme.colorScheme.primary,
+                                                                            fontSize: 17,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(width: 2.w),
+                                                                        Text(
+                                                                          timeInfo['value'] ?? '',
+                                                                          style: TextStyle(
+                                                                            fontSize: 15,
+                                                                            color: theme.colorScheme.onSurface,
+                                                                            fontWeight: FontWeight.normal,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  );
+                                                                } else {
+                                                                  return SizedBox.shrink();
+                                                                }
+                                                              } else if (info['label'] == 'Time') {
+                                                                // Skip rendering Time separately
                                                                 return SizedBox.shrink();
                                                               }
-                                                            } else if (info['label'] == 'Time') {
-                                                              // Skip rendering Time separately
-                                                              return SizedBox.shrink();
-                                                            }
-                                                            // Default rendering for other fields
-                                                            return Padding(
-                                                              padding: EdgeInsets.symmetric(vertical: 1.2.h),
-                                                              child: Row(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Text(
-                                                                    info['label'] + ':',
-                                                                    style: TextStyle(
-                                                                      fontWeight: FontWeight.bold,
-                                                                      color: theme.colorScheme.primary,
-                                                                      fontSize: 17,
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(width: 2.w),
-                                                                  Expanded(
-                                                                    child: Text(
-                                                                      info['value'] ?? '',
+                                                              // Default rendering for other fields
+                                                              return Padding(
+                                                                padding: EdgeInsets.symmetric(vertical: 1.2.h),
+                                                                child: Row(
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    Text(
+                                                                      info['label'] + ':',
                                                                       style: TextStyle(
-                                                                        fontSize: 15,
-                                                                        color: theme.colorScheme.onSurface,
-                                                                        fontWeight: FontWeight.normal,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: theme.colorScheme.primary,
+                                                                        fontSize: 17,
                                                                       ),
-                                                                      overflow: TextOverflow.visible,
                                                                     ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            );
-                                                          },
-                                                        ).toList(),
-                                                      ],
-                                                    ),
-                                                  )
-                                                  );
-                                                },
-                                              );
+                                                                    SizedBox(width: 2.w),
+                                                                    Expanded(
+                                                                      child: Text(
+                                                                        info['value'] ?? '',
+                                                                        style: TextStyle(
+                                                                          fontSize: 15,
+                                                                          color: theme.colorScheme.onSurface,
+                                                                          fontWeight: FontWeight.normal,
+                                                                        ),
+                                                                        overflow: TextOverflow.visible,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            },
+                                                          ).toList(),
+                                                        ],
+                                                      ),
+                                                    )
+                                                );
+                                              },
+                                            );
                                           },
                                         );
                                       },
@@ -696,7 +713,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     0.15,
                                   ),
                                 ),
-                                ...mainInfo.take(3).map(
+                                ...mainInfo.take(2).map(
                                       (info) => Padding(
                                     padding: EdgeInsets.symmetric(
                                       vertical: 1.2.h,
@@ -839,7 +856,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             showGlobalSnackBar('All tasks are submitted successfully');
           },
           icon: Icon(Icons.send, color: theme.colorScheme.surface, size: 18.sp,),
-          label: Text('Submit All Tasks', style: TextStyle(color: theme.colorScheme.surface, fontSize: 14.sp),),
+          label: Text('Submit', style: TextStyle(color: theme.colorScheme.surface, fontSize: 14.sp),),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
