@@ -41,3 +41,4 @@ class ApiState<T> {
     return 'ApiState(status: $status, data: $data, error: $error)';
   }
 }
+

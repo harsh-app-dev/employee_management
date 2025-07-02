@@ -3,18 +3,25 @@ import 'package:employee_management/core/storage/local_storage.dart';
 import 'package:employee_management/core/storage/shared_preference_keys.dart';
 import 'package:employee_management/routes/app_pages.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_sizer/flutter_sizer.dart';
 
 import 'core/configs/themes/theme.dart';
 import 'core/widgets/network_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  configureDependencies();
+  await configureDependencies();
   registerGlobalDependencies();
   await getIt<LocalStorage>().init();
   isLoggedIn.value =
       getIt<LocalStorage>().getBool(SharedPreferenceKeys.loggedInKey) ?? false;
-  runApp(const MyApp());
+  runApp(
+    FlutterSizer(
+      builder: (context, orientation, deviceType) {
+        return const MyApp();
+      },
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

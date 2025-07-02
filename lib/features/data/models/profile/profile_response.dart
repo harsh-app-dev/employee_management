@@ -15,6 +15,7 @@ class ProfileResponse {
     String? dateOfBirth,
     String? contactNumber,
     String? designation,
+    String? organization,
   }) {
     _id = id;
     _firstName = firstName;
@@ -23,6 +24,7 @@ class ProfileResponse {
     _dateOfBirth = dateOfBirth;
     _contactNumber = contactNumber;
     _designation = designation;
+    _organization = organization;
   }
 
   ProfileResponse.fromJson(dynamic json) {
@@ -32,7 +34,8 @@ class ProfileResponse {
     _email = json['email'];
     _dateOfBirth = json['date_of_birth'];
     _contactNumber = json['contact_number'];
-    _designation = json['designation'];
+    _designation = json['designation'] != null ? json['designation'].toString() : null;
+    _organization = json['Organisation'] != null ? json['Organisation'].toString() : null;
   }
 
   String? _id;
@@ -42,6 +45,7 @@ class ProfileResponse {
   String? _dateOfBirth;
   String? _contactNumber;
   String? _designation;
+  String? _organization;
 
   ProfileResponse copyWith({
     String? id,
@@ -51,6 +55,7 @@ class ProfileResponse {
     String? dateOfBirth,
     String? contactNumber,
     String? designation,
+    String? organization,
   }) => ProfileResponse(
     id: id ?? _id,
     firstName: firstName ?? _firstName,
@@ -59,6 +64,7 @@ class ProfileResponse {
     dateOfBirth: dateOfBirth ?? _dateOfBirth,
     contactNumber: contactNumber ?? _contactNumber,
     designation: designation ?? _designation,
+    organization: organization ?? _organization,
   );
 
   String? get id => _id;
@@ -75,6 +81,8 @@ class ProfileResponse {
 
   String? get designation => _designation;
 
+  String? get organization => _organization;
+
 
 
   Map<String, dynamic> toJson() {
@@ -86,6 +94,8 @@ class ProfileResponse {
     map['date_of_birth'] = _dateOfBirth;
     map['contact_number'] = _contactNumber;
     map['designation'] = _designation;
+    map['Organization'] = _organization;
+
     return map;
   }
 }

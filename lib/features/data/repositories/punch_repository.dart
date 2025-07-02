@@ -19,7 +19,7 @@ class PunchRepository {
   ) async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     return await _networkClient.post<PunchInOutResponse>(
-      "accounts/attendance",
+      "punchinout/attendance/punch/",
       headers: {"Authorization": "Bearer $token"},
       body: punchInOutRequest,
       parser: (json) => PunchInOutResponse.fromJson(json),

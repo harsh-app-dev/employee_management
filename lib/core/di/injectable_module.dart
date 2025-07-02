@@ -6,13 +6,13 @@ import 'injectable_module.config.dart';
 
 final getIt = GetIt.instance;
 
-final baseUrl = 'http://192.168.1.37:8000/api/v1/';
+final baseUrl = 'http://192.168.1.33:8080/api/v1/';
 final navigatorKey = GlobalKey<NavigatorState>();
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final ValueNotifier<bool> isLoggedIn = ValueNotifier<bool>(false);
 
 @InjectableInit()
-void configureDependencies() => getIt.init();
+Future<void> configureDependencies() async => await getIt.init();
 
 void registerGlobalDependencies() {
   getIt.registerSingleton<GlobalKey<NavigatorState>>(navigatorKey);

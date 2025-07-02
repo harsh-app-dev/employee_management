@@ -2,6 +2,7 @@ import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/core/utils/util.dart' show getInitials;
 import 'package:employee_management/features/presentation/state/profile_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_sizer/flutter_sizer.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -25,12 +26,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.colorScheme.onPrimary,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.primary,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.primary.withOpacity(0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         title: Text(
           'Profile',
-          style: TextStyle(color: theme.colorScheme.onPrimary),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onPrimary,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
@@ -64,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         radius: size.width * 0.18,
                         backgroundColor: theme.colorScheme.primaryContainer,
                         child: Text(
-                          getInitials(profile.firstName, profile.lastName),
+                          getInitials(profile.first_name, profile.last_name),
                           style: TextStyle(
                             fontSize: size.width * 0.10,
                             color: theme.colorScheme.onPrimaryContainer,
@@ -75,34 +90,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 32),
                       _ProfileField(
                         label: 'Name',
-                        value:
-                            '${profile.firstName ?? ''} ${profile.lastName ?? ''}',
+                        value: '${profile.first_name} ${profile.last_name}',
                         icon: Icons.person,
                       ),
                       const SizedBox(height: 16),
                       _ProfileField(
                         label: 'Email',
-                        value: profile.email ?? '',
+                        value: profile.email,
                         icon: Icons.email,
                       ),
                       const SizedBox(height: 16),
                       _ProfileField(
+                        label: 'Date of Birth',
+                        value: profile.dob,
+                        icon: Icons.calendar_today,
+                      ),
+                      const SizedBox(height: 16),
+                      _ProfileField(
                         label: 'Phone Number',
-                        value: profile.contactNumber ?? '',
+                        value: profile.phoneNo.toString(),
                         icon: Icons.phone,
                       ),
                       const SizedBox(height: 16),
                       _ProfileField(
                         label: 'Designation',
-                        value: profile.designation ?? '',
+                        value: profile.designation,
                         icon: Icons.work,
+                      ),
+                      const SizedBox(height: 16),
+                      _ProfileField(
+                        label: 'Organization',
+                        value: profile.organization,
+                        icon: Icons.business,
                       ),
                       const SizedBox(height: 32),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          icon: const Icon(Icons.logout),
-                          label: const Text('Logout'),
+                          icon:  Icon(Icons.logout, size: 22.sp,),
+                          label: Text('Logout', style: TextStyle(fontSize: 18.sp),),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.error,
                             foregroundColor: theme.colorScheme.onError,

@@ -8,6 +8,7 @@ import 'package:employee_management/features/domain/use_cases/punch_in_out_use_c
 import 'package:employee_management/features/domain/use_cases/punch_state_use_case.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:geolocator/geolocator.dart';
 
 @injectable
 class PunchController {
@@ -28,12 +29,34 @@ class PunchController {
 
   Future<void> punchInOut(String punchValue) async {
     punchInOutApiState.value = ApiState.loading();
+
     try {
-      final result = await _punchUseCase(PunchInOutRequest());
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      final latLong = "${position.latitude},${position.longitude}";
+
+      // 🔁 Construct request based on punch type
+      final request = punchValue.toLowerCase() == 'in'
+          ? PunchInOutRequest(punchedInLatLong: latLong)
+          : PunchInOutRequest(punchedOutLatLong: latLong);
+
+      final result = await _punchUseCase(request);
 
       if (result is NetworkSuccess<PunchInOutResponse>) {
         punchInOutApiState.value = ApiState.success(result.data);
-        await getPunchState();
+
+        // ✅ Update local punch state
+        if (punchValue.toLowerCase() == 'in') {
+          isPunchedIn.value = true;
+          isPunchedOut.value = false;
+        } else if (punchValue.toLowerCase() == 'out') {
+          isPunchedOut.value = true;
+        }
+
+        await getPunchState(); // Sync again
+
       } else if (result is NetworkError<PunchInOutResponse>) {
         punchInOutApiState.value = ApiState.error(result.message);
       } else {
@@ -46,6 +69,7 @@ class PunchController {
     }
   }
 
+
   Future<void> getPunchState() async {
     punchStateApiState.value = ApiState.loading();
     try {
@@ -56,9 +80,6 @@ class PunchController {
         isPunchedIn.value = result.data.isPunchedIn == true;
         isPunchedOut.value = result.data.isPunchedOut == true;
         nameInitials.value = getInitials(result.data.firstName, result.data.lastName);
-        // If both are true, user has punched in and out for the day
-        // You can use this logic in your UI to hide both buttons:
-        // if (isPunchedIn.value && isPunchedOut.value) => hide punch in/out buttons
       } else if (result is NetworkError<PunchStateResponse>) {
         punchStateApiState.value = ApiState.error(result.message);
       } else {
