@@ -73,7 +73,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Dummy tasks list for demonstration (replace with API data in production)
     final List<Map<String, dynamic>> tasks = [
       {
-        'client': 'Acme Corp',
         'project': 'Mobile App',
         'ticket': 'AD-134',
         'date': '01/07/2025',
@@ -83,7 +82,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'Implement login, dashboard, and punch features. Integrate API and handle state management for user attendance.',
       },
       {
-        'client': 'Beta Ltd',
         'project': 'Web Portal',
         'ticket': 'AD-137',
         'date': '01/07/2025',
@@ -93,7 +91,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'Write unit tests and perform bug fixes for the portal.',
       },
       {
-        'client': 'Gamma Inc',
         'project': 'API Backend',
         'ticket': 'AD-140',
         'date': '01/07/2025',
@@ -279,7 +276,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   _punchController.isPunchedOut.value;
                               String buttonText = 'Punch In';
                               VoidCallback? onPressed;
-                              Color buttonColor = theme.colorScheme.primary;
                               Color textColor = Colors.white;
                               IconData buttonIcon = Icons.login;
                               List<Color> gradientColors = [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)];
@@ -287,7 +283,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               if (!isPunchedIn && !isPunchedOut && !isLoading) {
                                 buttonText = 'Punch In';
                                 buttonIcon = Icons.login;
-                                buttonColor = theme.colorScheme.primary;
                                 textColor = Colors.white;
                                 gradientColors = [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)];
                                 onPressed = () async {
@@ -306,7 +301,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   !isLoading) {
                                 buttonText = 'Punch Out';
                                 buttonIcon = Icons.logout;
-                                buttonColor = Colors.red;
                                 textColor = Colors.white;
                                 gradientColors = [Colors.red, Colors.redAccent];
                                 onPressed = () async {
@@ -323,7 +317,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               } else {
                                 buttonText = 'Punch In';
                                 buttonIcon = Icons.login;
-                                buttonColor = Colors.grey.shade400;
                                 textColor = Colors.black;
                                 gradientColors = [Colors.grey.shade400, Colors.grey.shade300];
                                 onPressed = () async {
@@ -420,11 +413,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       final task = tasks[taskIndex];
                       final mainInfo = [
                         {
-                          'icon': Icons.business,
-                          'label': 'Client',
-                          'value': task['client'],
-                        },
-                        {
                           'icon': Icons.work,
                           'label': 'Project',
                           'value': task['project'],
@@ -437,11 +425,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         },
                       ];
                       final allInfo = [
-                        {
-                          'icon': Icons.business,
-                          'label': 'Client',
-                          'value': task['client'],
-                        },
                         {
                           'icon': Icons.work,
                           'label': 'Project',
@@ -713,7 +696,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     0.15,
                                   ),
                                 ),
-                                ...mainInfo.take(2).map(
+                                ...mainInfo.take(1).map(
                                       (info) => Padding(
                                     padding: EdgeInsets.symmetric(
                                       vertical: 1.2.h,

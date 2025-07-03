@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
+import 'package:employee_management/features/data/models/punch/response/punch_history_response.dart';
+import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
+import 'package:get_it/get_it.dart';
+
+import '../../../core/utils/network_result.dart';
 
 class PunchHistoryScreen extends StatefulWidget {
   const PunchHistoryScreen({Key? key}) : super(key: key);
@@ -12,9 +17,12 @@ class PunchHistoryScreen extends StatefulWidget {
 class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
   late DateTime _startDate;
   late DateTime _endDate;
-  late Map<String, Map<String, String>> _punchData;
-  int _visibleCount = 10;
-  bool _isLoadingMore = false;
+  List<PunchHistoryResponse> _punchHistory = [];
+  bool _isLoading = false;
+  int _currentPage = 1;
+  bool _hasMore = true;
+  final int _pageSize = 10;
+  final PunchHistoryUseCase _useCase = GetIt.I<PunchHistoryUseCase>();
 
   @override
   void initState() {
@@ -24,43 +32,40 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
     _startDate = now.subtract(Duration(days: now.weekday - 1));
     // Set endDate to Sunday of current week
     _endDate = _startDate.add(const Duration(days: 6));
-    _punchData = _generateDummyPunchData();
+    _fetchPunchHistory();
   }
 
-  Map<String, Map<String, String>> _generateDummyPunchData() {
-    final Map<String, Map<String, String>> data = {};
-    final now = DateTime.now();
-    for (int i = 0; i < 100; i++) {
-      final date = now.subtract(Duration(days: i));
-      final dateStr = DateFormat('yyyy-MM-dd').format(date);
-      final minute = i < 10 ? '0$i' : '$i';
-      data[dateStr] = {
-        'punchIn': '09:$minute AM',
-        'punchOut': '06:$minute PM',
-        'address': 'Location $i, New Delhi, India',
-      };
+  Future<void> _fetchPunchHistory({bool isLoadMore = false}) async {
+    if (_isLoading || (!_hasMore && isLoadMore)) return;
+    setState(() => _isLoading = true);
+    final result = await _useCase(
+      page: _currentPage,
+      pageSize: _pageSize,
+      startDate: DateFormat('yyyy-MM-dd').format(_startDate),
+      endDate: DateFormat('yyyy-MM-dd').format(_endDate),
+    );
+    if (result is NetworkSuccess<List<PunchHistoryResponse>>) {
+      final newItems = result.data;
+      setState(() {
+        if (isLoadMore) {
+          _punchHistory.addAll(newItems);
+        } else {
+          _punchHistory = newItems;
+        }
+        _hasMore = newItems.length == _pageSize;
+        _isLoading = false;
+        if (isLoadMore) _currentPage++;
+      });
+    } else {
+      setState(() => _isLoading = false);
+      // handle error
     }
-    return data;
-  }
-
-  List<MapEntry<String, Map<String, String>>> get _filteredPunchEntries {
-    return _punchData.entries.where((entry) {
-      final entryDate = DateTime.parse(entry.key);
-      return entryDate.isAfter(_startDate.subtract(const Duration(days: 1))) &&
-             entryDate.isBefore(_endDate.add(const Duration(days: 1)));
-    }).toList()..sort((a, b) => b.key.compareTo(a.key));
   }
 
   Future<void> _pickDateRange() async {
-    DateTime start = _startDate;
-    DateTime end = _endDate;
-    if (start.isAfter(end)) {
-      // Ensure start is not after end
-      start = end;
-    }
     final picked = await showDateRangePicker(
       context: context,
-      initialDateRange: DateTimeRange(start: start, end: end),
+      initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
@@ -68,18 +73,18 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
       setState(() {
         _startDate = picked.start;
         _endDate = picked.end;
+        _currentPage = 1;
+        _hasMore = true;
       });
+      _fetchPunchHistory();
     }
   }
 
-  void _loadMore() async {
-    if (_isLoadingMore) return;
-    setState(() => _isLoadingMore = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    setState(() {
-      _visibleCount += 10;
-      _isLoadingMore = false;
-    });
+  void _loadMore() {
+    if (_hasMore && !_isLoading) {
+      _currentPage++;
+      _fetchPunchHistory(isLoadMore: true);
+    }
   }
 
   @override
@@ -160,18 +165,16 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                 ),
               ),
               Expanded(
-                child: _filteredPunchEntries.isEmpty
-                    ? const Center(
-                  child: Text(
-                    'No punch entries found for selected dates.',
-                  ),
-                )
+                child: _isLoading && _punchHistory.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : _punchHistory.isEmpty
+                    ? const Center(child: Text('No punch entries found for selected dates.'))
                     : NotificationListener<ScrollNotification>(
                   onNotification: (ScrollNotification scrollInfo) {
-                    if (!_isLoadingMore &&
+                    if (!_isLoading &&
                         scrollInfo.metrics.pixels >=
                             scrollInfo.metrics.maxScrollExtent - 100 &&
-                        _visibleCount < _filteredPunchEntries.length) {
+                        _hasMore) {
                       _loadMore();
                     }
                     return false;
@@ -179,19 +182,14 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                   child: Stack(
                     children: [
                       ListView.builder(
-                        itemCount:
-                        (_visibleCount < _filteredPunchEntries.length)
-                            ? _visibleCount
-                            : _filteredPunchEntries.length,
+                        itemCount: _punchHistory.length + (_hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
-                          final entry = _filteredPunchEntries[index];
-                          final date = entry.key;
-                          final data = entry.value;
+                          if (index == _punchHistory.length) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          final item = _punchHistory[index];
                           return Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             child: Material(
                               elevation: 4,
                               borderRadius: BorderRadius.circular(16),
@@ -203,29 +201,18 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment
-                                            .spaceBetween,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            DateFormat(
-                                              'EEE, MMM d, yyyy',
-                                            ).format(
-                                              DateTime.parse(date),
-                                            ),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
+                                            DateFormat('EEE, MMM d, yyyy').format(DateTime.parse(item.date)),
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                           ),
                                           Icon(
-                                            Icons.location_on,
-                                            color:
-                                            theme.colorScheme.primary,
+                                            item.isPunchedIn && item.isPunchedOut ? Icons.check_circle : Icons.error,
+                                            color: item.isPunchedIn && item.isPunchedOut ? Colors.green : Colors.red,
                                             size: 20,
                                           ),
                                         ],
@@ -236,7 +223,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                           Expanded(
                                             child: _ProfileField(
                                               label: 'Punch In',
-                                              value: data['punchIn']!,
+                                              value: item.punchIn ?? '-',
                                               icon: Icons.login,
                                             ),
                                           ),
@@ -244,7 +231,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                           Expanded(
                                             child: _ProfileField(
                                               label: 'Punch Out',
-                                              value: data['punchOut']!,
+                                              value: item.punchOut ?? '-',
                                               icon: Icons.logout,
                                               iconColor: Colors.red,
                                             ),
@@ -253,9 +240,16 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       _ProfileField(
-                                        label: 'Address',
-                                        value: data['address']!,
-                                        icon: Icons.map,
+                                        label: 'Punch In Location',
+                                        value: item.punchInLocation ?? '-',
+                                        icon: Icons.location_on,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      _ProfileField(
+                                        label: 'Punch Out Location',
+                                        value: item.punchOutLocation ?? '-',
+                                        icon: Icons.location_on,
+                                        iconColor: Colors.red,
                                       ),
                                     ],
                                   ),
@@ -265,7 +259,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                           );
                         },
                       ),
-                      if (_isLoadingMore)
+                      if (_isLoading && _punchHistory.isNotEmpty)
                         Positioned(
                           left: 0,
                           right: 0,
