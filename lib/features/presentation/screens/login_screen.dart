@@ -4,6 +4,8 @@ import 'package:employee_management/features/presentation/state/login_controller
 import 'package:flutter/material.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 
+import '../../../core/widgets/debouncing_state.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -16,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   late final LoginController _controller;
+  final Debouncer _loginDebouncer = Debouncer(delay: Duration(seconds: 2));
 
   @override
   void initState() {
@@ -135,33 +138,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                 height: 7.h,
                                 width: 100.w,
                                 child: FilledButton(
-                                  onPressed: loginApiState.isLoading
-                                      ? null
-                                      : () async {
-                                          final email = _emailController.text
-                                              .trim();
-                                          final password =
-                                              _passwordController.text;
-                                          await _controller.login(
-                                            email,
-                                            password,
-                                          );
+                                  onPressed: () {
+                                    _loginDebouncer.run(() async {
+                                      if (_controller.loginApiState.value.isLoading) return;
 
-                                          final error =
-                                              _controller.submissionError.value;
-                                          if (error != null) {
-                                            showGlobalSnackBar(error);
-                                          } else if (_controller
-                                              .loginApiState
-                                              .value
-                                              .isSuccess) {
-                                            getIt<GlobalKey<NavigatorState>>()
-                                                .currentState
-                                                ?.pushReplacementNamed(
-                                                  '/dashboard',
-                                                );
-                                          }
-                                        },
+                                      final email = _emailController.text.trim();
+                                      final password = _passwordController.text;
+
+                                      await _controller.login(email, password);
+
+                                      final error = _controller.submissionError.value;
+                                      if (error != null) {
+                                        showGlobalSnackBar(error);
+                                      } else if (_controller.loginApiState.value.isSuccess) {
+                                        getIt<GlobalKey<NavigatorState>>()
+                                            .currentState
+                                            ?.pushReplacementNamed('/dashboard');
+                                      }
+                                    });
+                                  },
+
                                   child: loginApiState.isLoading
                                       ? SizedBox(
                                           height: 4.h,

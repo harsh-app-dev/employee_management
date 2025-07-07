@@ -25,7 +25,7 @@ class ParsedLocation {
     );
   }
 
-  String formatShort() => [city, state].where((e) => e != null).join(', ');
+  String formatShort() => [street, city].where((e) => e != null).join(', ');
   String formatMedium() => [street, city, state].where((e) => e != null).join(', ');
   String formatLong() => [street, city, state, country].where((e) => e != null).join(', ');
 }

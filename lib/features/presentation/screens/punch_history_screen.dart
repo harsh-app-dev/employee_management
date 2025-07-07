@@ -4,7 +4,6 @@ import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:employee_management/features/data/models/punch/response/punch_history_response.dart';
 import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
 import 'package:get_it/get_it.dart';
-
 import '../../../core/services/location_services.dart';
 import '../../../core/utils/network_result.dart';
 import '../../data/models/location/parsed_location.dart';
@@ -30,9 +29,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    // Set startDate to Monday of current week
     _startDate = now.subtract(Duration(days: now.weekday - 1));
-    // Set endDate to Sunday of current week
     _endDate = _startDate.add(const Duration(days: 6));
     _fetchPunchHistory();
   }
@@ -115,10 +112,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
             flexibleSpace: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.primary.withOpacity(0.7),
-                  ],
+                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7),],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -127,10 +121,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
             iconTheme: IconThemeData(color: Colors.white),
             title: Text(
               'Punch History',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onPrimary,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary,),
             ),
             elevation: 0,
             centerTitle: true,
@@ -148,52 +139,30 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3), width: 1.5,),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
+                        BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 4),),
                       ],
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.calendar_today_rounded,
-                            size: 24,
-                            color: theme.colorScheme.primary,
-                          ),
+                          decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle,),
+                          child: Icon(Icons.calendar_today_rounded, size: 24, color: theme.colorScheme.primary,),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "Date Range",
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                ),
+                              Text("Date Range",
+                                style: TextStyle(fontSize: 13.sp, color: theme.colorScheme.onSurface.withOpacity(0.6),),
                               ),
                               SizedBox(height: 4),
                               Text(
                                 "${DateFormat('dd MMM yyyy').format(_startDate)} → ${DateFormat('dd MMM yyyy').format(_endDate)}",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.primary,
-                                ),
+                                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: theme.colorScheme.primary,),
                               ),
                             ],
                           ),
@@ -216,10 +185,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                     ? const Center(child: Text('No punch entries found for selected dates.'))
                     : NotificationListener<ScrollNotification>(
                   onNotification: (ScrollNotification scrollInfo) {
-                    if (!_isLoading &&
-                        scrollInfo.metrics.pixels >=
-                            scrollInfo.metrics.maxScrollExtent - 100 &&
-                        _hasMore) {
+                    if (!_isLoading && scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 100 && _hasMore) {
                       _loadMore();
                     }
                     return false;
@@ -243,10 +209,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                               elevation: 4,
                               borderRadius: BorderRadius.circular(16),
                               child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  color: theme.colorScheme.surface,
-                                ),
+                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: theme.colorScheme.surface,),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Column(
@@ -265,20 +228,11 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: _ProfileField(
-                                              label: 'Punch In',
-                                              value: _formatTime(item.punchIn),
-                                              icon: Icons.login,
-                                            ),
+                                            child: _ProfileField(label: 'Punch In', value: _formatTime(item.punchIn), icon: Icons.login,),
                                           ),
                                           const SizedBox(width: 16),
                                           Expanded(
-                                            child: _ProfileField(
-                                              label: 'Punch Out',
-                                              value: _formatTime(item.punchOut),
-                                              icon: Icons.logout,
-                                              iconColor: Colors.red,
-                                            ),
+                                            child: _ProfileField(label: 'Punch Out', value: _formatTime(item.punchOut), icon: Icons.logout, iconColor: Colors.red,),
                                           ),
                                         ],
                                       ),
@@ -293,18 +247,11 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                               children: [
                                                 Text(
                                                   'Punch In Location',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: theme.colorScheme.onSurface,
-                                                  ),
+                                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface,),
                                                 ),
                                                 Text(
-                                                  punchInLoc.formatLong(), // Shows "Street, City, State"
-                                                  style: TextStyle(
-                                                    fontSize: 15,
-                                                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                                  ),
+                                                  punchInLoc.formatShort(), // Shows "Street, City, State"
+                                                  style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
                                                 ),
                                               ],
                                             ),
@@ -313,7 +260,6 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                       ),
 
                                       SizedBox(height: 8),
-// Punch Out Location (formatted)
                                       Row(
                                         children: [
                                           Icon(Icons.location_on, color: Colors.red, size: 20),
@@ -324,18 +270,11 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                               children: [
                                                 Text(
                                                   'Punch Out Location',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: theme.colorScheme.onSurface,
-                                                  ),
+                                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface,),
                                                 ),
                                                 Text(
-                                                  punchOutLoc.formatLong(), // Shows "Street, City, State"
-                                                  style: TextStyle(
-                                                    fontSize: 15,
-                                                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                                  ),
+                                                  punchOutLoc.formatShort(), // Shows "Street, City, State"
+                                                  style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
                                                 ),
                                               ],
                                             ),
@@ -358,14 +297,9 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                           child: Center(
                             child: Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 8,
-                                  ),
+                                  BoxShadow(color: Colors.black12, blurRadius: 8,),
                                 ],
                               ),
                               child: const CircularProgressIndicator(),
@@ -411,18 +345,11 @@ class _ProfileField extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface,),
               ),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
+                style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
               ),
             ],
           ),

@@ -8,13 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../../core/api/api_state.dart';
+import '../../../core/widgets/debouncing_state.dart';
 import '../../data/models/tasks/submit/submit_tasks_response.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
-
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -27,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final ValueNotifier<String> _employeeActive = ValueNotifier('');
   TimeOfDay? _punchInTime;
   TimeOfDay? _punchOutTime;
+  final Debouncer _submitDebouncer = Debouncer(delay: Duration(seconds: 2));
 
   @override
   void initState() {
@@ -59,14 +59,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await _clearPunchTimes();
     } else if (status == 'Active') {
       if (punchInStr != null) {
-        setState(() {
-          _punchInTime = _parseTimeOfDay(punchInStr);
-        });
+        setState(() {_punchInTime = _parseTimeOfDay(punchInStr);});
       }
       await prefs.remove('punchOutTime');
-      setState(() {
-        _punchOutTime = null;
-      });
+      setState(() {_punchOutTime = null;});
     } else if (status == 'Left') {
       setState(() {
         _punchInTime = punchInStr != null ? _parseTimeOfDay(punchInStr) : null;
@@ -104,15 +100,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _savePunchInTime(TimeOfDay time) async {
     final prefs = await SharedPreferences.getInstance();
-    final timeStr =
-        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    final timeStr = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     await prefs.setString('punchInTime', timeStr);
   }
 
   Future<void> _savePunchOutTime(TimeOfDay time) async {
     final prefs = await SharedPreferences.getInstance();
-    final timeStr =
-        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    final timeStr = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     await prefs.setString('punchOutTime', timeStr);
   }
 
@@ -179,10 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                theme.colorScheme.primary,
-                theme.colorScheme.primary.withOpacity(0.7),
-              ],
+              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7),],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -190,21 +181,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         title: Align(
           alignment: Alignment.centerLeft,
-          child: Text(
-            'Dashboard',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onPrimary,
-            ),
+          child: Text('Dashboard', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary,),
           ),
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.history,
-              color: theme.colorScheme.onPrimary,
-              size: 5.h,
-            ),
+            icon: Icon(Icons.history, color: theme.colorScheme.onPrimary, size: 5.h,),
             tooltip: 'Punch History',
             onPressed: () {
               Navigator.of(context).push(
@@ -221,16 +203,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               return Padding(
                 padding: EdgeInsets.only(top: 1.h, right: 1.h, bottom: 1.h),
                 child: GestureDetector(
-                  onTap: () {
-                    getIt<GlobalKey<NavigatorState>>().currentState?.pushNamed(
-                      '/profile',
-                    );
-                  },
+                  onTap: () {getIt<GlobalKey<NavigatorState>>().currentState?.pushNamed('/profile',);},
                   child: CircleAvatar(
                     radius: 3.h,
                     backgroundColor: theme.colorScheme.onPrimary,
-                    child: Text(
-                      (initials.isNotEmpty ? initials : '?'),
+                    child: Text((initials.isNotEmpty ? initials : '?'),
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -254,18 +231,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Card(
                     elevation: 10,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18),),
                     margin: EdgeInsets.only(bottom: 3.h),
-                    color: theme.brightness == Brightness.light
-                        ? Colors.white
-                        : theme.cardColor,
+                    color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
                     child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 6.w,
-                        vertical: 3.h,
-                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h,),
                       child: Column(
                         children: [
                           Row(
@@ -273,27 +243,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Container(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: [
-                                      theme.colorScheme.primary,
-                                      theme.colorScheme.primary.withOpacity(
-                                        0.7,
-                                      ),
-                                    ],
+                                    colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7,),],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 padding: EdgeInsets.all(10),
-                                child: Icon(
-                                  Icons.calendar_today,
-                                  color: Colors.white,
-                                  size: 26.sp,
-                                ),
+                                child: Icon(Icons.calendar_today, color: Colors.white, size: 24.sp,),
                               ),
                               SizedBox(width: 2.w),
-                              Text(
-                                "Today's Attendance",
+                              Text("Today's Attendance",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: theme.colorScheme.primary,
@@ -308,57 +268,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.login,
-                                    color: Colors.green,
-                                    size: 22,
-                                  ),
+                                  Icon(Icons.login, color: Colors.green, size: 22,),
                                   SizedBox(width: 1.w),
                                   Text(
-                                    'Punch In: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green,
-                                    ),
+                                    'In: ',
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green,),
                                   ),
                                   Text(
-                                    _employeeActive.value == 'Not Present'
-                                        ? '--:--'
-                                        : _punchInTime != null
-                                        ? _punchInTime!.format(context)
-                                        : '--:--',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    _employeeActive.value == 'Not Present' ? '--:--' : _punchInTime != null
+                                        ? _punchInTime!.format(context) : '--:--',
+                                    style: TextStyle(fontWeight: FontWeight.w500,),
                                   ),
                                 ],
                               ),
+                              SizedBox(width: 1.w),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.logout,
-                                    color: Colors.red,
-                                    size: 22,
+                                  Icon(Icons.logout, color: Colors.red, size: 22,
                                   ),
                                   SizedBox(width: 1.w),
                                   Text(
-                                    'Punch Out: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.red,
-                                    ),
+                                    'Out: ',
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red,),
                                   ),
                                   Text(
-                                    _employeeActive.value == 'Active' ||
-                                            _employeeActive.value ==
-                                                'Not Present'
-                                        ? '--:--'
-                                        : _punchOutTime != null
-                                        ? _punchOutTime!.format(context)
-                                        : '--:--',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    _employeeActive.value == 'Active' || _employeeActive.value == 'Not Present'
+                                        ? '--:--' : _punchOutTime != null ? _punchOutTime!.format(context) : '--:--',
+                                    style: TextStyle(fontWeight: FontWeight.w500,),
                                   ),
                                 ],
                               ),
@@ -378,57 +314,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 buttonText = 'Punch In';
                                 buttonIcon = Icons.login;
                                 textColor = Colors.white;
-                                onPressed = () async {
-                                  await _setStateForEmployeeActive(
-                                    'Not Present',
-                                  );
-                                  await _punchController.punchInOut('In');
-                                  if (_punchController
-                                          .punchInOutApiState
-                                          .value
-                                          ?.isSuccess ??
-                                      false) {
-                                    _employeeActive.value = 'Active';
-                                    final now = TimeOfDay.now();
-                                    setState(() {
-                                      _punchInTime = now;
-                                    });
-                                    await _savePunchInTime(now);
-                                    showGlobalSnackBar('Punch In successful!');
-                                  } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
-                                    showGlobalSnackBar(_punchController.punchInOutApiState.value?.error ?? 'Punch In failed!',);
-                                  }
+                                onPressed = () {
+                                  _submitDebouncer.run(() async {
+                                    await _setStateForEmployeeActive('Not Present');
+                                    await _punchController.punchInOut('In');
+
+                                    if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
+                                      _employeeActive.value = 'Active';
+                                      final now = TimeOfDay.now();
+                                      setState(() {
+                                        _punchInTime = now;
+                                      });
+                                      await _savePunchInTime(now);
+                                      showGlobalSnackBar('Punch In successful!');
+                                    } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
+                                      showGlobalSnackBar(
+                                        _punchController.punchInOutApiState.value?.error ?? 'Punch In failed!',
+                                      );
+                                    }
+                                  });
                                 };
                               } else if (employeeActive == 'Active') {
                                 buttonText = 'Punch Out';
                                 buttonIcon = Icons.logout;
                                 textColor = Colors.white;
-                                onPressed = () async {
-                                  await _setStateForEmployeeActive('Active');
-                                  await _punchController.punchInOut('out');
-                                  if (_punchController
-                                          .punchInOutApiState
-                                          .value
-                                          ?.isSuccess ??
-                                      false) {
-                                    _employeeActive.value = 'Left';
-                                    final now = TimeOfDay.now();
-                                    setState(() {
-                                      _punchOutTime = now;
-                                    });
-                                    await _savePunchOutTime(now);
-                                    showGlobalSnackBar('Punch Out successful!');
-                                  } else if (_punchController
-                                          .punchInOutApiState
-                                          .value
-                                          ?.isError ??
-                                      false) {
-                                    showGlobalSnackBar(
-                                      _punchController.punchInOutApiState.value?.error ?? 'Punch Out failed!',
-                                    );
-                                  }
+                                onPressed = () {
+                                  _submitDebouncer.run(() async {
+                                    await _setStateForEmployeeActive('Active');
+                                    await _punchController.punchInOut('out');
+
+                                    if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
+                                      _employeeActive.value = 'Left';
+                                      final now = TimeOfDay.now();
+                                      setState(() {
+                                        _punchOutTime = now;
+                                      });
+                                      await _savePunchOutTime(now);
+                                      showGlobalSnackBar('Punch Out successful!');
+                                    } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
+                                      showGlobalSnackBar(
+                                        _punchController.punchInOutApiState.value?.error ?? 'Punch Out failed!',
+                                      );
+                                    }
+                                  });
                                 };
-                              } else if (employeeActive == 'Left') {
+                              }
+                              else if (employeeActive == 'Left') {
                                 buttonText = 'Attendance Marked';
                                 buttonIcon = Icons.check_circle_outline;
                                 textColor = Colors.black;
@@ -445,56 +376,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   decoration: BoxDecoration(
                                     gradient: (employeeActive == 'Not Present')
                                         ? LinearGradient(
-                                            colors: [
-                                              theme.colorScheme.primary,
-                                              theme.colorScheme.primary
-                                                  .withOpacity(0.7),
-                                            ],
+                                            colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7),],
                                             begin: Alignment.topLeft,
                                             end: Alignment.bottomRight,
                                           )
                                         : (employeeActive == 'Active')
                                         ? LinearGradient(
-                                            colors: [
-                                              Colors.red,
-                                              Colors.redAccent,
-                                            ],
+                                            colors: [Colors.red, Colors.redAccent,],
                                             begin: Alignment.topLeft,
                                             end: Alignment.bottomRight,
                                           )
                                         : LinearGradient(
-                                            colors: [
-                                              Colors.grey.shade400,
-                                              Colors.grey.shade300,
-                                            ],
+                                            colors: [Colors.grey.shade400, Colors.grey.shade300,],
                                             begin: Alignment.topLeft,
                                             end: Alignment.bottomRight,
                                           ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: ElevatedButton.icon(
-                                    onPressed: isButtonEnabled
-                                        ? onPressed
-                                        : null,
-                                    icon: Icon(
-                                      buttonIcon,
-                                      size: 20.sp,
-                                      color: textColor,
-                                    ),
-                                    label: Text(
-                                      buttonText,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: textColor,
+                                    onPressed: isButtonEnabled ? onPressed : null,
+                                    icon: Icon(buttonIcon, size: 20.sp, color: textColor,),
+                                    label: Text(buttonText, style: TextStyle(
+                                        fontSize: 16.sp, fontWeight: FontWeight.bold, color: textColor,
                                       ),
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
                                       shadowColor: Colors.transparent,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),),
                                       elevation: 0,
                                       padding: EdgeInsets.zero,
                                     ),
@@ -512,11 +421,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: EdgeInsets.only(bottom: 1.5.h),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.assignment_turned_in_rounded,
-                          color: theme.colorScheme.primary,
-                          size: 28,
-                        ),
+                        Icon(Icons.assignment_turned_in_rounded, color: theme.colorScheme.primary, size: 28,),
                         SizedBox(width: 2.w),
                         Text(
                           'Task Overview',
@@ -538,9 +443,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         return Center(
                           child: Text(apiState.error ?? 'Failed to load tasks'),
                         );
-                      } else if (apiState.isSuccess &&
-                          apiState.data?.data != null &&
-                          apiState.data!.data!.isNotEmpty) {
+                      } else if (apiState.isSuccess && apiState.data?.data != null && apiState.data!.data!.isNotEmpty) {
                         final tasks = apiState.data!.data!;
                         return ListView.builder(
                           shrinkWrap: true,
@@ -552,54 +455,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               padding: EdgeInsets.only(bottom: 2.h),
                               child: Card(
                                 elevation: 10,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(22),
-                                ),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22),),
                                 margin: EdgeInsets.zero,
-                                color: theme.brightness == Brightness.light
-                                    ? Colors.white
-                                    : theme.cardColor,
+                                color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
                                 child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 5.w,
-                                    vertical: 3.h,
-                                  ),
+                                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 3.h,),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
-                                          Icon(
-                                            Icons.confirmation_number,
-                                            color: theme.colorScheme.primary,
-                                            size: 28,
-                                          ),
+                                          Icon(Icons.confirmation_number, color: theme.colorScheme.primary, size: 24,),
                                           SizedBox(width: 2.w),
                                           Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                task.ticket?.title ??
-                                                    task.ticketTitle ??
-                                                    '',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
-                                                  letterSpacing: 0.5,
-                                                ),
+                                                task.ticket?.title ?? task.ticketTitle ?? '',
+                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5,),
                                               ),
                                               if (task.ticketId != null)
                                                 Text(
                                                   'Ticket ID: ${task.ticketId}',
                                                   style: TextStyle(
-                                                    fontSize: 15,
-                                                    color: theme
-                                                        .colorScheme
-                                                        .onSurface,
-                                                    fontWeight:
-                                                        FontWeight.normal,
+                                                    fontSize: 14,
+                                                    color: theme.colorScheme.onSurface,
+                                                    fontWeight: FontWeight.normal,
                                                   ),
                                                 ),
                                             ],
@@ -611,15 +492,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 context: context,
                                                 isScrollControlled: true,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.vertical(
-                                                        top: Radius.circular(
-                                                          30,
-                                                        ),
-                                                      ),
+                                                  borderRadius: BorderRadius.vertical(top: Radius.circular(30,),),
                                                 ),
-                                                backgroundColor:
-                                                    theme.cardColor,
+                                                backgroundColor: theme.cardColor,
                                                 builder: (context) {
                                                   return DraggableScrollableSheet(
                                                     expand: false,
@@ -628,433 +503,193 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     maxChildSize: 0.95,
                                                     builder: (context, scrollController) {
                                                       return Padding(
-                                                        padding: EdgeInsets.only(
-                                                          left: 5.w,
-                                                          right: 5.w,
-                                                          top: 3.h,
-                                                          bottom:
-                                                              MediaQuery.of(
-                                                                    context,
-                                                                  )
-                                                                  .viewInsets
-                                                                  .bottom +
-                                                              16,
+                                                        padding: EdgeInsets.only(left: 5.w, right: 5.w, top: 3.h, bottom:
+                                                              MediaQuery.of(context,).viewInsets.bottom + 16,
                                                         ),
                                                         child: SingleChildScrollView(
-                                                          controller:
-                                                              scrollController,
+                                                          controller: scrollController,
                                                           child: Column(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            mainAxisSize: MainAxisSize.min,
                                                             children: [
                                                               Row(
                                                                 children: [
-                                                                  Icon(
-                                                                    Icons
-                                                                        .assignment,
-                                                                    color: theme
-                                                                        .colorScheme
-                                                                        .primary,
-                                                                    size: 28,
-                                                                  ),
-                                                                  SizedBox(
-                                                                    width: 2.w,
-                                                                  ),
+                                                                  Icon(Icons.assignment, color: theme.colorScheme.primary, size: 28,),
+                                                                  SizedBox(width: 2.w,),
                                                                   Text(
                                                                     'Task Details',
                                                                     style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      fontSize:
-                                                                          20,
-                                                                      letterSpacing:
-                                                                          0.5,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      fontSize: 20,
+                                                                      letterSpacing: 0.5,
                                                                     ),
                                                                   ),
                                                                   Spacer(),
                                                                   IconButton(
-                                                                    icon: Icon(
-                                                                      Icons
-                                                                          .close,
-                                                                      color: theme
-                                                                          .colorScheme
-                                                                          .primary,
-                                                                    ),
-                                                                    onPressed: () =>
-                                                                        Navigator.of(
-                                                                          context,
-                                                                        ).pop(),
+                                                                    icon: Icon(Icons.close, color: theme.colorScheme.primary,),
+                                                                    onPressed: () => Navigator.of(context,).pop(),
                                                                   ),
                                                                 ],
                                                               ),
                                                               Divider(
                                                                 height: 3.h,
                                                                 thickness: 1.3,
-                                                                color: theme
-                                                                    .colorScheme
-                                                                    .primary
-                                                                    .withOpacity(
-                                                                      0.15,
-                                                                    ),
+                                                                color: theme.colorScheme.primary.withOpacity(0.15,),
                                                               ),
                                                               Padding(
-                                                                padding:
-                                                                    EdgeInsets.symmetric(
-                                                                      vertical:
-                                                                          1.2.h,
-                                                                    ),
+                                                                padding: EdgeInsets.symmetric(vertical: 1.2.h,),
                                                                 child: Row(
                                                                   children: [
-                                                                    Icon(
-                                                                      Icons
-                                                                          .work,
-                                                                      color: theme
-                                                                          .colorScheme
-                                                                          .primary,
-                                                                      size: 22,
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    Icon(Icons.work, color: theme.colorScheme.primary, size: 22,),
+                                                                    SizedBox(width: 2.w,),
                                                                     Text(
                                                                       'Project:',
                                                                       style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .primary,
-                                                                        fontSize:
-                                                                            17,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: theme.colorScheme.primary,
+                                                                        fontSize: 16,
                                                                       ),
                                                                     ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    SizedBox(width: 2.w,),
                                                                     Expanded(
                                                                       child: Text(
-                                                                        task.ticket?.project?.title ??
-                                                                            task.projectTitle ??
-                                                                            '',
-                                                                        style: TextStyle(
-                                                                          fontSize:
-                                                                              15,
-                                                                          color: theme
-                                                                              .colorScheme
-                                                                              .onSurface,
-                                                                        ),
+                                                                        task.ticket?.project?.title ?? task.projectTitle ?? '',
+                                                                        style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                                                       ),
                                                                     ),
                                                                   ],
                                                                 ),
                                                               ),
                                                               Padding(
-                                                                padding:
-                                                                    EdgeInsets.symmetric(
-                                                                      vertical:
-                                                                          1.2.h,
-                                                                    ),
+                                                                padding: EdgeInsets.symmetric(vertical: 1.2.h,),
                                                                 child: Row(
                                                                   children: [
-                                                                    Icon(
-                                                                      Icons
-                                                                          .confirmation_number,
-                                                                      color: theme
-                                                                          .colorScheme
-                                                                          .primary,
-                                                                      size: 22,
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    Icon(Icons.confirmation_number, color: theme.colorScheme.primary, size: 22,),
+                                                                    SizedBox(width: 2.w,),
                                                                     Text(
                                                                       'Ticket Title:',
                                                                       style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .primary,
-                                                                        fontSize:
-                                                                            17,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: theme.colorScheme.primary,
+                                                                        fontSize: 16,
                                                                       ),
                                                                     ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    SizedBox(width: 2.w,),
                                                                     Expanded(
                                                                       child: Text(
-                                                                        task.ticket?.title ??
-                                                                            task.ticketTitle ??
-                                                                            '',
-                                                                        style: TextStyle(
-                                                                          fontSize:
-                                                                              15,
-                                                                          color: theme
-                                                                              .colorScheme
-                                                                              .onSurface,
-                                                                        ),
+                                                                        task.ticket?.title ?? task.ticketTitle ?? '',
+                                                                        style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                                                       ),
                                                                     ),
                                                                   ],
                                                                 ),
                                                               ),
                                                               Padding(
-                                                                padding:
-                                                                    EdgeInsets.symmetric(
-                                                                      vertical:
-                                                                          1.2.h,
-                                                                    ),
+                                                                padding: EdgeInsets.symmetric(vertical: 1.2.h,),
                                                                 child: Row(
                                                                   children: [
-                                                                    Icon(
-                                                                      Icons
-                                                                          .confirmation_number_outlined,
-                                                                      color: theme
-                                                                          .colorScheme
-                                                                          .primary,
-                                                                      size: 22,
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    Icon(Icons.confirmation_number_outlined, color: theme.colorScheme.primary, size: 22,),
+                                                                    SizedBox(width: 2.w,),
                                                                     Text(
                                                                       'Ticket ID:',
                                                                       style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .primary,
-                                                                        fontSize:
-                                                                            17,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: theme.colorScheme.primary,
+                                                                        fontSize: 16,
                                                                       ),
                                                                     ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    SizedBox(width: 2.w,),
                                                                     Expanded(
                                                                       child: Text(
-                                                                        task.ticketId !=
-                                                                                null
-                                                                            ? task.ticketId.toString()
-                                                                            : '-',
-                                                                        style: TextStyle(
-                                                                          fontSize:
-                                                                              15,
-                                                                          color: theme
-                                                                              .colorScheme
-                                                                              .onSurface,
-                                                                        ),
+                                                                        task.ticketId != null ? task.ticketId.toString() : '-',
+                                                                        style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                                                       ),
                                                                     ),
                                                                   ],
                                                                 ),
                                                               ),
                                                               Padding(
-                                                                padding:
-                                                                    EdgeInsets.symmetric(
-                                                                      vertical:
-                                                                          1.2.h,
-                                                                    ),
+                                                                padding: EdgeInsets.symmetric(vertical: 1.2.h,),
                                                                 child: Row(
                                                                   children: [
-                                                                    Icon(
-                                                                      Icons
-                                                                          .layers,
-                                                                      color: theme
-                                                                          .colorScheme
-                                                                          .primary,
-                                                                      size: 22,
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    Icon(Icons.layers, color: theme.colorScheme.primary, size: 22,),
+                                                                    SizedBox(width: 2.w,),
                                                                     Text(
                                                                       'Phase:',
                                                                       style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .primary,
-                                                                        fontSize:
-                                                                            17,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: theme.colorScheme.primary,
+                                                                        fontSize: 16,
                                                                       ),
                                                                     ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    SizedBox(width: 2.w,),
                                                                     Expanded(
                                                                       child: Text(
-                                                                        task.taskPhase ??
-                                                                            '',
-                                                                        style: TextStyle(
-                                                                          fontSize:
-                                                                              15,
-                                                                          color: theme
-                                                                              .colorScheme
-                                                                              .onSurface,
-                                                                        ),
+                                                                        task.taskPhase ?? '',
+                                                                        style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                                                       ),
                                                                     ),
                                                                   ],
                                                                 ),
                                                               ),
                                                               Padding(
-                                                                padding:
-                                                                    EdgeInsets.symmetric(
-                                                                      vertical:
-                                                                          1.2.h,
-                                                                    ),
+                                                                padding: EdgeInsets.symmetric(vertical: 1.2.h,),
                                                                 child: Row(
                                                                   children: [
-                                                                    Icon(
-                                                                      Icons
-                                                                          .calendar_today,
-                                                                      color: theme
-                                                                          .colorScheme
-                                                                          .primary,
-                                                                      size: 22,
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    Icon(Icons.calendar_today, color: theme.colorScheme.primary, size: 20,),
+                                                                    SizedBox(width: 2.w,),
                                                                     Text(
                                                                       'Date:',
                                                                       style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .primary,
-                                                                        fontSize:
-                                                                            17,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: theme.colorScheme.primary,
+                                                                        fontSize: 16,
                                                                       ),
                                                                     ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    SizedBox(width: 2.w,),
                                                                     Text(
-                                                                      task.createdAt?.substring(
-                                                                            0,
-                                                                            10,
-                                                                          ) ??
-                                                                          task.taskCreatedDate ??
-                                                                          '',
-                                                                      style: TextStyle(
-                                                                        fontSize:
-                                                                            15,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .onSurface,
-                                                                      ),
+                                                                      task.createdAt?.substring(0, 10,) ?? task.taskCreatedDate ?? '',
+                                                                      style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                                                     ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          3.w,
-                                                                    ),
-                                                                    Icon(
-                                                                      Icons
-                                                                          .access_time,
-                                                                      color: theme
-                                                                          .colorScheme
-                                                                          .primary,
-                                                                      size: 22,
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    SizedBox(width: 3.w,),
+                                                                    Icon(Icons.access_time, color: theme.colorScheme.primary, size: 20,),
+                                                                    SizedBox(width: 2.w,),
                                                                     Text(
                                                                       'Time:',
                                                                       style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .primary,
-                                                                        fontSize:
-                                                                            17,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: theme.colorScheme.primary,
+                                                                        fontSize: 16,
                                                                       ),
                                                                     ),
-                                                                    SizedBox(
-                                                                      width:
-                                                                          2.w,
-                                                                    ),
+                                                                    SizedBox(width: 2.w,),
                                                                     Text(
-                                                                      task.taskTimeSpend ??
-                                                                          '',
-                                                                      style: TextStyle(
-                                                                        fontSize:
-                                                                            15,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .onSurface,
-                                                                      ),
+                                                                      formatTimeSpent(task.taskTimeSpend),
+                                                                      style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                                                     ),
                                                                   ],
                                                                 ),
                                                               ),
                                                               Padding(
-                                                                padding:
-                                                                    EdgeInsets.symmetric(
-                                                                      vertical:
-                                                                          1.2.h,
-                                                                    ),
+                                                                padding: EdgeInsets.symmetric(vertical: 1.2.h,),
                                                                 child: Column(
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .start,
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                                   children: [
                                                                     Text(
                                                                       'Description:',
                                                                       style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .primary,
-                                                                        fontSize:
-                                                                            17,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        color: theme.colorScheme.primary,
+                                                                        fontSize: 16,
                                                                       ),
                                                                     ),
-                                                                    SizedBox(
-                                                                      height:
-                                                                          0.5.h,
-                                                                    ),
+                                                                    SizedBox(height: 0.5.h,),
                                                                     Text(
-                                                                      (task.taskDescription ??
-                                                                              '')
-                                                                          .replaceAll(
-                                                                            RegExp(
-                                                                              r'<[^>]*>|&[^;]+;',
-                                                                            ),
-                                                                            '',
-                                                                          ),
+                                                                      (task.taskDescription ?? '').replaceAll(RegExp(r'<[^>]*>|&[^;]+;',), '',),
                                                                       style: TextStyle(
-                                                                        fontSize:
-                                                                            15,
-                                                                        color: theme
-                                                                            .colorScheme
-                                                                            .onSurface,
-                                                                        fontWeight:
-                                                                            FontWeight.normal,
+                                                                        fontSize: 16,
+                                                                        color: theme.colorScheme.onSurface,
+                                                                        fontWeight: FontWeight.normal,
                                                                       ),
                                                                     ),
                                                                   ],
@@ -1075,18 +710,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   'View All',
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.bold,
-                                                    color: theme
-                                                        .colorScheme
-                                                        .primary,
-                                                    fontSize: 16,
+                                                    color: theme.colorScheme.primary,
+                                                    fontSize: 14,
                                                   ),
                                                 ),
-                                                Icon(
-                                                  Icons.expand_more,
-                                                  color:
-                                                      theme.colorScheme.primary,
-                                                  size: 20,
-                                                ),
+                                                Icon(Icons.expand_more, color: theme.colorScheme.primary, size: 20,),
                                               ],
                                             ),
                                           ),
@@ -1095,44 +723,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       Divider(
                                         height: 3.h,
                                         thickness: 1.3,
-                                        color: theme.colorScheme.primary
-                                            .withOpacity(0.15),
+                                        color: theme.colorScheme.primary.withOpacity(0.15),
                                       ),
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 1.2.h,
-                                        ),
+                                      Padding(padding: EdgeInsets.symmetric(vertical: 1.2.h,),
                                         child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
-                                            Icon(
-                                              Icons.work,
-                                              color: theme.colorScheme.primary,
-                                              size: 22,
-                                            ),
-                                            SizedBox(width: 2.w),
+                                            Icon(Icons.work, color: theme.colorScheme.primary, size: 20,),
+                                            SizedBox(width: 1.w),
                                             Text(
                                               'Project:',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
-                                                color:
-                                                    theme.colorScheme.primary,
-                                                fontSize: 17,
+                                                color: theme.colorScheme.primary,
+                                                fontSize: 16,
                                               ),
                                             ),
-                                            SizedBox(width: 2.w),
+                                            SizedBox(width: 1.w),
                                             Expanded(
                                               child: Text(
-                                                task.ticket?.project?.title ??
-                                                    task.projectTitle ??
-                                                    '',
-                                                style: TextStyle(
-                                                  fontSize: 15,
-                                                  color: theme
-                                                      .colorScheme
-                                                      .onSurface,
-                                                ),
+                                                task.ticket?.project?.title ?? task.projectTitle ?? '',
+                                                style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 1,
                                               ),
@@ -1141,66 +752,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         ),
                                       ),
                                       Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 1.2.h,
-                                        ),
+                                        padding: EdgeInsets.symmetric(vertical: 1.2.h,),
                                         child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
-                                            Icon(
-                                              Icons.calendar_today,
-                                              color: theme.colorScheme.primary,
-                                              size: 22,
-                                            ),
-                                            SizedBox(width: 2.w),
+                                            Icon(Icons.calendar_today, color: theme.colorScheme.primary, size: 20,),
+                                            SizedBox(width: 1.w),
                                             Text(
                                               'Date:',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
-                                                color:
-                                                    theme.colorScheme.primary,
-                                                fontSize: 17,
+                                                color: theme.colorScheme.primary,
+                                                fontSize: 16,
                                               ),
                                             ),
-                                            SizedBox(width: 2.w),
+                                            SizedBox(width: 1.w),
                                             Text(
-                                              task.createdAt?.substring(
-                                                    0,
-                                                    10,
-                                                  ) ??
-                                                  task.taskCreatedDate ??
-                                                  '',
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                color:
-                                                    theme.colorScheme.onSurface,
-                                              ),
-                                            ),
-                                            SizedBox(width: 3.w),
-                                            Icon(
-                                              Icons.access_time,
-                                              color: theme.colorScheme.primary,
-                                              size: 22,
+                                              task.createdAt?.substring(0, 10,) ?? task.taskCreatedDate ?? '',
+                                              style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                             ),
                                             SizedBox(width: 2.w),
+                                            Icon(Icons.access_time, color: theme.colorScheme.primary, size: 20,),
+                                            SizedBox(width: 1.w),
                                             Text(
                                               'Time:',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color:
-                                                    theme.colorScheme.primary,
-                                                fontSize: 17,
-                                              ),
+                                              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 16,),
                                             ),
-                                            SizedBox(width: 2.w),
+                                            SizedBox(width: 1.w),
                                             Text(
-                                              task.taskTimeSpend ?? '',
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                color:
-                                                    theme.colorScheme.onSurface,
-                                              ),
+                                              formatTimeSpent(task.taskTimeSpend),
+                                              style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface,),
                                             ),
                                           ],
                                         ),
@@ -1214,8 +795,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       } else {
                         return Center(
-                          child: SizedBox(
-                            height: 40.h,
+                          child: SizedBox(height: 40.h,
                             child: Center(
                               child: Text(
                                 'No task found.',
@@ -1224,7 +804,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                           ),
-                        );                      }
+                        );
+                      }
                     },
                   ),
                 ],
@@ -1253,10 +834,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primary,
-                  theme.colorScheme.primary.withOpacity(0.7),
-                ],
+                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7),],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -1266,26 +844,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
               alignment: Alignment.center,
               children: [
                 FloatingActionButton.extended(
-                  onPressed: isLoading
-                      ? null
-                      : () async {
-                    final tasks = _controller.tasksApiState.value.data;
-                    if (tasks != null && tasks.data != null && tasks.data!.isNotEmpty) {
-                      await _controller.submitTasks(tasks);
-                      if (_controller.submitTasksApiState.value.isSuccess) {
-                        showGlobalSnackBar('All tasks submitted successfully');
-                      } else if (_controller.submitTasksApiState.value.isError) {
-                        showGlobalSnackBar(_controller.submitTasksApiState.value.error ?? 'Failed to submit tasks');
+                  onPressed: () {
+                    _submitDebouncer.run(() async {
+                      if (isLoading) return;
+
+                      final tasks = _controller.tasksApiState.value.data;
+                      if (tasks != null && tasks.data != null && tasks.data!.isNotEmpty) {
+                        await _controller.submitTasks(tasks);
+                        if (_controller.submitTasksApiState.value.isSuccess) {
+                          showGlobalSnackBar('All tasks submitted successfully');
+                        } else if (_controller.submitTasksApiState.value.isError) {
+                          showGlobalSnackBar(
+                            _controller.submitTasksApiState.value.error ?? 'Failed to submit tasks',
+                          );
+                        }
+                      } else {
+                        showGlobalSnackBar('You have no pending tasks to submit');
                       }
-                    } else {
-                      showGlobalSnackBar('You have no pending tasks to submit');
-                    }
+                    });
                   },
+
                   label: Text(
                     isLoading ? 'Submitting...' : 'Submit',
                     style: TextStyle(
-                      color: isLoading ? Colors.transparent : theme.colorScheme.surface,
-                      fontSize: 14.sp,
+                      color: isLoading ? Colors.transparent : theme.colorScheme.surface, fontSize: 14.sp,
                     ),
                   ),
                   backgroundColor: Colors.transparent,
@@ -1321,5 +903,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         showGlobalSnackBar('Location permission is required.');
       }
     }
+  }
+}
+
+String formatTimeSpent(String? time) {
+  if (time == null || time.isEmpty) return '--:--';
+  try {
+    final t = time.split(':').map(int.parse).toList();
+    final h = t[0], m = t[1];
+    return h > 0 && m > 0 ? '${h}h ${m}m' : h > 0 ? '${h}h' : m > 0 ? '${m}m' : '<1m';
+  } catch (_) {
+    return '--:--';
   }
 }

@@ -68,7 +68,7 @@ class ProfileController {
       } else {
         profileApiState.value = ApiState.error("Unknown error occurred");
       }
-    } catch (e, st) {
+    } catch (e) {
       profileApiState.value = ApiState.error(
         "Something went wrong. Please try again.",
       );
