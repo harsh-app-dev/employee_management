@@ -130,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon:  Icon(Icons.logout, size: 22.sp,),
                           label: Text('Logout', style: TextStyle(fontSize: 18.sp),),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.error,
+                            backgroundColor: Colors.red,
                             foregroundColor: theme.colorScheme.onError,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),

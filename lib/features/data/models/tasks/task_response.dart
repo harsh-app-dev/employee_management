@@ -78,18 +78,32 @@ class Data {
     String? taskTimeSpend,
     String? totalHours,
     Ticket? ticket,
-  }) : _id = id,
-       _updatedAt = updatedAt,
-       _taskPhase = taskPhase,
-       _isCompleted = isCompleted,
-       _isVerified = isVerified,
-       _isDeleted = isDeleted,
-       _isEdited = isEdited,
-       _taskDescription = taskDescription,
-       _createdAt = createdAt,
-       _taskTimeSpend = taskTimeSpend,
-       _totalHours = totalHours,
-       _ticket = ticket;
+    int? ticketId,
+    String? ticketTitle,
+    String? projectTitle,
+    String? taskCreatedDate,
+    String? parentTask,
+    String? user,
+    String? updatedTask,
+  })  : _id = id,
+        _updatedAt = updatedAt,
+        _taskPhase = taskPhase,
+        _isCompleted = isCompleted,
+        _isVerified = isVerified,
+        _isDeleted = isDeleted,
+        _isEdited = isEdited,
+        _taskDescription = taskDescription,
+        _createdAt = createdAt,
+        _taskTimeSpend = taskTimeSpend,
+        _totalHours = totalHours,
+        _ticket = ticket,
+        _ticketId = ticketId,
+        _ticketTitle = ticketTitle,
+        _projectTitle = projectTitle,
+        _taskCreatedDate = taskCreatedDate,
+        _parentTask = parentTask,
+        _user = user,
+        _updatedTask = updatedTask;
 
   Data.fromJson(dynamic json) {
     _id = json['id'];
@@ -103,7 +117,22 @@ class Data {
     _createdAt = json['created_at'];
     _taskTimeSpend = json['task_time_spend'];
     _totalHours = json['total_hours'];
-    _ticket = json['ticket'] != null ? Ticket.fromJson(json['ticket']) : null;
+    if (json['ticket'] is Map) {
+      _ticket = Ticket.fromJson(json['ticket']);
+      _ticketId = null;
+    } else if (json['ticket'] is int) {
+      _ticket = null;
+      _ticketId = json['ticket'];
+    } else {
+      _ticket = null;
+      _ticketId = null;
+    }
+    _ticketTitle = json['ticket_title'];
+    _projectTitle = json['project_title'];
+    _taskCreatedDate = json['task_created_date'];
+    _parentTask = json['parent_task']?.toString();
+    _user = json['user']?.toString();
+    _updatedTask = json['updated_task']?.toString();
   }
 
   String? _id;
@@ -118,6 +147,13 @@ class Data {
   String? _taskTimeSpend;
   String? _totalHours;
   Ticket? _ticket;
+  int? _ticketId;
+  String? _ticketTitle;
+  String? _projectTitle;
+  String? _taskCreatedDate;
+  String? _parentTask;
+  String? _user;
+  String? _updatedTask;
 
   Data copyWith({
     String? id,
@@ -132,6 +168,13 @@ class Data {
     String? taskTimeSpend,
     String? totalHours,
     Ticket? ticket,
+    int? ticketId,
+    String? ticketTitle,
+    String? projectTitle,
+    String? taskCreatedDate,
+    String? parentTask,
+    String? user,
+    String? updatedTask,
   }) => Data(
     id: id ?? _id,
     updatedAt: updatedAt ?? _updatedAt,
@@ -145,6 +188,13 @@ class Data {
     taskTimeSpend: taskTimeSpend ?? _taskTimeSpend,
     totalHours: totalHours ?? _totalHours,
     ticket: ticket ?? _ticket,
+    ticketId: ticketId ?? _ticketId,
+    ticketTitle: ticketTitle ?? _ticketTitle,
+    projectTitle: projectTitle ?? _projectTitle,
+    taskCreatedDate: taskCreatedDate ?? _taskCreatedDate,
+    parentTask: parentTask ?? _parentTask,
+    user: user ?? _user,
+    updatedTask: updatedTask ?? _updatedTask,
   );
 
   String? get id => _id;
@@ -171,6 +221,20 @@ class Data {
 
   Ticket? get ticket => _ticket;
 
+  int? get ticketId => _ticketId;
+
+  String? get ticketTitle => _ticketTitle;
+
+  String? get projectTitle => _projectTitle;
+
+  String? get taskCreatedDate => _taskCreatedDate;
+
+  String? get parentTask => _parentTask;
+
+  String? get user => _user;
+
+  String? get updatedTask => _updatedTask;
+
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     map['id'] = _id;
@@ -186,7 +250,15 @@ class Data {
     map['total_hours'] = _totalHours;
     if (_ticket != null) {
       map['ticket'] = _ticket?.toJson();
+    } else if (_ticketId != null) {
+      map['ticket'] = _ticketId;
     }
+    map['ticket_title'] = _ticketTitle;
+    map['project_title'] = _projectTitle;
+    map['task_created_date'] = _taskCreatedDate;
+    map['parent_task'] = _parentTask;
+    map['user'] = _user;
+    map['updated_task'] = _updatedTask;
     return map;
   }
 }

@@ -30,8 +30,8 @@ class PunchHistoryResponse {
       isPunchedIn: json['is_punched_in'] ?? false,
       isPunchedOut: json['is_punched_out'] ?? false,
       employee: json['employee'],
-      punchInLocation: json['punch_in_location'],
-      punchOutLocation: json['punch_out_location'],
+      punchInLocation: json['punched_in_lat_long'],
+      punchOutLocation: json['punched_out_lat_long'],
     );
   }
 }

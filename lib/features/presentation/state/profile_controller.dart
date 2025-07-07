@@ -99,6 +99,9 @@ class ProfileController {
       organization: (response.organization?.isNotEmpty ?? false)
           ? response.organization!
           : 'SparkBrains',
+      employee_active: (response.employeeActive?.isNotEmpty ?? false)
+          ? response.employeeActive!
+          : 'Inactive',
     );
   }
 

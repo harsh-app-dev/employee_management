@@ -49,6 +49,7 @@ dependencies:
   intl: ^0.18.1
   floor: ^1.4.2
   sqflite: ^2.3.0
+  geocoding: ^2.1.0
 
 dev_dependencies:
   flutter_test:

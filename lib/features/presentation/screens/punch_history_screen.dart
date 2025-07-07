@@ -5,7 +5,9 @@ import 'package:employee_management/features/data/models/punch/response/punch_hi
 import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../core/services/location_services.dart';
 import '../../../core/utils/network_result.dart';
+import '../../data/models/location/parsed_location.dart';
 
 class PunchHistoryScreen extends StatefulWidget {
   const PunchHistoryScreen({Key? key}) : super(key: key);
@@ -45,7 +47,23 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
       endDate: DateFormat('yyyy-MM-dd').format(_endDate),
     );
     if (result is NetworkSuccess<List<PunchHistoryResponse>>) {
-      final newItems = result.data;
+      // Convert locations to readable format if needed
+      final newItems = await Future.wait(result.data.map((item) async {
+        final punchInLocation = await LocationService.getReadableLocation(item.punchInLocation);
+        final punchOutLocation = await LocationService.getReadableLocation(item.punchOutLocation);
+
+        return PunchHistoryResponse(
+          id: item.id,
+          date: item.date,
+          punchIn: item.punchIn,
+          punchOut: item.punchOut,
+          isPunchedIn: item.isPunchedIn,
+          isPunchedOut: item.isPunchedOut,
+          employee: item.employee,
+          punchInLocation: punchInLocation,
+          punchOutLocation: punchOutLocation,
+        );
+      }));
       setState(() {
         if (isLoadMore) {
           _punchHistory.addAll(newItems);
@@ -66,8 +84,8 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
     final picked = await showDateRangePicker(
       context: context,
       initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      firstDate: DateTime.now().subtract(const Duration(days: 365 * 5)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
     );
     if (picked != null) {
       setState(() {
@@ -125,44 +143,71 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                 child: GestureDetector(
                   onTap: _pickDateRange,
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 1.2.h, horizontal: 2.w),
+                    padding: EdgeInsets.symmetric(vertical: 1.8.h, horizontal: 4.w),
+                    margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: theme.colorScheme.primary,
-                        width: 2.0,
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.06),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                          color: Colors.grey.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.date_range,
-                          color: theme.colorScheme.primary,
-                        ),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            'Range: ${DateFormat('yyyy-MM-dd').format(_startDate)} to ${DateFormat('yyyy-MM-dd').format(_endDate)}',
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.calendar_today_rounded,
+                            size: 24,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Date Range",
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                "${DateFormat('dd MMM yyyy').format(_startDate)} → ${DateFormat('dd MMM yyyy').format(_endDate)}",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Icon(
+                        //   Icons.keyboard_arrow_down_rounded,
+                        //   size: 24,
+                        //   color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        // ),
                       ],
                     ),
                   ),
                 ),
+
               ),
               Expanded(
                 child: _isLoading && _punchHistory.isEmpty
@@ -188,6 +233,10 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                             return const Center(child: CircularProgressIndicator());
                           }
                           final item = _punchHistory[index];
+
+                          final punchInLoc = ParsedLocation.fromString(item.punchInLocation);
+                          final punchOutLoc = ParsedLocation.fromString(item.punchOutLocation);
+
                           return Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             child: Material(
@@ -208,12 +257,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                         children: [
                                           Text(
                                             DateFormat('EEE, MMM d, yyyy').format(DateTime.parse(item.date)),
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                          ),
-                                          Icon(
-                                            item.isPunchedIn && item.isPunchedOut ? Icons.check_circle : Icons.error,
-                                            color: item.isPunchedIn && item.isPunchedOut ? Colors.green : Colors.red,
-                                            size: 20,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                                           ),
                                         ],
                                       ),
@@ -223,7 +267,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                           Expanded(
                                             child: _ProfileField(
                                               label: 'Punch In',
-                                              value: item.punchIn ?? '-',
+                                              value: _formatTime(item.punchIn),
                                               icon: Icons.login,
                                             ),
                                           ),
@@ -231,25 +275,72 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                           Expanded(
                                             child: _ProfileField(
                                               label: 'Punch Out',
-                                              value: item.punchOut ?? '-',
+                                              value: _formatTime(item.punchOut),
                                               icon: Icons.logout,
                                               iconColor: Colors.red,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 8),
-                                      _ProfileField(
-                                        label: 'Punch In Location',
-                                        value: item.punchInLocation ?? '-',
-                                        icon: Icons.location_on,
+
+                                      Row(
+                                        children: [
+                                          Icon(Icons.location_on, color: theme.colorScheme.primary, size: 20),
+                                          SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Punch In Location',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: theme.colorScheme.onSurface,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  punchInLoc.formatLong(), // Shows "Street, City, State"
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4),
-                                      _ProfileField(
-                                        label: 'Punch Out Location',
-                                        value: item.punchOutLocation ?? '-',
-                                        icon: Icons.location_on,
-                                        iconColor: Colors.red,
+
+                                      SizedBox(height: 8),
+// Punch Out Location (formatted)
+                                      Row(
+                                        children: [
+                                          Icon(Icons.location_on, color: Colors.red, size: 20),
+                                          SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Punch Out Location',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: theme.colorScheme.onSurface,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  punchOutLoc.formatLong(), // Shows "Street, City, State"
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -321,16 +412,16 @@ class _ProfileField extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
+                  fontSize: 15,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ],
@@ -340,3 +431,14 @@ class _ProfileField extends StatelessWidget {
     );
   }
 }
+
+String _formatTime(String? isoTime) {
+  if (isoTime == null || isoTime.isEmpty) return '--:--';
+  try {
+    final dateTime = DateTime.parse(isoTime);
+    return DateFormat('hh:mm a').format(dateTime);
+  } catch (_) {
+    return '--:--';
+  }
+}
+
