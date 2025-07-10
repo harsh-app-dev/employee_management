@@ -1,3 +1,4 @@
+import 'package:employee_management/core/configs/strings.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/core/utils/util.dart' show getInitials;
 import 'package:employee_management/features/presentation/state/profile_controller.dart';
@@ -41,7 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         title: Text(
-          'Profile',
+          AppStrings.profile,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onPrimary,
@@ -66,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             } else if (profileState.isSuccess) {
               final profile = profileState.data;
               if (profile == null) {
-                return const Text('No profile data found.');
+                return const Text(AppStrings.profileDataNotFound);
               }
               return SingleChildScrollView(
                 child: Padding(
@@ -89,37 +90,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 32),
                       _ProfileField(
-                        label: 'Name',
+                        label: AppStrings.name,
                         value: '${profile.first_name} ${profile.last_name}',
                         icon: Icons.person,
                       ),
                       const SizedBox(height: 16),
                       _ProfileField(
-                        label: 'Email',
+                        label: AppStrings.email,
                         value: profile.email,
                         icon: Icons.email,
                       ),
                       const SizedBox(height: 16),
                       _ProfileField(
-                        label: 'Date of Birth',
+                        label: AppStrings.dob,
                         value: profile.dob,
                         icon: Icons.calendar_today,
                       ),
                       const SizedBox(height: 16),
                       _ProfileField(
-                        label: 'Phone Number',
+                        label: AppStrings.phoneNo,
                         value: profile.phoneNo.toString(),
                         icon: Icons.phone,
                       ),
                       const SizedBox(height: 16),
                       _ProfileField(
-                        label: 'Designation',
+                        label: AppStrings.designation,
                         value: profile.designation,
                         icon: Icons.work,
                       ),
                       const SizedBox(height: 16),
                       _ProfileField(
-                        label: 'Organization',
+                        label: AppStrings.organization,
                         value: profile.organization,
                         icon: Icons.business,
                       ),
@@ -128,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           icon:  Icon(Icons.logout, size: 22.sp,),
-                          label: Text('Logout', style: TextStyle(fontSize: 18.sp),),
+                          label: Text(AppStrings.logout, style: TextStyle(fontSize: 18.sp),),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                             foregroundColor: theme.colorScheme.onError,
@@ -185,13 +186,13 @@ class _ProfileField extends StatelessWidget {
                 label,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                ),
+                fontSize:  14.sp, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
+                  fontSize: 16.sp
                 ),
               ),
             ],

@@ -1,3 +1,4 @@
+import 'package:employee_management/core/configs/strings.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/core/utils/util.dart';
 import 'package:employee_management/features/presentation/state/login_controller.dart';
@@ -74,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       fontSize: 16.sp,
                                     ),
                                     decoration: InputDecoration(
-                                      labelText: 'Email',
+                                      labelText: AppStrings.email,
                                       border: const OutlineInputBorder(
                                         borderRadius: BorderRadius.all(
                                           Radius.circular(12),
@@ -107,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           fontSize: 16.sp,
                                         ),
                                         decoration: InputDecoration(
-                                          labelText: 'Password',
+                                          labelText: AppStrings.password,
                                           border: const OutlineInputBorder(
                                             borderRadius: BorderRadius.all(
                                               Radius.circular(12),
@@ -168,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ),
                                         )
                                       : Text(
-                                          'Login',
+                                          AppStrings.login,
                                           style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
                                         ),
                                 ),
