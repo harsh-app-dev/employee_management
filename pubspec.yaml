@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
+  # The following adds the Cupertino Icons fonts to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
@@ -46,6 +46,7 @@ dependencies:
   geolocator: ^10.1.0
   flutter_sizer: ^1.0.5  # or latest version
   table_calendar: ^3.0.9
+  file_picker: ^8.0.0+1
   intl: ^0.18.1
   floor: ^1.4.2
   sqflite: ^2.3.0
@@ -76,10 +77,22 @@ flutter:
     - assets/images/svgs/
 
 
-  # The following line ensures that the Material Icons font is
+  # The following line ensures that the Material Icons fonts is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+
+# NOTE: Make sure to download Poppins fonts files from Google Fonts
+# and place them in assets/fonts/ (create the directory if it doesn't exist):
+#   - assets/fonts/Poppins-Regular.ttf
+#   - assets/fonts/Poppins-Bold.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -94,8 +107,8 @@ flutter:
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
+  # "family" key with the fonts family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the fonts. For
   # example:
   # fonts:
   #   - family: Schyler

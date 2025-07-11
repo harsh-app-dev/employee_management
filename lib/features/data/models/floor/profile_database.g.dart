@@ -96,7 +96,7 @@ class _$AppDatabase extends AppDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `profile` (`id` TEXT NOT NULL, `first_name` TEXT NOT NULL, `last_name` TEXT NOT NULL, `email` TEXT NOT NULL, `dob` TEXT NOT NULL, `phoneNo` TEXT NOT NULL, `designation` TEXT NOT NULL, `organization` TEXT NOT NULL, `employee_active` TEXT NOT NULL, PRIMARY KEY (`id`))');
+            'CREATE TABLE IF NOT EXISTS `profile` (`id` TEXT NOT NULL, `first_name` TEXT NOT NULL, `last_name` TEXT NOT NULL, `email` TEXT NOT NULL, `dob` TEXT NOT NULL, `phoneNo` TEXT NOT NULL, `designation` TEXT NOT NULL, `organization` TEXT NOT NULL, PRIMARY KEY (`id`))');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -126,8 +126,7 @@ class _$ProfileDao extends ProfileDao {
                   'dob': item.dob,
                   'phoneNo': item.phoneNo,
                   'designation': item.designation,
-                  'organization': item.organization,
-                  'employee_active': item.employee_active
+                  'organization': item.organization
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -149,8 +148,8 @@ class _$ProfileDao extends ProfileDao {
             dob: row['dob'] as String,
             phoneNo: row['phoneNo'] as String,
             designation: row['designation'] as String,
-            organization: row['organization'] as String,
-            employee_active: row['employee_active'] as String),
+            organization: row['organization'] as String
+            ),
         arguments: [id]);
   }
 
@@ -165,8 +164,9 @@ class _$ProfileDao extends ProfileDao {
             dob: row['dob'] as String,
             phoneNo: row['phoneNo'] as String,
             designation: row['designation'] as String,
-            organization: row['organization'] as String,
-            employee_active: row['employee_active'] as String));
+            organization: row['organization'] as String
+            )
+        );
   }
 
   @override

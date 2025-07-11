@@ -125,26 +125,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.business,
                       ),
                       const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          icon:  Icon(Icons.logout, size: 22.sp,),
-                          label: Text(AppStrings.logout, style: TextStyle(fontSize: 18.sp),),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: theme.colorScheme.onError,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          onPressed: () async {
-                            await _profileController.logout();
-                            getIt<GlobalKey<NavigatorState>>().currentState
-                                ?.pushNamedAndRemoveUntil(
-                                  '/login',
-                                  (route) => false,
-                                );
-                          },
-                        ),
-                      ),
+                      // SizedBox(
+                      //   width: double.infinity,
+                      //   child: ElevatedButton.icon(
+                      //     icon:  Icon(Icons.logout, size: 22.sp,),
+                      //     label: Text(AppStrings.logout, style: TextStyle(fontSize: 18.sp),),
+                      //     style: ElevatedButton.styleFrom(
+                      //       backgroundColor: Colors.red,
+                      //       foregroundColor: theme.colorScheme.onError,
+                      //       padding: const EdgeInsets.symmetric(vertical: 16),
+                      //     ),
+                      //     onPressed: () async {
+                      //       await _profileController.logout();
+                      //       getIt<GlobalKey<NavigatorState>>().currentState
+                      //           ?.pushNamedAndRemoveUntil(
+                      //             '/login',
+                      //             (route) => false,
+                      //           );
+                      //     },
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),

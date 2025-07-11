@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       } else if (_controller.loginApiState.value.isSuccess) {
                                         getIt<GlobalKey<NavigatorState>>()
                                             .currentState
-                                            ?.pushReplacementNamed('/dashboard');
+                                            ?.pushReplacementNamed('/main');
                                       }
                                     });
                                   },

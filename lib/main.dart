@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
         valueListenable: isLoggedIn,
         builder: (context, isLoggedIn, _) {
           return isLoggedIn
-              ? AppPages.routes['/dashboard']!(context)
+              ? AppPages.routes['/main']!(context)
               : AppPages.routes['/login']!(context);
         },
       ),

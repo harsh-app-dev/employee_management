@@ -100,13 +100,6 @@ class AppTheme {
     onTertiaryFixed: Color(0xff001f23),
     tertiaryFixedDim: Color(0xffa1ced5),
     onTertiaryFixedVariant: Color(0xff1f4d53),
-    surfaceDim: Color(0xffd7dbd2),
-    surfaceBright: Color(0xfff7fbf1),
-    surfaceContainerLowest: Color(0xffffffff),
-    surfaceContainerLow: Color(0xfff1f5ec),
-    surfaceContainer: Color(0xffebefe6),
-    surfaceContainerHigh: Color(0xffe6e9e0),
-    surfaceContainerHighest: Color(0xffe0e4db),
   );
 
   static ThemeData _themeData(ColorScheme scheme, BuildContext? context) {

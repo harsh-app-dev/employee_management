@@ -11,7 +11,3 @@ part 'profile_database.g.dart';
 abstract class AppDatabase extends FloorDatabase {
   ProfileDao get profileDao;
 }
-
-final migration2to3 = Migration(2, 3, (database) async {
-  await database.execute('ALTER TABLE profile ADD COLUMN employee_active TEXT;');
-});
