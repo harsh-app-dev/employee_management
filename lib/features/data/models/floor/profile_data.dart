@@ -11,8 +11,9 @@ class Profile{
   final String phoneNo;
   final String designation;
   final String organization;
+  final String is_active;
 
-  Profile({required this.id, required this.first_name, required this.last_name, required this.email, required this.dob, required this.phoneNo, required this.designation, required this.organization});
+  Profile({required this.id, required this.first_name, required this.last_name, required this.email, required this.dob, required this.phoneNo, required this.designation, required this.organization, required this.is_active});
 
   factory Profile.fromApi(Map<String, dynamic> json) => Profile(
     id: json['id'] ?? '',
@@ -23,5 +24,6 @@ class Profile{
     phoneNo: json['contact_number'] ?? '',
     designation: json['designation'] != null ? json['designation'].toString() : '',
     organization: json['Organisation'] ?? '',
+    is_active: json['is_active'] ?? '',
   );
 }

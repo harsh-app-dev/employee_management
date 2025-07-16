@@ -1,22 +1,46 @@
 import 'package:flutter/material.dart';
+import '../../data/models/floor/profile_data.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/features/presentation/state/profile_controller.dart';
 import 'package:employee_management/core/utils/util.dart';
 
-class AppSideDrawer extends StatelessWidget {
+class AppSideDrawer extends StatefulWidget {
+  @override
+  State<AppSideDrawer> createState() => _AppSideDrawerState();
+}
+
+class _AppSideDrawerState extends State<AppSideDrawer> {
+  final ProfileController _profileController = getIt<ProfileController>();
+  Profile? _localProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalProfile();
+  }
+
+  Future<void> _loadLocalProfile() async {
+    final profiles = await _profileController.profileDao.getAllProfiles();
+    setState(() {
+      _localProfile = profiles.isNotEmpty ? profiles.first : null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ProfileController _profileController = getIt<ProfileController>();
     return Drawer(
       child: Column(
         children: [
           DrawerHeader(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.8)],
+                colors: [
+                  theme.colorScheme.primary,
+                  theme.colorScheme.primary.withOpacity(0.8),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -34,35 +58,32 @@ class AppSideDrawer extends StatelessWidget {
                     child: GestureDetector(
                       onTap: () {
                         Navigator.of(context).pop();
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProfileScreen()));
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => ProfileScreen()),
+                        );
                       },
-                      child: ValueListenableBuilder(
-                        valueListenable: _profileController.profileApiState,
-                        builder: (context, profileState, _) {
-                          String initials = '?';
-                          if (profileState.isSuccess && profileState.data != null) {
-                            initials = getInitials(profileState.data?.first_name, profileState.data?.last_name);
-                          }
-                          return CircleAvatar(
-                            radius: 36,
-                            backgroundColor: Colors.white,
-                            child: Text(
-                              initials,
-                              style: TextStyle(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 32,
-                              ),
-                            ),
-                          );
-                        },
+                      child: CircleAvatar(
+                        radius: 36,
+                        backgroundColor: Colors.white,
+                        child: Text(
+                          _localProfile != null
+                              ? getInitials(_localProfile!.first_name, _localProfile!.last_name)
+                              : '?',
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 32,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 30.0, bottom: 16.0),
+                    padding: const EdgeInsets.only(left: 10.0, bottom: 16.0),
                     child: Text(
-                      'Profile',
+                      _localProfile != null
+                          ? ('${_localProfile!.first_name} ${_localProfile!.last_name}').trim()
+                          : '--',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -84,7 +105,9 @@ class AppSideDrawer extends StatelessWidget {
                   title: Text('History'),
                   onTap: () {
                     Navigator.of(context).pop();
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => HistoryScreen()));
+                    Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (_) => HistoryScreen()));
                   },
                 ),
               ],
@@ -101,12 +124,18 @@ class AppSideDrawer extends StatelessWidget {
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  // Add logout logic here
+                onPressed: () async {
+                  await _profileController.logout();
+                  getIt<GlobalKey<NavigatorState>>().currentState
+                      ?.pushNamedAndRemoveUntil('/login', (route) => false);
                 },
               ),
             ),
@@ -115,4 +144,4 @@ class AppSideDrawer extends StatelessWidget {
       ),
     );
   }
-} 
+}

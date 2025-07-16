@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:employee_management/features/data/models/tasks/task_response.dart';
 import 'package:employee_management/features/data/models/tasks/task_history_response.dart';
+import '../../../core/utils/util.dart';
 import 'task_detail_modal.dart';
 import 'task_extensions.dart';
-import 'task_utils.dart';
 
 class TaskCard extends StatelessWidget {
   final dynamic task;

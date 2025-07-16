@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:table_calendar/table_calendar.dart';
+import '../../../core/utils/util.dart';
 import 'app_side_drawer.dart';
 
 class LeaveRequest {
@@ -12,7 +12,7 @@ class LeaveRequest {
   final String? attachmentPath;
   final String hr;
   final String teamLead;
-  final String status; // 'Pending', 'Approved', 'Rejected', 'Cancelled'
+  final String status;
   final DateTime appliedDate;
   final String? managerComment;
   final DateTime? processedDate;
@@ -174,10 +174,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
     return _leaveRequests.where((leave) {
       bool statusMatch = _selectedStatusFilter == 'All' || leave.status == _selectedStatusFilter;
       bool typeMatch = _selectedTypeFilter == 'All' || leave.leaveType == _selectedTypeFilter;
-      bool dateMatch = _selectedDateFilter == null || 
+      bool dateMatch = _selectedDateFilter == null ||
           (leave.dateRange.start.isAfter(_selectedDateFilter!.start.subtract(const Duration(days: 1))) &&
-           leave.dateRange.end.isBefore(_selectedDateFilter!.end.add(const Duration(days: 1))));
-      
+              leave.dateRange.end.isBefore(_selectedDateFilter!.end.add(const Duration(days: 1))));
+
       return statusMatch && typeMatch && dateMatch;
     }).toList();
   }
@@ -564,6 +564,8 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
   DateTimeRange? _dateRange;
   String? _attachmentPath;
   bool _isSubmitting = false;
+  TimeOfDay? _shortLeaveStartTime;
+  TimeOfDay? _shortLeaveEndTime;
 
   int get _totalDays {
     if (_dateRange == null) return 0;
@@ -589,14 +591,17 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
+      showGlobalSnackBar('Error picking file: $e');
     }
   }
 
   void _submitLeaveRequest() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedLeaveType == 'Short Leave' && _shortLeaveStartTime == null) {
+      showGlobalSnackBar('Please select the start time for your short leave.');
+
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
@@ -628,7 +633,9 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
         id: 'LR${DateTime.now().millisecondsSinceEpoch}',
         dateRange: _dateRange!,
         leaveType: leaveType,
-        reason: _reasonController.text.trim(),
+        reason: _selectedLeaveType == 'Short Leave' && _shortLeaveStartTime != null && _shortLeaveEndTime != null
+            ? '${_reasonController.text.trim()} (Short Leave: ${_shortLeaveStartTime!.format(context)} - ${_shortLeaveEndTime!.format(context)})'
+            : _reasonController.text.trim(),
         attachmentPath: _attachmentPath,
         hr: _selectedHR!,
         teamLead: _selectedTeamLead!,
@@ -653,13 +660,11 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
     _dateRange = null;
     _attachmentPath = null;
     _reasonController.clear();
+    _shortLeaveStartTime = null;
+    _shortLeaveEndTime = null;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Leave application submitted successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    showGlobalSnackBar('Leave application submitted successfully!');
+
   }
 
   @override
@@ -683,6 +688,50 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
             validator: (value) => value == null ? 'Please select leave type' : null,
             isExpanded: true,
           ),
+          if (_selectedLeaveType == 'Short Leave') ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: _shortLeaveStartTime ?? TimeOfDay.now(),
+                );
+                if (picked != null) {
+                  setState(() {
+                    _shortLeaveStartTime = picked;
+                    // Automatically calculate end time as start + 2 hours
+                    _shortLeaveEndTime = TimeOfDay(hour: (picked.hour + 2) % 24, minute: picked.minute);
+                  });
+                }
+              },
+              child: AbsorbPointer(
+                child: TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Short Leave Start Time *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.access_time),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  controller: TextEditingController(
+                    text: _shortLeaveStartTime == null ? 'Select start time' : _shortLeaveStartTime!.format(context),
+                  ),
+                  validator: (_) => _selectedLeaveType == 'Short Leave' && _shortLeaveStartTime == null ? 'Please select start time' : null,
+                ),
+              ),
+            ),
+            if (_shortLeaveEndTime != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.arrow_forward, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('End Time: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(_shortLeaveEndTime!.format(context), style: TextStyle(fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+          ],
           const SizedBox(height: 12),
 
           // Date Range Picker
@@ -841,10 +890,10 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
               ),
               child: _isSubmitting
                   ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                    )
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+              )
                   : const Text('Submit Leave Request', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             ),
           ),

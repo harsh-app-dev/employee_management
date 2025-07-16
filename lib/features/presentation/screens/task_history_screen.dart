@@ -65,9 +65,7 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
       final allTasks = <TaskHistoryData>[];
 
       if (result.data.data != null) {
-        result.data.data!.forEach((userName, tasks) {
-          allTasks.addAll(tasks);
-        });
+        allTasks.addAll(result.data.data!);
       }
 
       final filteredTasks = allTasks.where((task) {

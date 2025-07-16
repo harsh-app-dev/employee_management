@@ -210,58 +210,67 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
             animation: tabController,
             builder: (context, _) {
               if (tabController.index != 0) return const SizedBox.shrink();
-              return ValueListenableBuilder<ApiState<SubmitTasksResponse>>(
-                valueListenable: _controller.submitTasksApiState,
-                builder: (context, submitState, _) {
-                  final isLoading = submitState.isLoading;
-                  return Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        FloatingActionButton.extended(
-                          onPressed: () {
-                            _submitDebouncer.run(() async {
-                              if (isLoading) return;
-                              final tasks = _controller.tasksApiState.value.data;
-                              if (tasks != null && tasks.data != null && tasks.data!.isNotEmpty) {
-                                await _controller.submitTasks(tasks);
-                                if (_controller.submitTasksApiState.value.isSuccess) {
-                                  showGlobalSnackBar(AppStrings.successSubmission);
-                                } else if (_controller.submitTasksApiState.value.isError) {
-                                  showGlobalSnackBar(
-                                    _controller.submitTasksApiState.value.error ?? AppStrings.failedSubmission,
-                                  );
-                                }
-                              } else {
-                                showGlobalSnackBar('You have no pending tasks to submit');
-                              }
-                            });
-                          },
-                          label: Text(
-                            isLoading ? 'Submitting...' : AppStrings.submit,
-                            style: TextStyle(
-                              color: isLoading ? Colors.transparent : theme.colorScheme.surface, fontSize: 14.sp,
+              final now = DateTime.now();
+              final isToday = _selectedDate.year == now.year && _selectedDate.month == now.month && _selectedDate.day == now.day;
+              return AnimatedScale(
+                scale: isToday ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 400),
+                curve: Curves.easeOutBack,
+                child: isToday
+                  ? ValueListenableBuilder<ApiState<SubmitTasksResponse>>(
+                      valueListenable: _controller.submitTasksApiState,
+                      builder: (context, submitState, _) {
+                        final isLoading = submitState.isLoading;
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          backgroundColor: Colors.transparent,
-                          elevation: 0,
-                        ),
-                        if (isLoading)
-                          const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              FloatingActionButton.extended(
+                                onPressed: () {
+                                  _submitDebouncer.run(() async {
+                                    if (isLoading) return;
+                                    final tasks = _controller.tasksApiState.value.data;
+                                    if (tasks != null && tasks.data != null && tasks.data!.isNotEmpty) {
+                                      await _controller.submitTasks(tasks);
+                                      if (_controller.submitTasksApiState.value.isSuccess) {
+                                        showGlobalSnackBar(AppStrings.successSubmission);
+                                      } else if (_controller.submitTasksApiState.value.isError) {
+                                        showGlobalSnackBar(
+                                          _controller.submitTasksApiState.value.error ?? AppStrings.failedSubmission,
+                                        );
+                                      }
+                                    } else {
+                                      showGlobalSnackBar('You have no pending tasks to submit');
+                                    }
+                                  });
+                                },
+                                label: Text(
+                                  isLoading ? 'Submitting...' : AppStrings.submit,
+                                  style: TextStyle(
+                                    color: isLoading ? Colors.transparent : theme.colorScheme.surface, fontSize: 14.sp,
+                                  ),
+                                ),
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                              ),
+                              if (isLoading)
+                                const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
-                  );
-                },
+                        );
+                      },
+                    )
+                  : const SizedBox.shrink(),
               );
             },
           );

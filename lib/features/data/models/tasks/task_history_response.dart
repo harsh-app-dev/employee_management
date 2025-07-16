@@ -6,35 +6,30 @@ TaskHistoryResponse taskHistoryResponseFromJson(String str) =>
 String taskHistoryResponseToJson(TaskHistoryResponse data) => json.encode(data.toJson());
 
 class TaskHistoryResponse {
-  TaskHistoryResponse({Map<String, List<TaskHistoryData>>? data}) {
+  TaskHistoryResponse({List<TaskHistoryData>? data}) {
     _data = data;
   }
 
   TaskHistoryResponse.fromJson(dynamic json) {
-    if (json != null) {
-      _data = <String, List<TaskHistoryData>>{};
-      json.forEach((key, value) {
-        if (value is List) {
-          _data![key] = value.map((v) => TaskHistoryData.fromJson(v)).toList();
-        }
-      });
+    if (json is List) {
+      _data = json.map<TaskHistoryData>((v) => TaskHistoryData.fromJson(v)).toList();
+    } else {
+      _data = [];
     }
   }
 
-  Map<String, List<TaskHistoryData>>? _data;
+  List<TaskHistoryData>? _data;
 
-  TaskHistoryResponse copyWith({Map<String, List<TaskHistoryData>>? data}) => TaskHistoryResponse(
+  TaskHistoryResponse copyWith({List<TaskHistoryData>? data}) => TaskHistoryResponse(
     data: data ?? _data,
   );
 
-  Map<String, List<TaskHistoryData>>? get data => _data;
+  List<TaskHistoryData>? get data => _data;
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     if (_data != null) {
-      _data!.forEach((key, value) {
-        map[key] = value.map((v) => v.toJson()).toList();
-      });
+      map['data'] = _data?.map((v) => v.toJson()).toList();
     }
     return map;
   }

@@ -7,6 +7,9 @@ import 'package:employee_management/features/data/models/punch/response/punch_in
 import 'package:employee_management/features/data/models/punch/response/punch_history_response.dart';
 import 'package:employee_management/features/data/models/punch/state/PunchStateResponse.dart';
 import 'package:injectable/injectable.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 @injectable
 class PunchRepository {
@@ -27,6 +30,84 @@ class PunchRepository {
     );
   }
 
+  // New method for multipart form data upload
+  Future<NetworkResult<PunchInOutResponse>> punchInOutWithPhoto(
+    String punchType, // 'in' or 'out'
+    String? punchedInLatLong,
+    String? punchedOutLatLong,
+    File? photoFile,
+  ) async {
+    final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+          Uri.parse('${_networkClient.baseUrl}attendence/punch/')
+      );
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'accept': '*/*',
+        'X-CSRFTOKEN': '5OtGmZanAgPHuHg1tScbBiOiWx2xiLS6jrJ7KLMnvVaLas84OkKeI8Th9qqIEFUv',
+      });
+
+      // Set fields according to punch type
+      if (punchType == 'in') {
+        request.fields['punched_in_lat_long'] = punchedInLatLong ?? '';
+        request.fields['punched_out_lat_long'] = '';
+        request.fields['punch_out_photo'] = '';
+        if (photoFile != null && await photoFile.exists()) {
+          final stream = http.ByteStream(photoFile.openRead());
+          final length = await photoFile.length();
+          final multipartFile = http.MultipartFile(
+            'punch_in_photo',
+            stream,
+            length,
+            filename: 'punch_in_photo.jpg',
+          );
+          request.files.add(multipartFile);
+        }
+      } else if (punchType == 'out') {
+        request.fields['punched_in_lat_long'] = '';
+        request.fields['punched_out_lat_long'] = punchedOutLatLong ?? '';
+        request.fields['punch_in_photo'] = '';
+        if (photoFile != null && await photoFile.exists()) {
+          final stream = http.ByteStream(photoFile.openRead());
+          final length = await photoFile.length();
+          final multipartFile = http.MultipartFile(
+            'punch_out_photo',
+            stream,
+            length,
+            filename: 'punch_out_photo.jpg',
+          );
+          request.files.add(multipartFile);
+        }
+      }
+
+      // Set other fields to null or empty as required by backend
+      request.fields['punch_in'] = '';
+      request.fields['punch_out'] = '';
+      request.fields['attendance'] = '';
+
+      // Print request details for debugging in consistent format
+      print('[POST] ${request.url}');
+      print('Body: {fields: ${request.fields}, files: ${request.files.map((f) => f.filename).toList()}}');
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      print('Response: ${response.statusCode} $responseBody');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final jsonData = json.decode(responseBody);
+        return NetworkSuccess(PunchInOutResponse.fromJson(jsonData));
+      } else {
+        return NetworkError(response.statusCode, responseBody);
+      }
+    } catch (e) {
+      print('Upload failed: $e');
+      return NetworkError(-1, 'Upload failed: $e');
+    }
+  }
+
   Future<NetworkResult<PunchStateResponse>> getPunchState() async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     return await _networkClient.get<PunchStateResponse>(
@@ -44,7 +125,7 @@ class PunchRepository {
     String? endDate,
   }) async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
-    String url = "punchinout/attendance/history/";
+    String url = "attendence/attendence-history/";
     List<String> params = [];
     if (page != null) params.add('page=$page');
     if (pageSize != null) params.add('page_size=$pageSize');

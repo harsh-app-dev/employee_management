@@ -3,6 +3,7 @@ import 'package:employee_management/features/data/models/punch/request/punch_in_
 import 'package:employee_management/features/data/models/punch/response/punch_in_out_response.dart';
 import 'package:employee_management/features/data/repositories/punch_repository.dart';
 import 'package:injectable/injectable.dart';
+import 'dart:io';
 
 @injectable
 class PunchInOutUseCase {
@@ -12,5 +13,20 @@ class PunchInOutUseCase {
 
   Future<NetworkResult<PunchInOutResponse>> call(PunchInOutRequest punchInOutRequest) async {
     return await _punchRepository.punchInOut(punchInOutRequest);
+  }
+
+  // New method for multipart form data upload
+  Future<NetworkResult<PunchInOutResponse>> callWithPhoto(
+    String punchType, // 'in' or 'out'
+    String? punchedInLatLong,
+    String? punchedOutLatLong,
+    File? photoFile,
+  ) async {
+    return await _punchRepository.punchInOutWithPhoto(
+      punchType,
+      punchedInLatLong,
+      punchedOutLatLong,
+      photoFile,
+    );
   }
 }

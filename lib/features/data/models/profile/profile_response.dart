@@ -16,6 +16,7 @@ class ProfileResponse {
     String? contactNumber,
     String? designation,
     String? organization,
+    String? isActive,
   }) {
     _id = id;
     _firstName = firstName;
@@ -25,6 +26,7 @@ class ProfileResponse {
     _contactNumber = contactNumber;
     _designation = designation;
     _organization = organization;
+    _isActive = isActive;
   }
 
   ProfileResponse.fromJson(dynamic json) {
@@ -36,6 +38,7 @@ class ProfileResponse {
     _contactNumber = json['contact_number'];
     _designation = json['designation'] != null ? json['designation'].toString() : null;
     _organization = json['Organisation'] != null ? json['Organisation'].toString() : null;
+    _isActive = json['is_active']?.toString();
   }
 
   String? _id;
@@ -46,6 +49,7 @@ class ProfileResponse {
   String? _contactNumber;
   String? _designation;
   String? _organization;
+  String? _isActive;
 
   ProfileResponse copyWith({
     String? id,
@@ -56,6 +60,7 @@ class ProfileResponse {
     String? contactNumber,
     String? designation,
     String? organization,
+    String? isActive,
   }) => ProfileResponse(
     id: id ?? _id,
     firstName: firstName ?? _firstName,
@@ -65,23 +70,18 @@ class ProfileResponse {
     contactNumber: contactNumber ?? _contactNumber,
     designation: designation ?? _designation,
     organization: organization ?? _organization,
+    isActive: isActive ?? _isActive,
   );
 
   String? get id => _id;
-
   String? get firstName => _firstName;
-
   String? get lastName => _lastName;
-
   String? get email => _email;
-
   String? get dateOfBirth => _dateOfBirth;
-
   String? get contactNumber => _contactNumber;
-
   String? get designation => _designation;
-
   String? get organization => _organization;
+  String? get isActive => _isActive;
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
@@ -92,8 +92,8 @@ class ProfileResponse {
     map['date_of_birth'] = _dateOfBirth;
     map['contact_number'] = _contactNumber;
     map['designation'] = _designation;
-    map['Organization'] = _organization;
-
+    map['Organisation'] = _organization;
+    map['is_active'] = _isActive;
     return map;
   }
 }

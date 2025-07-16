@@ -8,7 +8,8 @@
   import 'package:employee_management/features/domain/use_cases/punch_state_use_case.dart';
   import 'package:flutter/foundation.dart';
   import 'package:injectable/injectable.dart';
-  import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:io';
 
   @injectable
   class PunchController {
@@ -25,9 +26,9 @@
     final ValueNotifier<bool> isPunchedOut = ValueNotifier(false);
     final ValueNotifier<String> nameInitials = ValueNotifier('');
 
-    bool get hasPunchedInAndOutToday => isPunchedIn.value && isPunchedOut.value;
+      bool get hasPunchedInAndOutToday => isPunchedIn.value && isPunchedOut.value;
 
-    Future<void> punchInOut(String punchValue) async {
+  Future<void> punchInOut(String punchValue, {File? punchPhoto}) async {
       punchInOutApiState.value = ApiState.loading();
 
       try {
@@ -37,12 +38,23 @@
 
         final latLong = "${position.latitude},${position.longitude}";
 
-        // 🔁 Construct request based on punch type
-        final request = punchValue.toLowerCase() == 'in'
-            ? PunchInOutRequest(punchedInLatLong: latLong)
-            : PunchInOutRequest(punchedOutLatLong: latLong);
+        NetworkResult<PunchInOutResponse> result;
 
-        final result = await _punchUseCase(request);
+        // Use multipart form data for better performance with images
+        if (punchPhoto != null) {
+          result = await _punchUseCase.callWithPhoto(
+            punchValue.toLowerCase(), // punchType: 'in' or 'out'
+            punchValue.toLowerCase() == 'in' ? latLong : null, // punchedInLatLong
+            punchValue.toLowerCase() == 'out' ? latLong : null, // punchedOutLatLong
+            punchPhoto, // photoFile
+          );
+        } else {
+          // Fallback to JSON for text-only requests
+          final request = punchValue.toLowerCase() == 'in'
+              ? PunchInOutRequest(punchedInLatLong: latLong)
+              : PunchInOutRequest(punchedOutLatLong: latLong);
+          result = await _punchUseCase(request);
+        }
 
         if (result is NetworkSuccess<PunchInOutResponse>) {
           punchInOutApiState.value = ApiState.success(result.data);
@@ -55,7 +67,7 @@
             isPunchedOut.value = true;
           }
 
-          await getPunchState(); // Sync again
+          // await getPunchState(); // Sync again
 
         } else if (result is NetworkError<PunchInOutResponse>) {
           punchInOutApiState.value = ApiState.error(result.message);
