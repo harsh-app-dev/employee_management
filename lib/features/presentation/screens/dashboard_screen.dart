@@ -112,14 +112,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await prefs.setString('lastPunchDate', DateTime.now().toIso8601String());
   }
 
-  TimeOfDay? _parseTimeOfDay(String timeStr) {
-    final parts = timeStr.split(":");
-    if (parts.length != 2) return null;
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) return null;
-    return TimeOfDay(hour: hour, minute: minute);
-  }
 
   Future<void> _fetchProfileData() async {
     final profiles = await _profileController.profileDao.getAllProfiles();
@@ -447,20 +439,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 _currentProfile = updated;
                                               });
                                             }
-                                            showGlobalSnackBar(AppStrings.punchOutSuccess);
+                                            showGlobalSnackBarWithIcon(AppStrings.punchOutSuccess, icon: Icons.logout, iconColor: Colors.red);
                                           } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
                                             if (!mounted) return;
                                             setState(() { _isApiLoading = false; });
-                                            showGlobalSnackBar(
-                                              _punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed,
-                                            );
+                                            showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed, icon: Icons.error_outline, iconColor: Colors.red);
                                           } else {
                                             if (!mounted) return;
                                             setState(() { _isApiLoading = false; });
                                           }
                                         });
                                       } else {
-                                        showGlobalSnackBar('Please take a selfie to proceed.');
+                                        showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
                                       }
                                     };
                                   } else {
@@ -505,20 +495,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 _currentProfile = updated;
                                               });
                                             }
-                                            showGlobalSnackBar(AppStrings.punchInSuccess);
+                                            showGlobalSnackBarWithIcon(AppStrings.punchInSuccess, icon: Icons.login, iconColor: Colors.green);
                                           } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
                                             if (!mounted) return;
                                             setState(() { _isApiLoading = false; });
-                                            showGlobalSnackBar(
-                                              _punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed,
-                                            );
+                                            showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed, icon: Icons.error_outline, iconColor: Colors.red);
                                           } else {
                                             if (!mounted) return;
                                             setState(() { _isApiLoading = false; });
                                           }
                                         });
                                       } else {
-                                        showGlobalSnackBar('Please take a selfie to proceed.');
+                                        showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
                                       }
                                     };
                                   }
@@ -592,7 +580,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       if (context.mounted) {
-        showGlobalSnackBar(AppStrings.locationPermission);
+        showGlobalSnackBarWithIcon(AppStrings.locationPermission);
       }
     }
   }

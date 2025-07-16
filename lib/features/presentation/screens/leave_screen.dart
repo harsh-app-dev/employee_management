@@ -17,6 +17,8 @@ class LeaveRequest {
   final String? managerComment;
   final DateTime? processedDate;
   final int totalDays;
+  final String? shortLeaveTime; // NEW: for short leave hours
+  final String? halfDayType;    // NEW: for half day type (first/second)
 
   LeaveRequest({
     required this.id,
@@ -31,6 +33,8 @@ class LeaveRequest {
     this.managerComment,
     this.processedDate,
     required this.totalDays,
+    this.shortLeaveTime, // NEW
+    this.halfDayType,    // NEW
   });
 }
 
@@ -87,9 +91,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
       teamLead: 'David TL',
       status: 'Approved',
       appliedDate: DateTime.now().subtract(const Duration(days: 15)),
-      processedDate: DateTime.now().subtract(const Duration(days: 12)),
+      processedDate: DateTime.now().subtract(const Duration(days: 7)), // after end
       managerComment: 'Approved. Enjoy your time with family.',
       totalDays: 3,
+      shortLeaveTime: null,
+      halfDayType: null,
     ),
     LeaveRequest(
       id: 'LR002',
@@ -101,32 +107,40 @@ class _LeaveScreenState extends State<LeaveScreen> {
       status: 'Pending',
       appliedDate: DateTime.now().subtract(const Duration(days: 2)),
       totalDays: 3,
+      shortLeaveTime: null,
+      halfDayType: null,
+      processedDate: null,
+      managerComment: null,
     ),
     LeaveRequest(
       id: 'LR003',
-      dateRange: DateTimeRange(start: DateTime.now().subtract(const Duration(days: 20)), end: DateTime.now().subtract(const Duration(days: 17))),
+      dateRange: DateTimeRange(start: DateTime(2025, 6, 26), end: DateTime(2025, 6, 26)),
       leaveType: 'Half Day',
       reason: 'Personal work',
       hr: 'Charlie HR',
       teamLead: 'Frank TL',
       status: 'Rejected',
-      appliedDate: DateTime.now().subtract(const Duration(days: 25)),
-      processedDate: DateTime.now().subtract(const Duration(days: 22)),
+      appliedDate: DateTime(2025, 6, 21),
+      processedDate: DateTime(2025, 6, 26), // processed on leave day
       managerComment: 'Rejected due to project deadline.',
-      totalDays: 3,
+      totalDays: 1,
+      shortLeaveTime: null,
+      halfDayType: 'First Half',
     ),
     LeaveRequest(
       id: 'LR004',
-      dateRange: DateTimeRange(start: DateTime.now().add(const Duration(days: 15)), end: DateTime.now().add(const Duration(days: 21))),
+      dateRange: DateTimeRange(start: DateTime(2025, 8, 1), end: DateTime(2025, 8, 1)),
       leaveType: 'Short Leave',
       reason: 'Attending cousin\'s wedding',
       hr: 'Diana HR',
       teamLead: 'Grace TL',
       status: 'Approved',
-      appliedDate: DateTime.now().subtract(const Duration(days: 5)),
-      processedDate: DateTime.now().subtract(const Duration(days: 3)),
+      appliedDate: DateTime(2025, 7, 28),
+      processedDate: DateTime(2025, 8, 1), // processed on leave day
       managerComment: 'Approved. Congratulations!',
-      totalDays: 6,
+      totalDays: 1,
+      shortLeaveTime: '10:00 AM - 12:00 PM',
+      halfDayType: null,
     ),
   ];
 
@@ -283,7 +297,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      const Icon(Icons.add_circle_outline, color: Colors.green, size: 24),
                       const SizedBox(width: 8),
                       const Text(
                         'Apply for Leave',
@@ -453,41 +466,53 @@ class _LeaveScreenState extends State<LeaveScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final leave = filteredRequests[index];
-        return Card(
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  backgroundColor: _getStatusColor(leave.leaveType).withOpacity(0.13),
-                  child: Icon(_getLeaveTypeIcon(leave.leaveType), color: _getStatusColor(leave.leaveType), size: 22),
-                  radius: 22,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        return GestureDetector(
+          onTap: () => _showLeaveDetailBottomSheet(leave, index),
+          child: Card(
+            elevation: 0,
+            margin: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        leave.leaveType,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      CircleAvatar(
+                        backgroundColor: _getStatusColor(leave.leaveType).withOpacity(0.13),
+                        child: Icon(_getLeaveTypeIcon(leave.leaveType), color: _getStatusColor(leave.leaveType), size: 22),
+                        radius: 22,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${DateFormat('dd MMM yyyy').format(leave.dateRange.start)} - ${DateFormat('dd MMM yyyy').format(leave.dateRange.end)} (${leave.totalDays} day${leave.totalDays > 1 ? 's' : ''})',
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              leave.leaveType,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${DateFormat('dd MMM yyyy').format(leave.dateRange.start)} - ${DateFormat('dd MMM yyyy').format(leave.dateRange.end)} (${leave.totalDays} day${leave.totalDays > 1 ? 's' : ''})',
+                              style: const TextStyle(fontSize: 12, color: Colors.black54),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 10),
+                      _buildStatusChip(leave.status),
                     ],
                   ),
-                ),
-                const SizedBox(width: 10),
-                _buildStatusChip(leave.status),
-              ],
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Icon(Icons.expand_more, color: Colors.grey, size: 22),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -495,7 +520,213 @@ class _LeaveScreenState extends State<LeaveScreen> {
     );
   }
 
-
+  void _showLeaveDetailBottomSheet(LeaveRequest leave, int index) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final isEditable = leave.status == 'Pending';
+        if (isEditable) {
+          // Show the same bottom sheet as apply, but for editing
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit, color: Colors.blue, size: 24),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Edit Leave',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                // Form
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        _LeaveApplicationForm(
+                          leaveTypes: _leaveTypes,
+                          hrList: _hrList,
+                          teamLeadList: _teamLeadList,
+                          onLeaveSubmitted: (request, {casualDeduct = 0, sickDeduct = 0, shortDeduct = 0}) {
+                            setState(() {
+                              _leaveRequests[index] = request;
+                              _initializeEvents();
+                            });
+                            Navigator.pop(context);
+                            showGlobalSnackBar('Leave request updated successfully!');
+                          },
+                          initialLeave: leave,
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 45,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              // Withdraw leave logic
+                              setState(() {
+                                _leaveRequests[index] = LeaveRequest(
+                                  id: leave.id,
+                                  dateRange: leave.dateRange,
+                                  leaveType: leave.leaveType,
+                                  reason: leave.reason,
+                                  attachmentPath: leave.attachmentPath,
+                                  hr: leave.hr,
+                                  teamLead: leave.teamLead,
+                                  status: 'Cancelled',
+                                  appliedDate: leave.appliedDate,
+                                  managerComment: leave.managerComment,
+                                  processedDate: DateTime.now(),
+                                  totalDays: leave.totalDays,
+                                );
+                                _initializeEvents();
+                              });
+                              Navigator.pop(context);
+                              showGlobalSnackBar('Leave request withdrawn.');
+                            },
+                            label: const Text('Withdraw Leave', style: TextStyle(fontSize: 16),),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        }
+        // Read-only detail view for non-editable
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.4,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (context, scrollController) {
+              return SingleChildScrollView(
+                controller: scrollController,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(_getLeaveTypeIcon(leave.leaveType), color: _getStatusColor(leave.leaveType), size: 28),
+                          const SizedBox(width: 10),
+                          Text(
+                            leave.leaveType,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                          const Spacer(),
+                          _buildStatusChip(leave.status),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Date Range:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('${DateFormat('dd MMM yyyy').format(leave.dateRange.start)} - ${DateFormat('dd MMM yyyy').format(leave.dateRange.end)}'),
+                      const SizedBox(height: 10),
+                      if (leave.leaveType == 'Half Day' && leave.halfDayType != null) ...[
+                        Text('Half Day:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(leave.halfDayType!),
+                        const SizedBox(height: 10),
+                      ],
+                      if (leave.leaveType == 'Short Leave' && leave.shortLeaveTime != null) ...[
+                        Text('Short Leave Time:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(leave.shortLeaveTime!),
+                        const SizedBox(height: 10),
+                      ],
+                      Text('Reason:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(leave.reason),
+                      const SizedBox(height: 10),
+                      if (leave.attachmentPath != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Attachment:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(leave.attachmentPath!),
+                            const SizedBox(height: 10),
+                          ],
+                        ),
+                      Text('HR:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(leave.hr),
+                      const SizedBox(height: 10),
+                      Text('Team Lead:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(leave.teamLead),
+                      const SizedBox(height: 10),
+                      Text('Applied Date:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(DateFormat('dd MMM yyyy').format(leave.appliedDate)),
+                      const SizedBox(height: 10),
+                      if (leave.managerComment != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Manager Comment:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(leave.managerComment!),
+                            const SizedBox(height: 10),
+                          ],
+                        ),
+                      if (leave.processedDate != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Processed Date:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(DateFormat('dd MMM yyyy').format(leave.processedDate!)),
+                            const SizedBox(height: 10),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildStatusChip(String status) {
     return Chip(
@@ -544,11 +775,13 @@ class _LeaveApplicationForm extends StatefulWidget {
   final List<String> hrList;
   final List<String> teamLeadList;
   final Function(LeaveRequest, {double casualDeduct, int sickDeduct, int shortDeduct}) onLeaveSubmitted;
+  final LeaveRequest? initialLeave; // Added for editing
   const _LeaveApplicationForm({
     required this.leaveTypes,
     required this.hrList,
     required this.teamLeadList,
     required this.onLeaveSubmitted,
+    this.initialLeave, // Initialize with initialLeave
   });
 
   @override
@@ -566,10 +799,32 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
   bool _isSubmitting = false;
   TimeOfDay? _shortLeaveStartTime;
   TimeOfDay? _shortLeaveEndTime;
+  String? _selectedHalf; // Add this for half day selection
 
   int get _totalDays {
     if (_dateRange == null) return 0;
     return _dateRange!.duration.inDays + 1;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialLeave != null) {
+      _selectedLeaveType = widget.initialLeave!.leaveType;
+      _selectedHR = widget.initialLeave!.hr;
+      _selectedTeamLead = widget.initialLeave!.teamLead;
+      _dateRange = widget.initialLeave!.dateRange;
+      _attachmentPath = widget.initialLeave!.attachmentPath;
+      _reasonController.text = widget.initialLeave!.reason;
+      _shortLeaveStartTime = TimeOfDay.fromDateTime(widget.initialLeave!.dateRange.start);
+      _shortLeaveEndTime = TimeOfDay.fromDateTime(widget.initialLeave!.dateRange.start.add(const Duration(hours: 2)));
+      // Try to extract half day info from reason if present
+      if (_selectedLeaveType == 'Half Day' && widget.initialLeave!.reason.contains('First Half')) {
+        _selectedHalf = 'First Half';
+      } else if (_selectedLeaveType == 'Half Day' && widget.initialLeave!.reason.contains('Second Half')) {
+        _selectedHalf = 'Second Half';
+      }
+    }
   }
 
   @override
@@ -597,9 +852,17 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
 
   void _submitLeaveRequest() async {
     if (!_formKey.currentState!.validate()) return;
+    if ((_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day') &&
+        _dateRange!.start != _dateRange!.end) {
+      showGlobalSnackBar('Short Leave and Half Day can only be applied for a single day.');
+      return;
+    }
     if (_selectedLeaveType == 'Short Leave' && _shortLeaveStartTime == null) {
       showGlobalSnackBar('Please select the start time for your short leave.');
-
+      return;
+    }
+    if (_selectedLeaveType == 'Half Day' && _selectedHalf == null) {
+      showGlobalSnackBar('Please select which half for Half Day leave.');
       return;
     }
 
@@ -616,9 +879,11 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
     int shortDeduct = 0;
     int totalDays = _totalDays;
     String leaveType = _selectedLeaveType!;
+    String reasonText = _reasonController.text.trim();
     if (leaveType == 'Half Day') {
       casualDeduct = 0.5;
       totalDays = 1; // For display
+      reasonText = '${_selectedHalf ?? ''} - $reasonText';
     } else if (leaveType == 'Casual Leave') {
       casualDeduct = _totalDays.toDouble();
     } else if (leaveType == 'Sick Leave') {
@@ -630,17 +895,15 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
     // Call parent to update balances
     widget.onLeaveSubmitted(
       LeaveRequest(
-        id: 'LR${DateTime.now().millisecondsSinceEpoch}',
+        id: widget.initialLeave?.id ?? 'LR${DateTime.now().millisecondsSinceEpoch}',
         dateRange: _dateRange!,
         leaveType: leaveType,
-        reason: _selectedLeaveType == 'Short Leave' && _shortLeaveStartTime != null && _shortLeaveEndTime != null
-            ? '${_reasonController.text.trim()} (Short Leave: ${_shortLeaveStartTime!.format(context)} - ${_shortLeaveEndTime!.format(context)})'
-            : _reasonController.text.trim(),
+        reason: reasonText,
         attachmentPath: _attachmentPath,
         hr: _selectedHR!,
         teamLead: _selectedTeamLead!,
-        status: 'Pending',
-        appliedDate: DateTime.now(),
+        status: 'Pending', // Keep status as Pending for resubmission
+        appliedDate: widget.initialLeave?.appliedDate ?? DateTime.now(),
         totalDays: totalDays,
       ),
       casualDeduct: casualDeduct,
@@ -662,6 +925,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
     _reasonController.clear();
     _shortLeaveStartTime = null;
     _shortLeaveEndTime = null;
+    _selectedHalf = null; // Reset half day selection
 
     showGlobalSnackBar('Leave application submitted successfully!');
 
@@ -684,10 +948,50 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
             ),
             value: _selectedLeaveType,
             items: widget.leaveTypes.map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
-            onChanged: (value) => setState(() => _selectedLeaveType = value),
+            onChanged: (value) => setState(() {
+              // Clear date field if switching between single-day and range types
+              final wasSingleDay = _selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day';
+              final isSingleDay = value == 'Short Leave' || value == 'Half Day';
+              if (wasSingleDay != isSingleDay) {
+                _dateRange = null;
+              }
+              _selectedLeaveType = value;
+              if (value != 'Half Day') _selectedHalf = null;
+            }),
             validator: (value) => value == null ? 'Please select leave type' : null,
             isExpanded: true,
           ),
+          if (_selectedLeaveType == 'Half Day') ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: const Text('First Half'),
+                    value: 'First Half',
+                    groupValue: _selectedHalf,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedHalf = value;
+                      });
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: const Text('Second Half'),
+                    value: 'Second Half',
+                    groupValue: _selectedHalf,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedHalf = value;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (_selectedLeaveType == 'Short Leave') ...[
             const SizedBox(height: 12),
             GestureDetector(
@@ -737,33 +1041,53 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
           // Date Range Picker
           GestureDetector(
             onTap: () async {
-              final picked = await showDateRangePicker(
-                context: context,
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-                initialDateRange: _dateRange,
-              );
-              if (picked != null) {
-                setState(() {
-                  _dateRange = picked;
-                });
+              if (_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day') {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _dateRange?.start ?? DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (picked != null) {
+                  setState(() {
+                    _dateRange = DateTimeRange(start: picked, end: picked);
+                  });
+                }
+              } else {
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  initialDateRange: _dateRange,
+                );
+                if (picked != null) {
+                  setState(() {
+                    _dateRange = picked;
+                  });
+                }
               }
             },
             child: AbsorbPointer(
               child: TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Date Range *',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.date_range),
-                  suffixIcon: Icon(Icons.calendar_today),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: InputDecoration(
+                  labelText: (_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day')
+                      ? 'Select date *'
+                      : 'Select date range *',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.date_range),
+                  suffixIcon: const Icon(Icons.calendar_today),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 controller: TextEditingController(
                   text: _dateRange == null
-                      ? 'Select date range'
-                      : '${DateFormat('dd MMM yyyy').format(_dateRange!.start)} - ${DateFormat('dd MMM yyyy').format(_dateRange!.end)}',
+                      ? (_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day'
+                          ? 'Select date'
+                          : 'Select date range')
+                      : (_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day'
+                          ? DateFormat('dd MMM yyyy').format(_dateRange!.start)
+                          : '${DateFormat('dd MMM yyyy').format(_dateRange!.start)} - ${DateFormat('dd MMM yyyy').format(_dateRange!.end)}'),
                 ),
-                validator: (_) => _dateRange == null ? 'Please select date range' : null,
+                validator: (_) => _dateRange == null ? 'Please select date${(_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day') ? '' : ' range'}' : null,
               ),
             ),
           ),

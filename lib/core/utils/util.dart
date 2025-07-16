@@ -19,19 +19,19 @@ void showGlobalSnackBar(String message) {
   );
 }
 
-void showGlobalSnackBarWithIcon(String message, IconData icon, {Color? iconColor}) {
+void showGlobalSnackBarWithIcon(String message, {IconData? icon, Color? iconColor}) {
   final key = getIt<GlobalKey<ScaffoldMessengerState>>();
   key.currentState?.showSnackBar(
     SnackBar(
       content: Row(
         children: [
-          Icon(icon, color: iconColor ?? Colors.white, size: 22),
-          const SizedBox(width: 12),
-          Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
+          if (icon != null) ...[
+            Icon(icon, color: iconColor ?? Colors.white, size: 22),
+            const SizedBox(width: 12),
+          ],
+          Expanded(child: Text(message)),
         ],
       ),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ),
   );
 }
