@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "911801085834",
+    "project_id": "employee-management-d90a2",
+    "storage_bucket": "employee-management-d90a2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:911801085834:android:54ae8788f7aca7a5262273",
+        "android_client_info": {
+          "package_name": "com.sparkbrains.employee_management"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEaVRuyjKRQZf8UcCS9RGO-6egqxr9o84"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

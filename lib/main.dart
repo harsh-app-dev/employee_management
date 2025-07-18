@@ -7,9 +7,13 @@ import 'package:flutter_sizer/flutter_sizer.dart';
 
 import 'core/configs/themes/theme.dart';
 import 'core/widgets/network_dialog.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:employee_management/core/services/firebase_messaging_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await FirebaseMessagingService().initialize();
   await configureDependencies();
   registerGlobalDependencies();
   await getIt<LocalStorage>().init();

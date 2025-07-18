@@ -1,3 +1,4 @@
+import 'package:employee_management/features/presentation/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/floor/profile_data.dart';
 import 'history_screen.dart';
@@ -5,6 +6,8 @@ import 'profile_screen.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/features/presentation/state/profile_controller.dart';
 import 'package:employee_management/core/utils/util.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'settings_screen.dart';
 
 class AppSideDrawer extends StatefulWidget {
   @override
@@ -80,15 +83,23 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 10.0, bottom: 16.0),
-                    child: Text(
-                      _localProfile != null
-                          ? ('${_localProfile!.first_name} ${_localProfile!.last_name}').trim()
-                          : '--',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => ProfileScreen()),
+                        );
+                      },
+                      child: Text(
+                        _localProfile != null
+                            ? ('${_localProfile!.first_name} ${_localProfile!.last_name}').trim()
+                            : '--',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),
@@ -101,6 +112,16 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
               padding: EdgeInsets.zero,
               children: [
                 ListTile(
+                  leading: Icon(Icons.dashboard),
+                  title: Text('Dashboard'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => MainScreen()),
+                    );
+                  },
+                ),
+                ListTile(
                   leading: Icon(Icons.history),
                   title: Text('History'),
                   onTap: () {
@@ -108,6 +129,50 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                     Navigator.of(
                       context,
                     ).push(MaterialPageRoute(builder: (_) => HistoryScreen()));
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.settings),
+                  title: Text('Settings'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => SettingsScreen()),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.support_agent),
+                  title: Text('Help & Support'),
+                  onTap: () {
+                    /*Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => SettingsScreen()),
+                    );*/
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.privacy_tip_outlined),
+                  title: Text('Privacy Policy'),
+                  onTap: () async {
+                    final url = Uri.parse('https://sparkbrains.in/privacy-policy/');
+                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Could not open the Privacy Policy.')),
+                      );
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.info_outline),
+                  title: Text('About'),
+                  onTap: () async {
+                    final url = Uri.parse('https://sparkbrains.in/about-us/');
+                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Could not open the About page.')),
+                      );
+                    }
                   },
                 ),
               ],

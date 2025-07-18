@@ -1,8 +1,6 @@
 import 'package:employee_management/core/configs/strings.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/core/utils/util.dart';
-import 'package:employee_management/features/presentation/state/punch_controller.dart';
-import 'package:employee_management/features/presentation/state/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:geolocator/geolocator.dart';
@@ -13,10 +11,15 @@ import 'dart:async';
 import '../../../core/utils/network_result.dart';
 import '../../../core/widgets/debouncing_state.dart';
 import '../../data/models/floor/profile_data.dart';
+import '../state/profile_controller.dart';
+import '../state/punch_controller.dart';
 import 'app_side_drawer.dart';
 import 'package:employee_management/features/data/models/punch/response/punch_history_response.dart';
 import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
 import 'package:intl/intl.dart';
+
+import 'notification_screen.dart';
+import 'package:employee_management/features/presentation/widgets/manual_punch_in_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -43,6 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _firstPunchIn = '--';
   String _lastPunchOut = '--';
   final PunchHistoryUseCase _punchHistoryUseCase = getIt<PunchHistoryUseCase>();
+  bool _isFabExpanded = false;
 
   @override
   void initState() {
@@ -272,7 +276,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(Icons.menu, color: theme.colorScheme.onPrimary),
+            icon: Icon(Icons.menu, color: theme.colorScheme.onPrimary, size: 30,),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -286,15 +290,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         title: Align(
-          alignment: Alignment.centerLeft,
+          alignment: Alignment.center,
           child: Text(AppStrings.dashboard, style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary,),),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white, size: 30,),
+            tooltip: 'Notifications',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationScreen()),
+              );
+            },
+          ),
         ],
       ),
       drawer: Drawer(
         child: AppSideDrawer(),
       ),
+      /*floatingActionButton: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          if (_isFabExpanded) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 80.0 + 10.0, right: 20.0),
+              child: FloatingActionButton(
+                heroTag: 'manualPunchIn',
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => ManualPunchInDialog(
+                      onSubmit: (dateTime, reason) {
+                        // TODO: Handle the submitted values here
+                        print('Manual Punch In: dateTime="+dateTime.toString()+", reason=$reason');
+                      },
+                    ),
+                  );
+                  setState(() => _isFabExpanded = false);
+                },
+                child: Icon(Icons.fingerprint),
+                tooltip: 'Manual Punch In',
+              ),
+            ),
+          ],
+          Padding(
+            padding: const EdgeInsets.only(bottom: 15.0, right: 20.0),
+            child: FloatingActionButton(
+              onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
+              child: Icon(_isFabExpanded ? Icons.close : Icons.add),
+              tooltip: 'Expand',
+            ),
+          ),
+        ],
+      ),*/
       body: SafeArea(
         child: Stack(
           children: [

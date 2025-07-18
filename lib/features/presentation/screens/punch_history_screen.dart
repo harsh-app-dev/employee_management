@@ -603,7 +603,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                 );
                               },
                             ),
-                            if (_isLoading && _punchHistory.isNotEmpty)
+                            if (_isLoading && _hasMore && _punchHistory.isNotEmpty)
                               Positioned(
                                 left: 0,
                                 right: 0,

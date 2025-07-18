@@ -175,6 +175,13 @@ class ReportScreen extends StatelessWidget {
       );
     }
 
+    // --- Sandwich Relief Section ---
+    final DateTime sandwichStart = DateTime(DateTime.now().year, 7, 1);
+    final DateTime nowDate = DateTime.now();
+    final int sandwichDaysElapsed = nowDate.difference(sandwichStart).inDays;
+    final int sandwichDaysRemaining = 60 - sandwichDaysElapsed;
+    final bool sandwichEligible = sandwichDaysElapsed >= 60;
+
     return DefaultTabController(
       length: 2, // Number of tabs
       child: Scaffold(
@@ -195,11 +202,82 @@ class ReportScreen extends StatelessWidget {
             ),
           ),
         ),
-        body: Padding(
+        body: SingleChildScrollView(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // --- Attractive & Compact Sandwich Relief Card ---
+              Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [theme.colorScheme.primary.withOpacity(0.85), theme.colorScheme.secondary.withOpacity(0.85)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.timer, color: Colors.white, size: 22),
+                            const SizedBox(width: 8),
+                            Text('60-Day Sandwich Relief', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        if (!sandwichEligible)
+                          Column(
+                            children: [
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 60,
+                                    height: 60,
+                                    child: CircularProgressIndicator(
+                                      value: (60 - (sandwichDaysRemaining > 0 ? sandwichDaysRemaining : 0)) / 60,
+                                      strokeWidth: 6,
+                                      backgroundColor: Colors.white24,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${sandwichDaysRemaining > 0 ? sandwichDaysRemaining : 0}',
+                                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text('Days remaining for sandwich relief', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                            ],
+                          )
+                        else
+                          Column(
+                            children: [
+                              Icon(Icons.celebration, color: Colors.amberAccent, size: 32),
+                              const SizedBox(height: 6),
+                              Text('Congratulations!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.amberAccent)),
+                              const SizedBox(height: 4),
+                              Text('You are eligible for a sandwich relief! No leave taken in the last 60 days since July 1.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.white, fontSize: 12)),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               // --- Summary Section ---
               Card(
                 margin: const EdgeInsets.only(bottom: 18, left: 4, right: 4, top: 4),
@@ -247,14 +325,31 @@ class ReportScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // --- Calendar ---
-              Expanded(
+              // --- Calendar Section ---
+              SizedBox(
+                height: 400, // Adjust height as needed for your design
                 child: TableCalendar(
                   firstDay: DateTime.now().subtract(const Duration(days: 365)),
                   lastDay: DateTime.now().add(const Duration(days: 365)),
                   focusedDay: DateTime.now(),
                   calendarFormat: CalendarFormat.month,
                   availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+                  calendarStyle: CalendarStyle(
+                    todayDecoration: BoxDecoration(
+                      color: Colors.green[700], // Darker green for today
+                      shape: BoxShape.circle,
+                    ),
+                    selectedDecoration: BoxDecoration(
+                      color: Colors.blue[800], // Darker blue for selected day
+                      shape: BoxShape.circle,
+                    ),
+                    weekendTextStyle: TextStyle(color: Colors.red[800]), // Darker red for weekends
+                    defaultTextStyle: TextStyle(color: Colors.grey[900]), // Darker text
+                  ),
+                  daysOfWeekStyle: DaysOfWeekStyle(
+                    weekdayStyle: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.bold),
+                    weekendStyle: TextStyle(color: Colors.red[800], fontWeight: FontWeight.bold),
+                  ),
                   onDaySelected: (selectedDay, focusedDay) {
                     _showPunchDetailSheet(selectedDay);
                   },
@@ -267,8 +362,8 @@ class ReportScreen extends StatelessWidget {
                       // Demo: Mark weekends as incomplete (red), others as present (green)
                       bool isIncomplete = day.weekday == 6 || day.weekday == 7; // Sat/Sun
                       Color bgColor = isIncomplete
-                          ? const Color(0xFFFF4D4F).withOpacity(0.18) // Vibrant red
-                          : const Color(0xFF4CAF50).withOpacity(0.18); // Vibrant green
+                          ? const Color(0xFFFF4D4F).withOpacity(0.30) // Vibrant red
+                          : const Color(0xFF4CAF50).withOpacity(0.30); // Vibrant green
 
                       // Add a subtle border/shadow for today
                       bool isToday = day.year == now.year && day.month == now.month && day.day == now.day;
