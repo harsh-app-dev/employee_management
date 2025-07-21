@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../state/getx/theme_controller.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -51,6 +54,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final ThemeController themeController = Get.find<ThemeController>();
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Settings'),
@@ -63,17 +69,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(_selectedLanguage),
             onTap: _showLanguageDialog,
           ),
-          SwitchListTile(
-            secondary: Icon(Icons.dark_mode),
-            title: Text('Dark Theme'),
-            value: _isDarkTheme,
-            onChanged: (value) {
-              setState(() {
-                _isDarkTheme = value;
-              });
-              // Add logic to change theme if needed
-            },
-          ),
+          Obx(() =>
+              ListTile(
+                leading: Icon(Icons.dark_mode),
+                title: Text('Dark Mode'),
+                trailing: Switch(
+                    value: themeController.themeMode.value == ThemeMode.dark,
+                    onChanged: (isDark) {
+                      themeController.setThemeMode(
+                          isDark ? ThemeMode.dark : ThemeMode.light
+                      );
+                    }),
+              )),
           SwitchListTile(
             secondary: Icon(Icons.notifications_active),
             title: Text('Notification Permission'),

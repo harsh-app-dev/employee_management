@@ -82,7 +82,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 10.0, bottom: 16.0),
+                    padding: const EdgeInsets.only(left: 20.0, bottom: 10.0),
                     child: GestureDetector(
                       onTap: () {
                         Navigator.of(context).pop();
@@ -90,16 +90,32 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                           MaterialPageRoute(builder: (_) => ProfileScreen()),
                         );
                       },
-                      child: Text(
-                        _localProfile != null
-                            ? ('${_localProfile!.first_name} ${_localProfile!.last_name}').trim()
-                            : '--',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localProfile != null
+                                ? ('${_localProfile!.first_name} ${_localProfile!.last_name}').trim()
+                                : '--',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          if (_localProfile?.email != null && _localProfile!.email.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(
+                                _localProfile!.email,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -112,7 +128,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
               padding: EdgeInsets.zero,
               children: [
                 ListTile(
-                  leading: Icon(Icons.dashboard),
+                  leading: Icon(Icons.dashboard, size: 24),
                   title: Text('Dashboard'),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -122,7 +138,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.history),
+                  leading: Icon(Icons.history, size: 24),
                   title: Text('History'),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -132,7 +148,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.settings),
+                  leading: Icon(Icons.settings, size: 24),
                   title: Text('Settings'),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -142,17 +158,14 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.support_agent),
+                  leading: Icon(Icons.support_agent, size: 24),
                   title: Text('Help & Support'),
                   onTap: () {
-                    /*Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => SettingsScreen()),
-                    );*/
+                    // Add navigation or support logic here
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.privacy_tip_outlined),
+                  leading: Icon(Icons.privacy_tip_outlined, size: 24),
                   title: Text('Privacy Policy'),
                   onTap: () async {
                     final url = Uri.parse('https://sparkbrains.in/privacy-policy/');
@@ -164,7 +177,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.info_outline),
+                  leading: Icon(Icons.info_outline, size: 24),
                   title: Text('About'),
                   onTap: () async {
                     final url = Uri.parse('https://sparkbrains.in/about-us/');
@@ -178,6 +191,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
               ],
             ),
           ),
+          const Divider(indent: 16, endIndent: 16, height: 24),
           Padding(
             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
             child: SizedBox(

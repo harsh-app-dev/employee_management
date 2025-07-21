@@ -58,7 +58,8 @@ dependencies:
   webview_flutter: ^4.4.2
   syncfusion_flutter_pdfviewer: ^30.1.40
   flutter_speed_dial: ^7.0.0
-
+  get: ^4.7.2
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -97,10 +98,10 @@ flutter:
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
 
-# NOTE: Make sure to download Poppins fonts files from Google Fonts
-# and place them in assets/fonts/ (create the directory if it doesn't exist):
-#   - assets/fonts/Poppins-Regular.ttf
-#   - assets/fonts/Poppins-Bold.ttf
+  # NOTE: Make sure to download Poppins fonts files from Google Fonts
+  # and place them in assets/fonts/ (create the directory if it doesn't exist):
+  #   - assets/fonts/Poppins-Regular.ttf
+  #   - assets/fonts/Poppins-Bold.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
