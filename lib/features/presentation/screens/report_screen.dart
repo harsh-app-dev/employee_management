@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import '../../data/models/leave/leave_response.dart';
 import 'app_side_drawer.dart';
-import 'leave_screen.dart'; // To access _leaveRequests if needed, or you can pass the data in a real app
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final List<LeaveRequest> leaveRequests = [];
+    final List<LeaveResponse> leaveRequests = [];
     try {
     } catch (_) {}
     final theme = Theme.of(context);

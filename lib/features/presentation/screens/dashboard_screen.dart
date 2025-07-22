@@ -13,13 +13,12 @@ import '../../../core/widgets/debouncing_state.dart';
 import '../../data/models/floor/profile_data.dart';
 import '../state/profile_controller.dart';
 import '../state/punch_controller.dart';
+import '../widgets/manual_punch_in_dialog.dart';
 import 'app_side_drawer.dart';
 import 'package:employee_management/features/data/models/punch/response/punch_history_response.dart';
 import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
 import 'package:intl/intl.dart';
-
 import 'notification_screen.dart';
-import 'package:employee_management/features/presentation/widgets/manual_punch_in_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -253,20 +252,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  int get displayedWorkedSeconds {
-    if (_lastPunchType == 'in' && _lastPunchTime != null) {
-      return _workedSeconds + DateTime.now().difference(_lastPunchTime!).inSeconds;
-    }
-    return _workedSeconds;
-  }
-
-  int get displayedBreakSeconds {
-    if (_lastPunchType == 'out' && _lastPunchTime != null) {
-      return _breakSeconds + DateTime.now().difference(_lastPunchTime!).inSeconds;
-    }
-    return _breakSeconds;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -308,7 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       drawer: Drawer(
         child: AppSideDrawer(),
       ),
-      /*floatingActionButton: Stack(
+     /* floatingActionButton: Stack(
         alignment: Alignment.bottomRight,
         children: [
           if (_isFabExpanded) ...[

@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 class DocumentWebViewer extends StatelessWidget {
   final String filePath;
@@ -26,13 +27,18 @@ class DocumentWebViewer extends StatelessWidget {
       final tempFile = File('${tempDir.path}/$fileName');
       await tempFile.writeAsBytes(byteData.buffer.asUint8List());
       return tempFile.path;
+    } else if (isPublicUrl) {
+      final httpClient = HttpClient();
+      final request = await httpClient.getUrl(Uri.parse(filePath));
+      final response = await request.close();
+      final bytes = await consolidateHttpClientResponseBytes(response);
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+      return file.path;
     } else {
       return filePath;
     }
-  }
-
-  String _googleDocsUrl(String fileUri) {
-    return 'https://docs.google.com/gview?embedded=true&url=$fileUri';
   }
 
   @override
@@ -65,7 +71,6 @@ class DocumentWebViewer extends StatelessWidget {
               border: Border.all(
                 color: borderColor,
                 width: 1.2,
-                style: BorderStyle.solid,
               ),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
@@ -93,25 +98,21 @@ class DocumentWebViewer extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: iconColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              fileType,
-                              style: TextStyle(
-                                color: iconColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: iconColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          fileType,
+                          style: TextStyle(
+                            color: iconColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                            letterSpacing: 0.5,
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -142,7 +143,7 @@ class DocumentWebViewer extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            margin: const EdgeInsets.only(top: 12), // Small gap from top
+            margin: const EdgeInsets.only(top: 12),
             child: Column(
               children: [
                 Padding(
@@ -165,37 +166,33 @@ class DocumentWebViewer extends StatelessWidget {
                 ),
                 const Divider(height: 1),
                 Expanded(
-                  child: isPdf && !isPublicUrl
-                      ? FutureBuilder<String>(
-                          future: _prepareFile(context),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
-                              return const Center(child: CircularProgressIndicator());
-                            }
-                            final pdfPath = snapshot.data!;
-                            return SfPdfViewer.file(File(pdfPath));
-                          },
-                        )
-                      : isPdf && isPublicUrl
-                          ? WebViewWidget(
-                              controller: WebViewController()
-                                ..setJavaScriptMode(JavaScriptMode.unrestricted)
-                                ..loadRequest(Uri.parse(_googleDocsUrl(filePath))),
-                            )
-                      : isImage
-                          ? Center(
-                              child: Image.file(
-                                File(filePath),
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.broken_image, size: 80),
-                              ),
-                            )
-                          : WebViewWidget(
-                              controller: WebViewController()
-                                ..setJavaScriptMode(JavaScriptMode.unrestricted)
-                                ..loadRequest(Uri.parse(filePath)),
-                            ),
+                  child: FutureBuilder<String>(
+                    future: _prepareFile(context),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final localPath = snapshot.data!;
+                      if (isPdf) {
+                        return SfPdfViewer.file(File(localPath));
+                      } else if (isImage) {
+                        return Center(
+                          child: Image.file(
+                            File(localPath),
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.broken_image, size: 80),
+                          ),
+                        );
+                      } else {
+                        return WebViewWidget(
+                          controller: WebViewController()
+                            ..setJavaScriptMode(JavaScriptMode.unrestricted)
+                            ..loadFile(localPath),
+                        );
+                      }
+                    },
+                  ),
                 ),
               ],
             ),
@@ -204,4 +201,4 @@ class DocumentWebViewer extends StatelessWidget {
       ),
     );
   }
-} 
+}

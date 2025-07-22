@@ -22,6 +22,8 @@ import 'package:employee_management/features/data/models/floor/profile_database.
     as _i1065;
 import 'package:employee_management/features/data/repositories/auth_repository.dart'
     as _i106;
+import 'package:employee_management/features/data/repositories/leave_repository.dart'
+    as _i111;
 import 'package:employee_management/features/data/repositories/logout_repository.dart'
     as _i1067;
 import 'package:employee_management/features/data/repositories/profile_repository.dart'
@@ -90,6 +92,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i427.LogoutUseCase>(
         () => _i427.LogoutUseCase(gh<_i1067.LogoutRepository>()));
     gh.factory<_i106.AuthRepository>(() => _i106.AuthRepository(
+          gh<_i431.NetworkClient>(),
+          gh<_i1007.LocalStorage>(),
+        ));
+    gh.factory<_i111.LeaveRepository>(() => _i111.LeaveRepository(
           gh<_i431.NetworkClient>(),
           gh<_i1007.LocalStorage>(),
         ));

@@ -83,8 +83,6 @@ flutter:
     - assets/images/light/
     - assets/images/dark/
     - assets/images/svgs/
-    - assets/sample.pdf
-
 
   # The following line ensures that the Material Icons fonts is
   # included with your application, so that you can use the icons in
