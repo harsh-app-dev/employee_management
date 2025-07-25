@@ -41,7 +41,7 @@ class PunchRepository {
     try {
       var request = http.MultipartRequest(
         'POST',
-          Uri.parse('${_networkClient.baseUrl}attendence/punch/')
+          Uri.parse('${_networkClient.baseUrl}attendence/attendence-create/')
       );
 
       request.headers.addAll({
@@ -143,5 +143,36 @@ class PunchRepository {
       },
     );
   }
-}
 
+  // Break logs API
+  Future<NetworkResult<dynamic>> createBreakLog({
+    required String breakStart,
+    required String breakOver,
+    required int attendanceId,
+  }) async {
+    final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+    final url = "attendence/break-logs-create/";
+    final headers = {
+      "Authorization": "Bearer $token",
+      "accept": "application/json",
+      "Content-Type": "application/json",
+      "X-CSRFTOKEN": "Fv7MpkgvSv78FBaj8SVHV0TSlz2dhmTJ0qdeu5g8N3TuCSNzkTLpCUg0usy6K0Dq",
+    };
+    final body = jsonEncode({
+      "break_start": breakStart,
+      "break_over": breakOver,
+      "attendance": attendanceId,
+    });
+    try {
+      final response = await _networkClient.post(
+        url,
+        headers: headers,
+        body: body,
+        parser: (json) => json,
+      );
+      return response;
+    } catch (e) {
+      return NetworkError(-1, e.toString());
+    }
+  }
+}

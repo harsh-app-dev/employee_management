@@ -16,6 +16,7 @@ class LeaveResponse {
   final String? shortLeaveTime;
   final String? halfDayType;
   final bool isNewlyApplied;
+  final String leaveTypeName;
 
   LeaveResponse({
     required this.id,
@@ -33,6 +34,7 @@ class LeaveResponse {
     this.shortLeaveTime,
     this.halfDayType,
     this.isNewlyApplied = false,
+    required this.leaveTypeName,
   });
 
   LeaveResponse copyWith({
@@ -51,6 +53,7 @@ class LeaveResponse {
     String? shortLeaveTime,
     String? halfDayType,
     bool? isNewlyApplied,
+    String? leaveTypeName,
   }) {
     return LeaveResponse(
       id: id ?? this.id,
@@ -68,6 +71,7 @@ class LeaveResponse {
       shortLeaveTime: shortLeaveTime ?? this.shortLeaveTime,
       halfDayType: halfDayType ?? this.halfDayType,
       isNewlyApplied: isNewlyApplied ?? this.isNewlyApplied,
+      leaveTypeName: leaveTypeName ?? this.leaveTypeName,
     );
   }
 }

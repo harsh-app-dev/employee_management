@@ -159,6 +159,8 @@ class LeaveRepository {
               : null,
             halfDayType: item['half_day_session'],
             attachmentPath: item['attachment'],
+            leaveTypeName: item['leave_type_name'].toString(), // You may want to map this to name if available
+
           );
         }).toList();
         return NetworkSuccess(leaveRequests);

@@ -155,9 +155,7 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(
-                          width: 48,
-                          height: 48,
+                        SizedBox(width: 48, height: 48,
                           child: IconButton(
                             padding: EdgeInsets.zero,
                             icon: Icon(Icons.arrow_left, size: 35),
@@ -205,11 +203,7 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
                                 children: [
                                   Text(
                                     "${DateFormat('dd MMM yyyy').format(_startDate)} → ${DateFormat('dd MMM yyyy').format(_endDate)}",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.primary,
-                                    ),
+                                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: theme.colorScheme.primary,),
                                   ),
                                   if (_selectedFilter == DateFilter.custom) ...[
                                     SizedBox(width: 4),
@@ -273,11 +267,7 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
                               SizedBox(width: 8),
                               Text(
                                 AppStrings.completedTasks,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                  letterSpacing: 0.5,
-                                ),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, letterSpacing: 0.5,),
                               ),
                             ],
                           ),
@@ -291,10 +281,7 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
                                     final task = _taskHistory[taskIndex];
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                      child: TaskCard(
-                                        task: task,
-                                        isHistoryTask: true,
-                                      ),
+                                      child: TaskCard(task: task, isHistoryTask: true,),
                                     );
                                   },
                                 ),

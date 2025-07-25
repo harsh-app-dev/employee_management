@@ -29,4 +29,17 @@ class PunchInOutUseCase {
       photoFile,
     );
   }
+
+  // Break logs use case
+  Future<NetworkResult<dynamic>> createBreakLog({
+    required String breakStart,
+    required String breakOver,
+    required int attendanceId,
+  }) async {
+    return await _punchRepository.createBreakLog(
+      breakStart: breakStart,
+      breakOver: breakOver,
+      attendanceId: attendanceId,
+    );
+  }
 }

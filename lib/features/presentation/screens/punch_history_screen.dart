@@ -293,7 +293,6 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                 }
                                 final item = _punchHistory[index];
 
-                                // Use new model: first punch in, first punch out, etc.
                                 final firstPunchIn = item.punches.firstWhereOrNull(
                                       (p) =>
                                           p.punchIn != null &&

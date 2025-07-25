@@ -35,7 +35,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
     setState(() {
       _selectedDate = newDate;
     });
-    _controller.fetchTasks(); // You can pass the date to fetchTasks if your API supports it
+    _controller.fetchTasks();
   }
 
   @override
@@ -73,7 +73,6 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
       backgroundColor: const Color(0xFFF5F7FA),
       body: TabBarView(
         children: [
-          // --- Tasks Tab ---
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
             child: Column(
@@ -106,10 +105,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                           },
                           child: Container(
                             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.07),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.07), borderRadius: BorderRadius.circular(12),),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -117,12 +113,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                                 SizedBox(width: 8),
                                 Text(
                                   DateFormat('E, d MMMM yyyy').format(_selectedDate),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    letterSpacing: 0.5,
-                                    color: theme.colorScheme.primary,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, letterSpacing: 0.5, color: theme.colorScheme.primary,),
                                 ),
                                 SizedBox(width: 4),
                                 Icon(Icons.arrow_drop_down_rounded, color: theme.colorScheme.primary, size: 28),
@@ -198,14 +189,12 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
               ],
             ),
           ),
-          // --- History Tab ---
           const TaskHistoryScreen(),
         ],
       ),
       floatingActionButton: Builder(
         builder: (context) {
           final tabController = DefaultTabController.of(context);
-          if (tabController == null) return const SizedBox.shrink();
           return AnimatedBuilder(
             animation: tabController,
             builder: (context, _) {

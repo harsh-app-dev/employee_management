@@ -1,3 +1,4 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
@@ -12,22 +13,6 @@ import 'package:employee_management/features/data/repositories/leave_repository.
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/features/data/models/leave/leave_apply_request.dart';
 import 'dart:io';
-
-class LeaveBalance {
-  final String leaveType;
-  final int total;
-  final int used;
-  final int remaining;
-  final int carryForward;
-
-  LeaveBalance({
-    required this.leaveType,
-    required this.total,
-    required this.used,
-    required this.remaining,
-    required this.carryForward,
-  });
-}
 
 class LeaveScreen extends StatefulWidget {
   const LeaveScreen({Key? key}) : super(key: key);
@@ -286,7 +271,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                         _addLeaveRequest(request, casualDeduct: casualDeduct, sickDeduct: sickDeduct, shortDeduct: shortDeduct);
                         Navigator.pop(context);
                       },
-                      onSubmissionSuccess: _fetchLeaveHistory, // Add this line
+                      onSubmissionSuccess: _fetchLeaveHistory,
                     ),
                   ),
                 ),
@@ -313,46 +298,173 @@ class _LeaveScreenState extends State<LeaveScreen> {
             Row(
               children: [
                 Expanded(
-                  child: DropdownButtonFormField<String>(
+                  child: InputDecorator(
                     decoration: const InputDecoration(
                       labelText: 'Status',
                       border: OutlineInputBorder(),
-                      isDense: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     ),
-                    value: _selectedStatusFilter,
-                    items: ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled']
-                        .map((status) => DropdownMenuItem(value: status, child: Text(status)))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedStatusFilter = value!;
-                      });
-                    },
-                    isExpanded: true,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton2<String>(
+                        isExpanded: true,
+                        hint: const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Status',
+                            style: TextStyle(fontSize: 14, color: Colors.black54),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.start,
+                          ),
+                        ),
+                        value: _selectedStatusFilter,
+                        items: ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled']
+                            .map((item) => DropdownMenuItem<String>(
+                          value: item,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              item,
+                              style: const TextStyle(fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.start,
+                            ),
+                          ),
+                        ))
+                            .toList(),
+                        selectedItemBuilder: (context) {
+                          return ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'].map(
+                                (item) => Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                item,
+                                style: const TextStyle(fontSize: 14),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.start,
+                              ),
+                            ),
+                          ).toList();
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedStatusFilter = value!;
+                          });
+                        },
+                        buttonStyleData: const ButtonStyleData(
+                          padding: EdgeInsets.symmetric(horizontal: 10), // ensures text is clickable too
+                          height: 30,
+                          width: double.infinity,
+                        ),
+                        iconStyleData: const IconStyleData(
+                          icon: Icon(Icons.arrow_drop_down),
+                          iconSize: 24,
+                        ),
+                        dropdownStyleData: DropdownStyleData(
+                          maxHeight: 400,
+                          width: 180,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
+
+
+
                 const SizedBox(width: 10),
                 Expanded(
-                  child: DropdownButtonFormField<String>(
+                  child: InputDecorator(
                     decoration: const InputDecoration(
                       labelText: 'Leave Type',
                       border: OutlineInputBorder(),
-                      isDense: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     ),
-                    value: _selectedTypeFilter,
-                    items: ['All', ..._leaveTypes.map((e) => e.name)]
-                        .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedTypeFilter = value!;
-                      });
-                    },
-                    isExpanded: true,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton2<String>(
+                        isExpanded: true,
+                        hint: const SizedBox(
+                          width: double.infinity,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Leave Type',
+                              style: TextStyle(fontSize: 14, color: Colors.black54),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.start,
+                            ),
+                          ),
+                        ),
+                        value: _selectedTypeFilter,
+                        items: ['All', ..._leaveTypes.map((e) => e.name)].map(
+                              (type) => DropdownMenuItem<String>(
+                            value: type,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  type,
+                                  style: const TextStyle(fontSize: 14),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.start,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ).toList(),
+                        selectedItemBuilder: (context) {
+                          return ['All', ..._leaveTypes.map((e) => e.name)].map(
+                                (type) => SizedBox(
+                              width: double.infinity,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  type,
+                                  style: const TextStyle(fontSize: 14),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.start,
+                                ),
+                              ),
+                            ),
+                          ).toList();
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedTypeFilter = value!;
+                          });
+                        },
+                        buttonStyleData: const ButtonStyleData(
+                          padding: EdgeInsets.symmetric(horizontal: 10), // ensures text is clickable too
+                          height: 30,
+                          width: double.infinity,
+                        ),
+                        iconStyleData: const IconStyleData(
+                          icon: Icon(Icons.arrow_drop_down),
+                          iconSize: 24,
+                        ),
+                        dropdownStyleData: DropdownStyleData(
+                          maxHeight: 400,
+                          width: 180,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
+
                 const SizedBox(width: 10),
                 IconButton(
                   onPressed: () {
@@ -448,7 +560,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       CircleAvatar(
                         backgroundColor: _getStatusColor(leave.leaveType).withOpacity(0.13),
                         radius: 22,
-                        child: Icon(_getLeaveTypeIcon(leave.leaveType), color: _getStatusColor(leave.leaveType), size: 22),
+                        child: Icon(_getLeaveTypeIcon(leave.leaveTypeName), color: _getStatusColor(leave.leaveType), size: 22),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -456,7 +568,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              leave.leaveType,
+                              leave.leaveTypeName,
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                             ),
                             const SizedBox(height: 2),
@@ -571,6 +683,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                                       managerComment: leave.managerComment,
                                       processedDate: DateTime.now(),
                                       totalDays: leave.totalDays,
+                                      leaveTypeName: leave.leaveTypeName
                                     );
                                     _initializeEvents();
                                   });
@@ -626,7 +739,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       SizedBox(height: 10),
                       Row(
                         children: [
-                          Icon(_getLeaveTypeIcon(leave.leaveType), color: _getStatusColor(leave.leaveType), size: 28),
+                          Icon(_getLeaveTypeIcon(leave.leaveTypeName), color: _getStatusColor(leave.leaveType), size: 28),
                           const SizedBox(width: 10),
                           Text(
                             leave.leaveType,
@@ -715,11 +828,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
       ),
       child: Text(
         status,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500,),
       ),
     );
   }
@@ -740,17 +849,38 @@ class _LeaveScreenState extends State<LeaveScreen> {
   IconData _getLeaveTypeIcon(String type) {
     switch (type) {
       case 'Sick Leave':
+      case 'Medical Leave':
         return Icons.sick;
+
       case 'Casual Leave':
         return Icons.beach_access;
-      case 'Half Day':
+
+      case 'Half Day Leave':
         return Icons.wb_sunny;
+
       case 'Short Leave':
         return Icons.timelapse;
+
+      case 'Emergency Leave':
+        return Icons.warning_amber_rounded;
+
+      case 'Maternity Leave':
+        return Icons.pregnant_woman;
+
+      case 'Paternity Leave':
+        return Icons.family_restroom;
+
+      case 'Wedding Leave':
+        return Icons.favorite;
+
+      case 'Bereavement Leave':
+        return Icons.sentiment_dissatisfied;
+
       default:
         return Icons.category;
     }
   }
+
 }
 
 class _LeaveApplicationForm extends StatefulWidget {
@@ -831,7 +961,6 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
       );
-
       if (result != null) {
         setState(() {
           _attachmentPath = result.files.single.path;
@@ -857,7 +986,6 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
       showGlobalSnackBar('Please select which half for Half Day leave.');
       return;
     }
-
     if (_selectedManagers.isEmpty) {
       showGlobalSnackBar('Please select at least one manager.');
       return;
@@ -895,8 +1023,8 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
       attachment: _attachmentPath != null ? File(_attachmentPath!) : null,
       isHalfDay: _selectedLeaveType == 'Half Day Leave',
       halfDaySession: _selectedHalf == 'First Half' ? 'FH' : _selectedHalf == 'Second Half' ? 'SH' : null,
-      startTime: _shortLeaveStartTime?.format(context),
-      endTime: _shortLeaveEndTime?.format(context),
+      startTime: _shortLeaveStartTime != null ? _shortLeaveStartTime!.hour.toString().padLeft(2, '0') + ':' + _shortLeaveStartTime!.minute.toString().padLeft(2, '0') : null,
+      endTime: _shortLeaveEndTime != null ? _shortLeaveEndTime!.hour.toString().padLeft(2, '0') + ':' + _shortLeaveEndTime!.minute.toString().padLeft(2, '0') : null,
     );
 
     final repo = getIt<LeaveRepository>();
@@ -930,26 +1058,64 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DropdownButtonFormField<String>(
+          DropdownButtonFormField2<String>(
             decoration: const InputDecoration(
               labelText: 'Leave Type *',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.category),
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
-            value: _selectedLeaveType,
-            items: uniqueLeaveTypes.map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
-            onChanged: (value) => setState(() {
-              final wasSingleDay = _selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day Leave';
-              final isSingleDay = value == 'Short Leave' || value == 'Half Day Leave';
-              if (wasSingleDay != isSingleDay) {
-                _dateRange = null;
-              }
-              _selectedLeaveType = value;
-              if (value != 'Half Day Leave') _selectedHalf = null;
-            }),
-            validator: (value) => value == null ? 'Please select leave type' : null,
             isExpanded: true,
+            value: _selectedLeaveType,
+            hint: const Text(
+              'Select Leave Type',
+              style: TextStyle(fontSize: 14, color: Colors.black54),
+              overflow: TextOverflow.ellipsis,
+            ),
+            items: uniqueLeaveTypes
+                .map(
+                  (type) => DropdownMenuItem<String>(
+                value: type,
+                child: Text(
+                  type,
+                  style: const TextStyle(fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            )
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                final wasSingleDay =
+                    _selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day Leave';
+                final isSingleDay =
+                    value == 'Short Leave' || value == 'Half Day Leave';
+                if (wasSingleDay != isSingleDay) {
+                  _dateRange = null;
+                }
+                _selectedLeaveType = value;
+                if (value != 'Half Day Leave') _selectedHalf = null;
+              });
+            },
+            validator: (value) =>
+            value == null || value.isEmpty ? 'Please select leave type' : null,
+            buttonStyleData: const ButtonStyleData(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              height: 30,
+              width: double.infinity,
+            ),
+            iconStyleData: const IconStyleData(
+              icon: Icon(Icons.arrow_drop_down),
+              iconSize: 24,
+            ),
+            dropdownStyleData: DropdownStyleData(
+              maxHeight: 300,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: Colors.white,
+                border: Border.all(color: Colors.grey),
+              ),
+            ),
           ),
           if (_selectedLeaveType == 'Half Day Leave') ...[
             const SizedBox(height: 12),
@@ -1102,81 +1268,143 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
             ),
           if (_dateRange != null) const SizedBox(height: 12),
 
-          DropdownButtonFormField<String>(
+          DropdownButtonFormField2<String>(
             decoration: const InputDecoration(
               labelText: 'HR *',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.person_outline),
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
-            value: _selectedHR,
-            items: uniqueHRs.map((hr) => DropdownMenuItem(value: hr, child: Text(hr))).toList(),
-            onChanged: (value) => setState(() => _selectedHR = value),
-            validator: (value) => value == null ? 'Please select an HR' : null,
             isExpanded: true,
+            value: _selectedHR,
+            hint: const Text(
+              'Select HR',
+              style: TextStyle(fontSize: 14, color: Colors.black54),
+              overflow: TextOverflow.ellipsis,
+            ),
+            items: uniqueHRs
+                .map(
+                  (hr) => DropdownMenuItem<String>(
+                value: hr,
+                child: Text(
+                  hr,
+                  style: const TextStyle(fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            )
+                .toList(),
+            onChanged: (value) => setState(() => _selectedHR = value),
+            validator: (value) =>
+            value == null || value.isEmpty ? 'Please select an HR' : null,
+            buttonStyleData: const ButtonStyleData(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              height: 30,
+              width: double.infinity,
+            ),
+            iconStyleData: const IconStyleData(
+              icon: Icon(Icons.arrow_drop_down),
+              iconSize: 24,
+            ),
+            dropdownStyleData: DropdownStyleData(
+              maxHeight: 300,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: Colors.white,
+                border: Border.all(color: Colors.grey),
+              ),
+            ),
           ),
+
           const SizedBox(height: 12),
           FormField<List<RoleUser>>(
-            builder: (field) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  InkWell(
-                    onTap: () async {
-                      final List<RoleUser>? results = await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return MultiSelectManagerDialog(
-                            managers: widget.managerList,
-                            selectedManagers: _selectedManagers,
-                          );
-                        },
-                      );
-
-                      if (results != null) {
-                        setState(() {
-                          _selectedManagers = results;
-                          field.didChange(_selectedManagers);
-                        });
-                      }
-                    },
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: 'Team Lead(s) *',
-                        border: const OutlineInputBorder(),
-                        errorText: field.errorText,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      child: _selectedManagers.isEmpty
-                          ? const Text('Select one or more managers')
-                          : Wrap(
-                        spacing: 6.0,
-                        runSpacing: 6.0,
-                        children: _selectedManagers
-                            .map((manager) => Chip(
-                          label: Text(manager.fullName),
-                          onDeleted: () {
-                            setState(() {
-                              _selectedManagers.remove(manager);
-                              field.didChange(_selectedManagers);
-                            });
-                          },
-                        ))
-                            .toList(),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
+            initialValue: _selectedManagers,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please select at least one manager.';
               }
               return null;
             },
-            initialValue: _selectedManagers,
+            builder: (field) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton2(
+                      isExpanded: true,
+                      customButton: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Team Lead(s) *',
+                          border: const OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          errorText: field.errorText,
+                        ),
+                        child: Text(
+                          _selectedManagers.isEmpty
+                              ? 'Select one or more managers'
+                              : _selectedManagers.map((e) => e.fullName).join(', '),
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      dropdownStyleData: DropdownStyleData(
+                        maxHeight: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          color: Colors.white,
+                          border: Border.all(color: Colors.grey),
+                        ),
+                      ),
+                      onChanged: (_) {}, // Still required but not used
+                      items: widget.managerList.map((manager) {
+                        return DropdownMenuItem(
+                          value: manager,
+                          child: StatefulBuilder(
+                            builder: (context, setStateSB) {
+                              final isSelected = _selectedManagers.any((m) => m.id == manager.id);
+                              return CheckboxListTile(
+                                dense: true,
+                                value: isSelected,
+                                title: Text(manager.fullName, style: const TextStyle(fontSize: 14)),
+                                controlAffinity: ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                                onChanged: (checked) {
+                                  setState(() {
+                                    if (checked == true) {
+                                      _selectedManagers.add(manager);
+                                    } else {
+                                      _selectedManagers.removeWhere((m) => m.id == manager.id);
+                                    }
+                                    field.didChange(_selectedManagers);
+                                  });
+                                  setStateSB(() {}); // This updates the checkbox immediately
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      }).toList(),
+                      iconStyleData: const IconStyleData(
+                        icon: Icon(Icons.arrow_drop_down),
+                        iconSize: 24,
+                      ),
+                    ),
+                  ),
+                  if (field.hasError)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12.0, top: 5),
+                      child: Text(
+                        field.errorText!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
+
+
+
           const SizedBox(height: 12),
           TextFormField(
             controller: _reasonController,
@@ -1249,68 +1477,3 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
     );
   }
 }
-
-class MultiSelectManagerDialog extends StatefulWidget {
-  final List<RoleUser> managers;
-  final List<RoleUser> selectedManagers;
-
-  const MultiSelectManagerDialog({
-    Key? key,
-    required this.managers,
-    required this.selectedManagers,
-  }) : super(key: key);
-
-  @override
-  State<MultiSelectManagerDialog> createState() => _MultiSelectManagerDialogState();
-}
-
-class _MultiSelectManagerDialogState extends State<MultiSelectManagerDialog> {
-  late final List<RoleUser> _tempSelectedManagers;
-
-  @override
-  void initState() {
-    super.initState();
-    _tempSelectedManagers = List.from(widget.selectedManagers);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Select Managers'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: ListView.builder(
-          itemCount: widget.managers.length,
-          itemBuilder: (context, index) {
-            final manager = widget.managers[index];
-            final isSelected = _tempSelectedManagers.any((m) => m.id == manager.id);
-            return CheckboxListTile(
-              title: Text(manager.fullName),
-              value: isSelected,
-              onChanged: (bool? value) {
-                setState(() {
-                  if (value == true) {
-                    _tempSelectedManagers.add(manager);
-                  } else {
-                    _tempSelectedManagers.removeWhere((m) => m.id == manager.id);
-                  }
-                });
-              },
-            );
-          },
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          child: const Text('Cancel'),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        ElevatedButton(
-          child: const Text('OK'),
-          onPressed: () => Navigator.of(context).pop(_tempSelectedManagers),
-        ),
-      ],
-    );
-  }
-}
-

@@ -43,10 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         title: Text(
           AppStrings.profile,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onPrimary,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary,),
         ),
         centerTitle: true,
         elevation: 0,
@@ -81,11 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundColor: theme.colorScheme.primaryContainer,
                         child: Text(
                           getInitials(profile.first_name, profile.last_name),
-                          style: TextStyle(
-                            fontSize: size.width * 0.10,
-                            color: theme.colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: size.width * 0.10, color: theme.colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold,),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -124,27 +117,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         value: profile.organization,
                         icon: Icons.business,
                       ),
-                      const SizedBox(height: 32),
-                      // SizedBox(
-                      //   width: double.infinity,
-                      //   child: ElevatedButton.icon(
-                      //     icon:  Icon(Icons.logout, size: 22.sp,),
-                      //     label: Text(AppStrings.logout, style: TextStyle(fontSize: 18.sp),),
-                      //     style: ElevatedButton.styleFrom(
-                      //       backgroundColor: Colors.red,
-                      //       foregroundColor: theme.colorScheme.onError,
-                      //       padding: const EdgeInsets.symmetric(vertical: 16),
-                      //     ),
-                      //     onPressed: () async {
-                      //       await _profileController.logout();
-                      //       getIt<GlobalKey<NavigatorState>>().currentState
-                      //           ?.pushNamedAndRemoveUntil(
-                      //             '/login',
-                      //             (route) => false,
-                      //           );
-                      //     },
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
@@ -158,7 +130,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// Helper widget for profile fields
 class _ProfileField extends StatelessWidget {
   final String label;
   final String value;
@@ -189,12 +160,7 @@ class _ProfileField extends StatelessWidget {
                 fontSize:  14.sp, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 2),
-              Text(
-                value,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontSize: 16.sp
-                ),
-              ),
+              Text(value, style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16.sp),),
             ],
           ),
         ),

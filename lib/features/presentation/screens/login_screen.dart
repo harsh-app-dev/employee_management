@@ -68,23 +68,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   return TextFormField(
                                     controller: _emailController,
                                     keyboardType: TextInputType.emailAddress,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface,
-                                      fontSize: 16.sp,
-                                    ),
+                                    style: TextStyle(color: Theme.of(context,).colorScheme.onSurface, fontSize: 16.sp,),
                                     decoration: InputDecoration(
                                       labelText: AppStrings.email,
-                                      border: const OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(12),
-                                        ),
-                                      ),
+                                      border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12),),),
                                       errorText: emailError,
-                                      prefixIcon: const Icon(
-                                        Icons.email_outlined,
-                                      ),
+                                      prefixIcon: const Icon(Icons.email_outlined,),
                                     ),
                                   );
                                 },
@@ -94,38 +83,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                 valueListenable: _controller.passwordError,
                                 builder: (context, passwordError, _) {
                                   return ValueListenableBuilder<bool>(
-                                    valueListenable:
-                                        _controller.isPasswordVisible,
+                                    valueListenable: _controller.isPasswordVisible,
                                     builder: (context, isPasswordVisible, _) {
                                       return TextFormField(
                                         controller: _passwordController,
-                                        keyboardType:
-                                            TextInputType.visiblePassword,
-                                        style: TextStyle(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface,
-                                          fontSize: 16.sp,
-                                        ),
+                                        keyboardType: TextInputType.visiblePassword,
+                                        style: TextStyle(color: Theme.of(context,).colorScheme.onSurface, fontSize: 16.sp,),
                                         decoration: InputDecoration(
                                           labelText: AppStrings.password,
-                                          border: const OutlineInputBorder(
-                                            borderRadius: BorderRadius.all(
-                                              Radius.circular(12),
-                                            ),
-                                          ),
+                                          border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12),),),
                                           errorText: passwordError,
-                                          prefixIcon: const Icon(
-                                            Icons.lock_outline,
-                                          ),
+                                          prefixIcon: const Icon(Icons.lock_outline,),
                                           suffixIcon: IconButton(
-                                            icon: Icon(
-                                              isPasswordVisible
-                                                  ? Icons.visibility
-                                                  : Icons.visibility_off,
-                                            ),
-                                            onPressed: _controller
-                                                .togglePasswordVisibility,
+                                            icon: Icon(isPasswordVisible ? Icons.visibility : Icons.visibility_off,),
+                                            onPressed: _controller.togglePasswordVisibility,
                                           ),
                                         ),
                                         obscureText: !isPasswordVisible,
@@ -135,9 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                               ),
                               SizedBox(height: 3.h),
-                              SizedBox(
-                                height: 7.h,
-                                width: 100.w,
+                              SizedBox(height: 7.h, width: 100.w,
                                 child: FilledButton(
                                   onPressed: () {
                                     _loginDebouncer.run(() async {
@@ -152,21 +121,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                       if (error != null) {
                                         showGlobalSnackBar(error);
                                       } else if (_controller.loginApiState.value.isSuccess) {
-                                        getIt<GlobalKey<NavigatorState>>()
-                                            .currentState
-                                            ?.pushReplacementNamed('/main');
+                                        getIt<GlobalKey<NavigatorState>>().currentState?.pushReplacementNamed('/main');
                                       }
                                     });
                                   },
 
                                   child: loginApiState.isLoading
-                                      ? SizedBox(
-                                          height: 4.h,
-                                          width: 4.h,
-                                          child:
-                                              const CircularProgressIndicator(
-                                                strokeWidth: 4,
-                                              ),
+                                      ? SizedBox(height: 4.h, width: 4.h,
+                                          child: const CircularProgressIndicator(strokeWidth: 4,),
                                         )
                                       : Text(
                                           AppStrings.login,
