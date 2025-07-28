@@ -51,11 +51,21 @@ String formatDuration(String? durationStr) {
   }
 }
 
-String formatTime(String? isoTime) {
-  if (isoTime == null || isoTime.isEmpty) return '--:--';
+String formatTime(String? time, {String? date}) {
+  if (time == null || time.isEmpty) return '--:--';
+
   try {
-    final dateTime = DateTime.parse(isoTime);
-    return DateFormat('hh:mm a').format(dateTime);
+    // Remove milliseconds if present
+    final timeWithoutMillis = time.split('.')[0];
+
+    // If date is provided, combine with time
+    if (date != null) {
+      return DateFormat('hh:mm a').format(DateTime.parse('${date}T$timeWithoutMillis'));
+    }
+    // For time-only strings (HH:mm:ss)
+    else {
+      return DateFormat('hh:mm a').format(DateFormat('HH:mm:ss').parse(timeWithoutMillis));
+    }
   } catch (_) {
     return '--:--';
   }

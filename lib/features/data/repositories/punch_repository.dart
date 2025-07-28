@@ -118,7 +118,7 @@ class PunchRepository {
   }
 
   // Fetch punch history with optional pagination and date range
-  Future<NetworkResult<List<PunchHistoryResponse>>> getPunchHistory({
+  Future<NetworkResult<PunchHistoryResponse>> getPunchHistory({
     int? page,
     int? pageSize,
     String? startDate,
@@ -134,13 +134,10 @@ class PunchRepository {
     if (params.isNotEmpty) {
       url += '?${params.join('&')}';
     }
-    return await _networkClient.get<List<PunchHistoryResponse>>(
+    return await _networkClient.get<PunchHistoryResponse>(
       url,
       headers: {"Authorization": "Bearer $token"},
-      parser: (json) {
-        final List<dynamic> data = json['results'] ?? [];
-        return data.map((e) => PunchHistoryResponse.fromJson(e)).toList();
-      },
+      parser: (json) => PunchHistoryResponse.fromJson(json),
     );
   }
 

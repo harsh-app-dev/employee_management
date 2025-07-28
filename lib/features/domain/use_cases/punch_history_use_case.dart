@@ -8,7 +8,7 @@ class PunchHistoryUseCase {
   final PunchRepository _repo;
   PunchHistoryUseCase(this._repo);
 
-  Future<NetworkResult<List<PunchHistoryResponse>>> call({
+  Future<NetworkResult<PunchHistoryResponse>> call({
     int? page,
     int? pageSize,
     String? startDate,

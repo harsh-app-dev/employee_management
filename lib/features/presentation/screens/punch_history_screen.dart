@@ -23,7 +23,7 @@ class PunchHistoryScreen extends StatefulWidget {
 class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
   late DateTime _startDate;
   late DateTime _endDate;
-  List<PunchHistoryResponse> _punchHistory = [];
+  List<PunchEntry> _punchHistory = [];
   bool _isLoading = false;
   int _currentPage = 1;
   bool _hasMore = true;
@@ -56,14 +56,14 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
       pageSize: _pageSize,
     );
 
-    if (result is NetworkSuccess<List<PunchHistoryResponse>>) {
+    if (result is NetworkSuccess<PunchHistoryResponse>) {
       setState(() {
         if (isLoadMore) {
-          _punchHistory.addAll(result.data);
+          _punchHistory.addAll(result.data.results);
         } else {
-          _punchHistory = result.data;
+          _punchHistory = result.data.results;
         }
-        _hasMore = result.data.length == _pageSize;
+        _hasMore = result.data.results.length == _pageSize;
         _isLoading = false;
         if (isLoadMore) _currentPage++;
       });
@@ -263,7 +263,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                 _fetchPunchHistory();
                               },
                             ),
-                          ),
+                          )
                         );
                       },
                     ),
@@ -293,16 +293,8 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                 }
                                 final item = _punchHistory[index];
 
-                                final firstPunchIn = item.punches.firstWhereOrNull(
-                                      (p) =>
-                                          p.punchIn != null &&
-                                          p.punchIn!.isNotEmpty,
-                                    );
-                                final lastPunchOut = item.punches.lastWhereOrNull(
-                                      (p) =>
-                                          p.punchOut != null &&
-                                          p.punchOut!.isNotEmpty,
-                                    );
+                                final punchIn = item.punchIn;
+                                final punchOut = item.punchOut;
 
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10,),
@@ -389,65 +381,95 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                                         Divider(height: 24, thickness: 1.3,
                                                                           color: theme.colorScheme.primary.withOpacity(0.15,),
                                                                         ),
-                                                                        ...item.punches.asMap().entries.map((entry,) {
-                                                                          final i = entry.key;
-                                                                          final punch = entry.value;
-                                                                          return Padding(padding: const EdgeInsets.only(bottom: 18.0,),
-                                                                            child: Column(
-                                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                                              children: [
-                                                                                Row(
-                                                                                  children: [
-                                                                                    Icon(Icons.login, color: Colors.green, size: 22,),
-                                                                                    SizedBox(width: 6,),
-                                                                                    Text(
-                                                                                      '${AppStrings.inText}: ',
-                                                                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 15,),
-                                                                                    ),
-                                                                                    Text(
-                                                                                      formatTime(punch.punchIn,),
-                                                                                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15,),
-                                                                                    ),
-                                                                                    Spacer(),
-                                                                                    Icon(Icons.logout, color: Colors.red, size: 22,),
-                                                                                    SizedBox(width: 6,),
-                                                                                    Text(
-                                                                                      '${AppStrings.out}: ',
-                                                                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 15,),
-                                                                                    ),
-                                                                                    Text(
-                                                                                      formatTime(punch.punchOut,),
-                                                                                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15,),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                                if (i != item.punches.length - 1) ...[
-                                                                                  SizedBox(height: 10,),
-                                                                                  Row(
-                                                                                    children: [
-                                                                                      Expanded(
-                                                                                        child: Divider(thickness: 1, color: theme.colorScheme.primary.withOpacity(0.08,),
-                                                                                        ),
-                                                                                      ),
-                                                                                      Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0,),
-                                                                                        child: Text(
-                                                                                          'Break',
-                                                                                          style: TextStyle(fontSize: 13, color: theme.colorScheme.primary.withOpacity(0.5,), fontWeight: FontWeight.w600,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      Expanded(
-                                                                                        child: Divider(thickness: 1, color: theme.colorScheme.primary.withOpacity(0.08,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ],
+                                                                        // Punch In/Out details
+                                                                        Padding(padding: const EdgeInsets.only(bottom: 18.0,),
+                                                                          child: Column(
+                                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                                            children: [
+                                                                              Row(
+                                                                                children: [
+                                                                                  Icon(Icons.login, color: Colors.green, size: 22,),
+                                                                                  SizedBox(width: 6,),
+                                                                                  Text(
+                                                                                    '${AppStrings.inText}: ',
+                                                                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 15,),
+                                                                                  ),
+                                                                                  Text(
+                                                                                    formatTime(punchIn,),
+                                                                                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15,),
+                                                                                  ),
+                                                                                  Spacer(),
+                                                                                  Icon(Icons.logout, color: Colors.red, size: 22,),
+                                                                                  SizedBox(width: 6,),
+                                                                                  Text(
+                                                                                    '${AppStrings.out}: ',
+                                                                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 15,),
+                                                                                  ),
+                                                                                  Text(
+                                                                                    formatTime(punchOut,),
+                                                                                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15,),
                                                                                   ),
                                                                                 ],
+                                                                              ),
+                                                                              // Break logs
+                                                                              if (item.breaks.isNotEmpty) ...[
+                                                                                SizedBox(height: 30),
+                                                                                Text('Break Logs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                                                                Divider(height: 18, thickness: 1.1, color: theme.colorScheme.primary.withOpacity(0.10)),
+                                                                                ...item.breaks.asMap().entries.map((bEntry) {
+                                                                                  final brk = bEntry.value;
+                                                                                  final parentDate = item.date;
+                                                                                  return Padding(
+                                                                                    padding: const EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
+                                                                                    child: Row(
+                                                                                      children: [
+                                                                                        Container(
+                                                                                          padding: EdgeInsets.all(6),
+                                                                                          decoration: BoxDecoration(
+                                                                                            shape: BoxShape.circle,
+                                                                                            color: Colors.orange.withOpacity(0.1),
+                                                                                          ),
+                                                                                          child: Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20),
+                                                                                        ),
+                                                                                        SizedBox(width: 8),
+                                                                                        Column(
+                                                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                          children: [
+                                                                                            Text('Break In', style: TextStyle(fontSize: 15, color: Colors.orange, fontWeight: FontWeight.bold)),
+                                                                                            SizedBox(height: 2),
+                                                                                            Text( brk.breakStart != null
+                                                                                  ? formatTime(brk.breakStart, date: parentDate)
+                                                                                      : '--:--', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                                                                                          ],
+                                                                                        ),
+                                                                                        Spacer(),
+                                                                                        Container(
+                                                                                          padding: EdgeInsets.all(6),
+                                                                                          decoration: BoxDecoration(
+                                                                                            shape: BoxShape.circle,
+                                                                                            color: Colors.green.withOpacity(0.1),
+                                                                                          ),
+                                                                                          child: Icon(Icons.play_circle_fill, color: Colors.green, size: 20),
+                                                                                        ),
+                                                                                        SizedBox(width: 8),
+                                                                                        Column(
+                                                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                          children: [
+                                                                                            Text('Break Out', style: TextStyle(fontSize: 15, color: Colors.green, fontWeight: FontWeight.bold)),
+                                                                                            SizedBox(height: 2),
+                                                                                            Text( brk.breakOver != null
+                                                                                  ? formatTime(brk.breakOver, date: parentDate)
+                                                                                      : '--:--', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                                                                                          ],
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                  );
+                                                                                }).toList(),
                                                                               ],
-                                                                            ),
-                                                                          );
-                                                                        }).toList(),
+                                                                            ],
+                                                                          ),
+                                                                        ),
                                                                         Divider(height: 28, thickness: 1.3, color: theme.colorScheme.primary.withOpacity(0.15,),),
                                                                         Row(
                                                                           children: [
@@ -522,8 +544,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                             ),
                                                             SizedBox(height: 4),
                                                             Text(
-                                                              firstPunchIn?.punchIn != null && firstPunchIn?.punchIn?.isNotEmpty == true
-                                                                  ? formatTime(firstPunchIn!.punchIn) : '--',
+                                                              punchIn != null && punchIn.isNotEmpty ? formatTime(punchIn) : '--',
                                                               style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
                                                             ),
                                                           ],
@@ -546,8 +567,8 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                             ),
                                                             SizedBox(height: 4),
                                                             Text(
-                                                              lastPunchOut?.punchOut != null && lastPunchOut?.punchOut?.isNotEmpty == true
-                                                                  ? formatTime(lastPunchOut!.punchOut,) : '--',
+                                                              punchOut != null && punchOut.isNotEmpty
+                                                                  ? formatTime(punchOut) : '--',
                                                               style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
                                                             ),
                                                           ],
@@ -557,8 +578,8 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                   ),
                                                   SizedBox(height: 10),
                                                   _PunchLocationColumn(
-                                                    punchInLatLong: firstPunchIn?.punchedInLatLong,
-                                                    punchOutLatLong: lastPunchOut?.punchedOutLatLong,
+                                                    punchInLatLong: item.punchedInLatLong ?? item.punchedInLatLong,
+                                                    punchOutLatLong: item.punchedOutLatLong ?? item.punchedOutLatLong,
                                                   ),
                                                 ],
                                               ),
@@ -580,7 +601,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                     formatDuration(item.totalWorkTime,),
                                                     style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
                                                   ),
-                                                  SizedBox(width: 14),
+                                                  SizedBox(width: 30),
                                                   Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20,),
                                                   SizedBox(width: 6),
                                                   Text(

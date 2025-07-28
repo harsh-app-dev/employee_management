@@ -51,10 +51,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _lastPunchOut = '--';
   final PunchHistoryUseCase _punchHistoryUseCase = getIt<PunchHistoryUseCase>();
   bool _isFabExpanded = false;
-  List<PunchHistoryResponse> _todaysPunchHistory = [];
+  List<PunchEntry> _todaysPunchEntries = [];
   String _todaysPunchIn = '--';
   String _todaysPunchOut = '--';
   bool _isPunchLoading = false;
+  bool _isBreakButtonEnabled = false;
+  bool _isOnBreak = false;
+  bool _isBreakLoading = false;
 
   @override
   void initState() {
@@ -192,25 +195,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
     final result = await _punchHistoryUseCase(startDate: todayStr, endDate: todayStr, page: 1, pageSize: 1,);
 
-    if (result is NetworkSuccess<List<PunchHistoryResponse>>) {
-      final data = result.data;
+    if (result is NetworkSuccess<PunchHistoryResponse>) {
+      final data = result.data.results;
       if (data.isNotEmpty) {
-        final punches = data[0].punches;
-        String? firstIn;
-        String? lastOut;
-        for (final punch in punches) {
-          if (firstIn == null && punch.punchIn != null && punch.punchIn!.isNotEmpty) {
-            firstIn = punch.punchIn;
-          }
-          if (punch.punchOut != null && punch.punchOut!.isNotEmpty) {
-            lastOut = punch.punchOut;
-          }
-        }
+        final entry = data[0];
+        String? firstIn = entry.punchIn;
+        String? lastOut = entry.punchOut;
         setState(() {
-          _workedDuration = _formatApiDuration(data[0].totalWorkTime);
-          _breakDuration = _formatApiDuration(data[0].totalBreakTime);
-          _firstPunchIn = firstIn != null ? _formatTime(firstIn) : '--';
-          _lastPunchOut = lastOut != null ? _formatTime(lastOut) : '--';
+          _workedDuration = _formatApiDuration(entry.totalWorkTime);
+          _breakDuration = _formatApiDuration(entry.totalBreakTime);
+          _firstPunchIn = firstIn != null && firstIn.isNotEmpty ? _formatTime(firstIn) : '--';
+          _lastPunchOut = lastOut != null && lastOut.isNotEmpty ? _formatTime(lastOut) : '--';
         });
       } else {
         setState(() {
@@ -264,47 +259,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
       page: 1,
       pageSize: 1,
     );
-    if (result is NetworkSuccess<List<PunchHistoryResponse>>) {
-      _todaysPunchHistory = result.data;
-      if (_todaysPunchHistory.isNotEmpty) {
-        final punches = _todaysPunchHistory.first.punches;
-        final firstPunchIn = punches.firstWhereOrNull((p) => p.punchIn != null && p.punchIn!.isNotEmpty);
-        final lastPunchOut = punches.isNotEmpty
-            ? punches.reversed.firstWhereOrNull((p) => p.punchOut != null && p.punchOut!.isNotEmpty)
-            : null;
-        _todaysPunchIn = firstPunchIn?.punchIn ?? '--';
-        _todaysPunchOut = lastPunchOut?.punchOut ?? '--';
-        // Also update worked/break times and first/last punch
-        final data = _todaysPunchHistory.first;
-        String? firstIn;
-        String? lastOut;
-        for (final punch in punches) {
-          if (firstIn == null && punch.punchIn != null && punch.punchIn!.isNotEmpty) {
-            firstIn = punch.punchIn;
-          }
-          if (punch.punchOut != null && punch.punchOut!.isNotEmpty) {
-            lastOut = punch.punchOut;
-          }
+    if (result is NetworkSuccess<PunchHistoryResponse>) {
+      final entries = result.data.results;
+      _todaysPunchEntries = entries;
+      if (_todaysPunchEntries.isNotEmpty) {
+        final entry = _todaysPunchEntries.first;
+        final date = entry.date; // e.g., "2025-07-28"
+        final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
+        final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
+        _workedDuration = _formatApiDuration(entry.totalWorkTime);
+        _breakDuration = _formatApiDuration(entry.totalBreakTime);
+        _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
+        _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
+        // Set break button enabled based on punch in/out status
+        _isBreakButtonEnabled = entry.punchIn != null && entry.punchOut == null;
+        // Determine break state
+        if (entry.breaks.isNotEmpty) {
+          final lastBreak = entry.breaks.last;
+          _isOnBreak = lastBreak.breakStart != null && (lastBreak.breakOver == null || lastBreak.breakOver!.isEmpty);
+        } else {
+          _isOnBreak = false;
         }
-        _workedDuration = _formatApiDuration(data.totalWorkTime);
-        _breakDuration = _formatApiDuration(data.totalBreakTime);
-        _firstPunchIn = firstIn != null ? _formatTime(firstIn) : '--';
-        _lastPunchOut = lastOut != null ? _formatTime(lastOut) : '--';
       } else {
-        _todaysPunchIn = '--';
-        _todaysPunchOut = '--';
         _workedDuration = '--';
         _breakDuration = '--';
         _firstPunchIn = '--';
         _lastPunchOut = '--';
+        _isBreakButtonEnabled = false;
+        _isOnBreak = false;
       }
     } else {
-      _todaysPunchIn = '--';
-      _todaysPunchOut = '--';
       _workedDuration = '--';
       _breakDuration = '--';
       _firstPunchIn = '--';
       _lastPunchOut = '--';
+      _isBreakButtonEnabled = false;
+      _isOnBreak = false;
     }
     setState(() { _isPunchLoading = false; });
   }
@@ -350,7 +340,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       drawer: Drawer(
         child: AppSideDrawer(),
       ),
-     /* floatingActionButton: Stack(
+      /* floatingActionButton: Stack(
         alignment: Alignment.bottomRight,
         children: [
           if (_isFabExpanded) ...[
@@ -391,277 +381,351 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Column(
               children: [
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Card(
-                            elevation: 10,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18),),
-                            margin: EdgeInsets.only(bottom: 3.h),
-                            color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h,),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7,),],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        padding: EdgeInsets.all(10),
-                                        child: Icon(Icons.calendar_today, color: Colors.white, size: 24.sp,),
-                                      ),
-                                      SizedBox(width: 2.w),
-                                      Text(
-                                        AppStrings.attendance,
-                                        style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 20.sp,),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 2.h),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(Icons.login, color: Colors.green, size: 22),
-                                          SizedBox(width: 1.w),
-                                          Text('In: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                                          Text(_firstPunchIn, style: TextStyle(fontWeight: FontWeight.w500)),
-                                        ],
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.logout, color: Colors.red, size: 22),
-                                          SizedBox(width: 1.w),
-                                          Text('Out: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                                          Text(_lastPunchOut, style: TextStyle(fontWeight: FontWeight.w500)),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 2.h),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(Icons.timer, color: theme.colorScheme.primary, size: 20),
-                                          SizedBox(width: 1.w),
-                                          Text('Worked: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                                          Text(_workedDuration, style: TextStyle(fontWeight: FontWeight.w500)),
-                                        ],
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20),
-                                          SizedBox(width: 1.w),
-                                          Text('Break: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                                          Text(_breakDuration, style: TextStyle(fontWeight: FontWeight.w500)),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 2.h),
-                                  // Punch In/Out Button
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 7.h,
-                                    child: Builder(
-                                      builder: (context) {
-                                        String buttonText;
-                                        VoidCallback? onPressed;
-                                        Color buttonColor;
-                                        IconData buttonIcon;
-
-                                        final isActive = _currentProfile?.is_active == 'true';
-
-                                        if (isActive) {
-                                          buttonText = AppStrings.punchOut;
-                                          buttonIcon = Icons.logout;
-                                          buttonColor = Colors.red;
-                                          onPressed = () async {
-                                            final confirm = await showPunchConfirmationDialog(context, isPunchOut: true);
-                                            if(!confirm) return;
-
-                                            final XFile? image = await _picker.pickImage(
-                                              source: ImageSource.camera,
-                                              preferredCameraDevice: CameraDevice.front,
-                                            );
-                                            if (image != null) {
-                                              setState(() { _selfieImage = File(image.path); _isApiLoading = true; });
-                                              await _submitDebouncer.run(() async {
-                                                await _punchController.punchInOut('out', punchPhoto: _selfieImage);
-                                                if (!mounted) return;
-                                                if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
-                                                  final now = TimeOfDay.now();
-                                                  if (!mounted) return;
-                                                  setState(() {
-                                                    _isApiLoading = false;
-                                                  });
-                                                  await _savePunchOutTime(now);
-                                                  _updateWorkBreakOnPunch('out');
-                                                  await _updateWorkedAndBreakTimes();
-                                                  if (_currentProfile != null) {
-                                                    final updated = Profile(
-                                                      id: _currentProfile!.id,
-                                                      first_name: _currentProfile!.first_name,
-                                                      last_name: _currentProfile!.last_name,
-                                                      email: _currentProfile!.email,
-                                                      dob: _currentProfile!.dob,
-                                                      phoneNo: _currentProfile!.phoneNo,
-                                                      designation: _currentProfile!.designation,
-                                                      organization: _currentProfile!.organization,
-                                                      is_active: 'false',
-                                                    );
-                                                    await _profileController.profileDao.insertProfile(updated);
-                                                    setState(() {
-                                                      _currentProfile = updated;
-                                                    });
-                                                  }
-                                                  showGlobalSnackBarWithIcon(AppStrings.punchOutSuccess, icon: Icons.logout, iconColor: Colors.red);
-                                                } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
-                                                  if (!mounted) return;
-                                                  setState(() { _isApiLoading = false; });
-                                                  showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed, icon: Icons.error_outline, iconColor: Colors.red);
-                                                } else {
-                                                  if (!mounted) return;
-                                                  setState(() { _isApiLoading = false; });
-                                                }
-                                              });
-                                            } else {
-                                              showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
-                                            }
-                                          };
-                                        } else {
-                                          buttonText = AppStrings.punchIn;
-                                          buttonIcon = Icons.login;
-                                          buttonColor = theme.colorScheme.primary;
-                                          onPressed = () async {
-                                            final XFile? image = await _picker.pickImage(
-                                              source: ImageSource.camera,
-                                              preferredCameraDevice: CameraDevice.front,
-                                            );
-                                            if (image != null) {
-                                              setState(() { _selfieImage = File(image.path); _isApiLoading = true; });
-                                              await _submitDebouncer.run(() async {
-                                                await _punchController.punchInOut('In', punchPhoto: _selfieImage);
-                                                if (!mounted) return;
-                                                if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
-                                                  final now = TimeOfDay.now();
-                                                  if (!mounted) return;
-                                                  setState(() {
-                                                    _isApiLoading = false;
-                                                  });
-                                                  await _savePunchInTime(now);
-                                                  _updateWorkBreakOnPunch('in');
-                                                  await _updateWorkedAndBreakTimes();
-                                                  if (_currentProfile != null) {
-                                                    final updated = Profile(
-                                                      id: _currentProfile!.id,
-                                                      first_name: _currentProfile!.first_name,
-                                                      last_name: _currentProfile!.last_name,
-                                                      email: _currentProfile!.email,
-                                                      dob: _currentProfile!.dob,
-                                                      phoneNo: _currentProfile!.phoneNo,
-                                                      designation: _currentProfile!.designation,
-                                                      organization: _currentProfile!.organization,
-                                                      is_active: 'true',
-                                                    );
-                                                    await _profileController.profileDao.insertProfile(updated);
-                                                    setState(() {
-                                                      _currentProfile = updated;
-                                                    });
-                                                  }
-                                                  showGlobalSnackBarWithIcon(AppStrings.punchInSuccess, icon: Icons.login, iconColor: Colors.green);
-                                                } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
-                                                  if (!mounted) return;
-                                                  setState(() { _isApiLoading = false; });
-                                                  showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed, icon: Icons.error_outline, iconColor: Colors.red);
-                                                } else {
-                                                  if (!mounted) return;
-                                                  setState(() { _isApiLoading = false; });
-                                                }
-                                              });
-                                            } else {
-                                              showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
-                                            }
-                                          };
-                                        }
-                                        return Row(
+                    child: SingleChildScrollView(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Card(
+                                  elevation: 10,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18),),
+                                  margin: EdgeInsets.only(bottom: 3.h),
+                                  color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h,),
+                                    child: Column(
+                                      children: [
+                                        Row(
                                           children: [
-                                            Expanded(
-                                              flex: 1,
-                                                child: ElevatedButton.icon(
-                                                  onPressed: onPressed,
-                                                  icon: Icon(buttonIcon, size: 22.sp, color: Colors.white,),
-                                                  label: Text(
-                                                    buttonText,
-                                                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
-                                                  ),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: buttonColor,
-                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                    elevation: 0,
-                                                    padding: EdgeInsets.symmetric(vertical: 14)
-                                                  ),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7,),],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 ),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              padding: EdgeInsets.all(10),
+                                              child: Icon(Icons.calendar_today, color: Colors.white, size: 24.sp,),
                                             ),
-                                            SizedBox(width: 3.w,),
-                                            Expanded(
-                                              flex: 1,
-                                                child: ElevatedButton.icon(
-                                                  onPressed: () async {
-                                                    // --- BREAK IN BUTTON HANDLER ---
-                                                    // if (_todaysPunchHistory.isNotEmpty) {
-                                                      final attendanceId = _todaysPunchHistory.first.id;
-                                                      final now = DateTime.now();
-                                                      final breakStart = now.toIso8601String();
-                                                      // For break in, break_over is empty string
-                                                      final breakOver = "";
-                                                      final punchInOutUseCase = getIt<PunchInOutUseCase>();
-                                                      final result = await punchInOutUseCase.createBreakLog(
-                                                        breakStart: breakStart,
-                                                        breakOver: breakOver,
-                                                        attendanceId: attendanceId,
-                                                      );
-                                                      if (result is NetworkSuccess) {
-                                                        showGlobalSnackBarWithIcon('Break started successfully!', icon: Icons.pause_circle, iconColor: Colors.orange);
-                                                      } else {
-                                                        showGlobalSnackBarWithIcon('Failed to start break', icon: Icons.error, iconColor: Colors.red);
-                                                      }
-                                                    // } else {
-                                                    //   showGlobalSnackBarWithIcon('Attendance not found for today', icon: Icons.error, iconColor: Colors.red);
-                                                    // }
-                                                  },
-                                                  icon: Icon(Icons.pause_circle_outline, size: 22.sp, color: Colors.white,),
-                                                  label: Text(
-                                                    'Break In',
-                                                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
-                                                  ),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.orange,
-                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                    elevation: 0,
-                                                    padding: EdgeInsets.symmetric(vertical: 14)
-                                                  ),
-                                                ),
+                                            SizedBox(width: 2.w),
+                                            Text(
+                                              AppStrings.attendance,
+                                              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 20.sp,),
                                             ),
                                           ],
-                                        );
+                                        ),
+                                        SizedBox(height: 2.h),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(Icons.login, color: Colors.green, size: 22),
+                                                SizedBox(width: 1.w),
+                                                Text('In: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                                                Text(_firstPunchIn, style: TextStyle(fontWeight: FontWeight.w500)),
+                                              ],
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Row(
+                                              children: [
+                                                Icon(Icons.logout, color: Colors.red, size: 22),
+                                                SizedBox(width: 1.w),
+                                                Text('Out: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                                                Text(_lastPunchOut, style: TextStyle(fontWeight: FontWeight.w500)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 2.h),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(Icons.timer, color: theme.colorScheme.primary, size: 20),
+                                                SizedBox(width: 1.w),
+                                                Text('Worked: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                                Text(_workedDuration, style: TextStyle(fontWeight: FontWeight.w500)),
+                                              ],
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Row(
+                                              children: [
+                                                Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20),
+                                                SizedBox(width: 1.w),
+                                                Text('Break: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                                Text(_breakDuration, style: TextStyle(fontWeight: FontWeight.w500)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 2.h),
+                                        // Punch In/Out Button
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 7.h,
+                                          child: Builder(
+                                            builder: (context) {
+                                              String buttonText;
+                                              VoidCallback? onPressed;
+                                              Color buttonColor;
+                                              IconData buttonIcon;
 
-                                       /* return ElevatedButton.icon(
+                                              final isActive = _currentProfile?.is_active == 'true';
+
+                                              if (isActive) {
+                                                buttonText = AppStrings.punchOut;
+                                                buttonIcon = Icons.logout;
+                                                buttonColor = Colors.red;
+                                                onPressed = () async {
+                                                  final confirm = await showPunchConfirmationDialog(context, isPunchOut: true);
+                                                  if(!confirm) return;
+
+                                                  final XFile? image = await _picker.pickImage(
+                                                    source: ImageSource.camera,
+                                                    preferredCameraDevice: CameraDevice.front,
+                                                  );
+                                                  if (image != null) {
+                                                    setState(() { _selfieImage = File(image.path); _isApiLoading = true; });
+                                                    await _submitDebouncer.run(() async {
+                                                      await _punchController.punchInOut('out', punchPhoto: _selfieImage);
+                                                      if (!mounted) return;
+                                                      if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
+                                                        final now = TimeOfDay.now();
+                                                        if (!mounted) return;
+                                                        setState(() {
+                                                          _isApiLoading = false;
+                                                        });
+                                                        await _savePunchOutTime(now);
+                                                        _updateWorkBreakOnPunch('out');
+                                                        await _updateWorkedAndBreakTimes();
+                                                        await _fetchTodaysPunchHistory();
+                                                        if (_currentProfile != null) {
+                                                          final updated = Profile(
+                                                            id: _currentProfile!.id,
+                                                            first_name: _currentProfile!.first_name,
+                                                            last_name: _currentProfile!.last_name,
+                                                            email: _currentProfile!.email,
+                                                            dob: _currentProfile!.dob,
+                                                            phoneNo: _currentProfile!.phoneNo,
+                                                            designation: _currentProfile!.designation,
+                                                            organization: _currentProfile!.organization,
+                                                            is_active: 'false',
+                                                          );
+                                                          await _profileController.profileDao.insertProfile(updated);
+                                                          setState(() {
+                                                            _currentProfile = updated;
+                                                          });
+                                                        }
+                                                        showGlobalSnackBarWithIcon(AppStrings.punchOutSuccess, icon: Icons.logout, iconColor: Colors.red);
+                                                        setState(() {
+                                                          _isBreakButtonEnabled = false;
+                                                          _isOnBreak = false;
+                                                        });
+                                                      } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
+                                                        if (!mounted) return;
+                                                        setState(() { _isApiLoading = false; });
+                                                        showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed, icon: Icons.error_outline, iconColor: Colors.red);
+                                                      } else {
+                                                        if (!mounted) return;
+                                                        setState(() { _isApiLoading = false; });
+                                                      }
+                                                    });
+                                                  } else {
+                                                    showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
+                                                  }
+                                                };
+                                              } else {
+                                                buttonText = AppStrings.punchIn;
+                                                buttonIcon = Icons.login;
+                                                buttonColor = theme.colorScheme.primary;
+                                                onPressed = () async {
+                                                  final XFile? image = await _picker.pickImage(
+                                                    source: ImageSource.camera,
+                                                    preferredCameraDevice: CameraDevice.front,
+                                                  );
+                                                  if (image != null) {
+                                                    setState(() { _selfieImage = File(image.path); _isApiLoading = true; });
+                                                    await _submitDebouncer.run(() async {
+                                                      await _punchController.punchInOut('In', punchPhoto: _selfieImage);
+                                                      if (!mounted) return;
+                                                      if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
+                                                        final now = TimeOfDay.now();
+                                                        if (!mounted) return;
+                                                        setState(() {
+                                                          _isApiLoading = false;
+                                                        });
+                                                        await _savePunchInTime(now);
+                                                        _updateWorkBreakOnPunch('in');
+                                                        await _updateWorkedAndBreakTimes();
+                                                        await _fetchTodaysPunchHistory();
+                                                        if (_currentProfile != null) {
+                                                          final updated = Profile(
+                                                            id: _currentProfile!.id,
+                                                            first_name: _currentProfile!.first_name,
+                                                            last_name: _currentProfile!.last_name,
+                                                            email: _currentProfile!.email,
+                                                            dob: _currentProfile!.dob,
+                                                            phoneNo: _currentProfile!.phoneNo,
+                                                            designation: _currentProfile!.designation,
+                                                            organization: _currentProfile!.organization,
+                                                            is_active: 'true',
+                                                          );
+                                                          await _profileController.profileDao.insertProfile(updated);
+                                                          setState(() {
+                                                            _currentProfile = updated;
+                                                          });
+                                                        }
+                                                        showGlobalSnackBarWithIcon(AppStrings.punchInSuccess, icon: Icons.login, iconColor: Colors.green);
+                                                        setState(() {
+                                                          _isBreakButtonEnabled = true;
+                                                          _isOnBreak = false;
+                                                        });
+                                                      } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
+                                                        if (!mounted) return;
+                                                        setState(() { _isApiLoading = false; });
+                                                        showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed, icon: Icons.error_outline, iconColor: Colors.red);
+                                                      } else {
+                                                        if (!mounted) return;
+                                                        setState(() { _isApiLoading = false; });
+                                                      }
+                                                    });
+                                                  } else {
+                                                    showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
+                                                  }
+                                                };
+                                              }
+                                              return Row(
+                                                children: [
+                                                  Expanded(
+                                                    flex: 1,
+                                                    child: ElevatedButton.icon(
+                                                      onPressed: onPressed,
+                                                      icon: Icon(buttonIcon, size: 22.sp, color: Colors.white,),
+                                                      label: Text(
+                                                        buttonText,
+                                                        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                                                      ),
+                                                      style: ElevatedButton.styleFrom(
+                                                          backgroundColor: buttonColor,
+                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                          elevation: 0,
+                                                          padding: EdgeInsets.symmetric(vertical: 14)
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 3.w,),
+                                                  Expanded(
+                                                    flex: 1,
+                                                    child: ElevatedButton.icon(
+                                                      onPressed: _isBreakButtonEnabled
+                                                          ? () async {
+                                                        if (!_isOnBreak) {
+                                                          // Break In logic
+                                                          setState(() { _isBreakLoading = true; });
+                                                          final attendanceId = _todaysPunchEntries.isNotEmpty ? _todaysPunchEntries.first.id : null;
+                                                          if (attendanceId == null) {
+                                                            setState(() { _isBreakLoading = false; });
+                                                            showGlobalSnackBarWithIcon('Attendance not found for today', icon: Icons.error, iconColor: Colors.red);
+                                                            return;
+                                                          }
+                                                          final now = DateTime.now();
+                                                          final breakStart = now.toIso8601String();
+                                                          final breakOver = "";
+                                                          final punchInOutUseCase = getIt<PunchInOutUseCase>();
+                                                          final result = await punchInOutUseCase.createBreakLog(
+                                                            breakStart: breakStart,
+                                                            breakOver: breakOver,
+                                                            attendanceId: attendanceId,
+                                                          );
+                                                          setState(() { _isBreakLoading = false; });
+                                                          if (result is NetworkSuccess) {
+                                                            setState(() { _isOnBreak = ! _isOnBreak; });
+                                                            await _fetchTodaysPunchHistory();
+                                                            await _updateWorkedAndBreakTimes();
+                                                            // Ensure punch in/out times are updated after break events
+                                                            if (_todaysPunchEntries.isNotEmpty) {
+                                                              final entry = _todaysPunchEntries.first;
+                                                              final date = entry.date;
+                                                              final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
+                                                              final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
+                                                              setState(() {
+                                                                _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
+                                                                _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
+                                                              });
+                                                            }
+                                                            showGlobalSnackBarWithIcon('Break started successfully!', icon: Icons.pause_circle, iconColor: Colors.orange);
+                                                          } else {
+                                                            showGlobalSnackBarWithIcon('Failed to start break', icon: Icons.error, iconColor: Colors.red);
+                                                          }
+                                                        } else {
+                                                          // Break Out logic
+                                                          setState(() { _isBreakLoading = true; });
+                                                          final attendanceId = _todaysPunchEntries.isNotEmpty ? _todaysPunchEntries.first.id : null;
+                                                          if (attendanceId == null) {
+                                                            setState(() { _isBreakLoading = false; });
+                                                            showGlobalSnackBarWithIcon('Attendance not found for today', icon: Icons.error, iconColor: Colors.red);
+                                                            return;
+                                                          }
+                                                          final now = DateTime.now();
+                                                          final lastBreak = _todaysPunchEntries.first.breaks.lastOrNull;
+                                                          if (lastBreak == null) {
+                                                            setState(() { _isBreakLoading = false; });
+                                                            showGlobalSnackBarWithIcon('No break to end.', icon: Icons.error, iconColor: Colors.red);
+                                                            return;
+                                                          }
+                                                          final breakStart = lastBreak.breakStart != null ? "${_todaysPunchEntries.first.date}T${lastBreak.breakStart}" : null;
+                                                          final breakOver = now.toIso8601String();
+                                                          final punchInOutUseCase = getIt<PunchInOutUseCase>();
+                                                          final result = await punchInOutUseCase.createBreakLog(
+                                                            breakStart: breakStart ?? now.toIso8601String(),
+                                                            breakOver: breakOver,
+                                                            attendanceId: attendanceId,
+                                                          );
+                                                          setState(() { _isBreakLoading = false; });
+                                                          if (result is NetworkSuccess) {
+                                                            setState(() { _isOnBreak = ! _isOnBreak; });
+                                                            await _fetchTodaysPunchHistory();
+                                                            await _updateWorkedAndBreakTimes();
+                                                            // Ensure punch in/out times are updated after break events
+                                                            if (_todaysPunchEntries.isNotEmpty) {
+                                                              final entry = _todaysPunchEntries.first;
+                                                              final date = entry.date;
+                                                              final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
+                                                              final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
+                                                              setState(() {
+                                                                _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
+                                                                _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
+                                                              });
+                                                            }
+                                                            showGlobalSnackBarWithIcon('Break ended successfully!', icon: Icons.play_circle, iconColor: Colors.green);
+                                                          } else {
+                                                            showGlobalSnackBarWithIcon('Failed to end break', icon: Icons.error, iconColor: Colors.red);
+                                                          }
+                                                        }
+                                                      }
+                                                          : null,
+                                                      icon: Icon(_isOnBreak ? Icons.play_circle_fill : Icons.pause_circle_outline, size: 22.sp, color: Colors.white),
+                                                      label: Text(
+                                                        _isOnBreak ? 'Break Out' : 'Break In',
+                                                        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                                                      ),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: _isOnBreak ? Colors.green : Colors.orange,
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                        elevation: 0,
+                                                        padding: EdgeInsets.symmetric(vertical: 14),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+
+                                              /* return ElevatedButton.icon(
                                           onPressed: onPressed,
                                           icon: Icon(buttonIcon, size: 24.sp, color: Colors.white),
                                           label: Text(
@@ -675,72 +739,95 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             padding: EdgeInsets.zero,
                                           ),
                                         );*/
-                                      },
+                                            },
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                    ),
-                  ),
-                          if (_todaysPunchHistory.isNotEmpty && _todaysPunchHistory.first.punches.isNotEmpty)
-                            Card(
-                              elevation: 10,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18),),
-                              margin: EdgeInsets.only(bottom: 3.h),
-                              color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Today\'s Punch Logs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                    Divider(height: 24, thickness: 1.3, color: Theme.of(context).colorScheme.primary.withOpacity(0.15)),
-                                    ..._todaysPunchHistory.first.punches.asMap().entries.map((entry) {
-                                      final i = entry.key;
-                                      final punch = entry.value;
-                                      return Padding(
-                                        padding: const EdgeInsets.only(bottom: 18.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Icon(Icons.login, color: Colors.green, size: 22),
-                                                SizedBox(width: 6),
-                                                Text('In: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 15)),
-                                                Text(_formatTime(punch.punchIn ?? ''), style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
-                                                Spacer(),
-                                                Icon(Icons.logout, color: Colors.red, size: 22),
-                                                SizedBox(width: 6),
-                                                Text('Out: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 15)),
-                                                Text(_formatTime(punch.punchOut ?? ''), style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
-                                              ],
-                                            ),
-                                            if (i != _todaysPunchHistory.first.punches.length - 1) ...[
-                                              SizedBox(height: 10),
-                                              Row(
+                                ),
+                                if (_todaysPunchEntries.isNotEmpty && _todaysPunchEntries.first.breaks.isNotEmpty)
+                                  Card(
+                                    elevation: 8,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    margin: EdgeInsets.only(bottom: 3.h),
+                                    color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Today\'s Break Logs',
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
+                                          ),
+                                          Divider(
+                                            height: 24,
+                                            thickness: 1.3,
+                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                                          ),
+                                          ..._todaysPunchEntries.first.breaks.asMap().entries.map((entry) {
+                                            final i = entry.key;
+                                            final brk = entry.value;
+                                            final parentDate = _todaysPunchEntries.first.date;
+                                            final breakStartIso = brk.breakStart != null ? "${parentDate}T${brk.breakStart}" : null;
+                                            final breakOverIso = brk.breakOver != null ? "${parentDate}T${brk.breakOver}" : null;
+                                            return Padding(
+                                              padding: const EdgeInsets.only(bottom: 14.0, left: 10.0, right: 10.0),
+                                              child: Row(
                                                 children: [
-                                                  Expanded(child: Divider(thickness: 1, color: Theme.of(context).colorScheme.primary.withOpacity(0.08))),
-                                                  Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                    child: Text('Break', style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.primary.withOpacity(0.5), fontWeight: FontWeight.w600)),
+                                                  Container(
+                                                    padding: EdgeInsets.all(6),
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.orange.withOpacity(0.1),
+                                                    ),
+                                                    child: Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20),
                                                   ),
-                                                  Expanded(child: Divider(thickness: 1, color: Theme.of(context).colorScheme.primary.withOpacity(0.08))),
+                                                  SizedBox(width: 8),
+                                                  Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text('Break In', style: TextStyle(fontSize: 16, color: Colors.orange, fontWeight: FontWeight.bold)),
+                                                      SizedBox(height: 2),
+                                                      Text(_formatTime(breakStartIso ?? '') ?? '--:--',
+                                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                                    ],
+                                                  ),
+                                                  Spacer(),
+                                                  Container(
+                                                    padding: EdgeInsets.all(6),
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.green.withOpacity(0.1),
+                                                    ),
+                                                    child: Icon(Icons.play_circle_fill, color: Colors.green, size: 20),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text('Break Out', style: TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold)),
+                                                      SizedBox(height: 2),
+                                                      Text(_formatTime(breakOverIso ?? '') ?? '--:--',
+                                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                                    ],
+                                                  ),
                                                 ],
                                               ),
-                                            ],
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ],
-                                ),
-                              ),
-                            ),
-        ]
-                ),
-                     )
-                  )
+                                            );
+                                          }).toList(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
+                              ]
+                          ),
+                        )
+                    )
                 )
               ],
             ),
@@ -758,6 +845,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
             if (_isApiLoading)
+              Positioned.fill(
+                child: AbsorbPointer(
+                  absorbing: true,
+                  child: Container(
+                    color: Colors.black.withOpacity(0.2),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+              ),
+            if (_isBreakLoading)
               Positioned.fill(
                 child: AbsorbPointer(
                   absorbing: true,

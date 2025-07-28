@@ -6,7 +6,7 @@ import 'injectable_module.config.dart';
 
 final getIt = GetIt.instance;
 
-final baseUrl = 'http://192.168.1.33:8080/api/v1/';
+final baseUrl = 'https://9b0c1217ae3c.ngrok-free.app/api/v1/';
 final navigatorKey = GlobalKey<NavigatorState>();
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final ValueNotifier<bool> isLoggedIn = ValueNotifier<bool>(false);

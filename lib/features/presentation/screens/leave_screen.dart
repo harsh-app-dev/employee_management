@@ -929,7 +929,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
   void initState() {
     super.initState();
     if (widget.initialLeave != null) {
-      _selectedLeaveType = widget.initialLeave!.leaveType;
+      _selectedLeaveType = widget.initialLeave!.leaveTypeName ?? widget.initialLeave!.leaveType;
       _selectedHR = widget.initialLeave!.hr;
       final initialManager = widget.managerList.firstWhere(
             (m) => m.fullName == widget.initialLeave!.teamLead,
