@@ -11,7 +11,7 @@ import '../../../core/utils/util.dart';
 import '../../../core/widgets/debouncing_state.dart';
 import '../../data/models/tasks/submit/submit_tasks_response.dart';
 import 'task_history_screen.dart';
-import 'app_side_drawer.dart';
+import '../../../core/widgets/app_side_drawer.dart';
 
 class TaskManagementScreen extends StatefulWidget {
   const TaskManagementScreen({Key? key}) : super(key: key);

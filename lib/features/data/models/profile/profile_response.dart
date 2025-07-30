@@ -38,7 +38,7 @@ class ProfileResponse {
     _contactNumber = json['contact_number'];
     _designation = json['designation'] != null ? json['designation'].toString() : null;
     _organization = json['Organisation'] != null ? json['Organisation'].toString() : null;
-    _isActive = json['is_active']?.toString();
+    _isActive = json['attendance_status']?.toString();
   }
 
   String? _id;
@@ -93,7 +93,7 @@ class ProfileResponse {
     map['contact_number'] = _contactNumber;
     map['designation'] = _designation;
     map['Organisation'] = _organization;
-    map['is_active'] = _isActive;
+    map['attendance_status'] = _isActive;
     return map;
   }
 }

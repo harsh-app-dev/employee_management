@@ -24,6 +24,6 @@ class Profile{
     phoneNo: json['contact_number'] ?? '',
     designation: json['designation'] != null ? json['designation'].toString() : '',
     organization: json['Organisation'] ?? '',
-    is_active: json['is_active'] ?? '',
+    is_active: json['attendance_status'] ?? '',
   );
 }

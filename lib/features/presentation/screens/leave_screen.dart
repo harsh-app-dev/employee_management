@@ -5,7 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../../core/utils/network_result.dart';
 import '../../../core/utils/util.dart';
 import '../../data/models/leave/leave_response.dart';
-import 'app_side_drawer.dart';
+import '../../../core/widgets/app_side_drawer.dart';
 import 'package:employee_management/core/widgets/document_web_viewer.dart';
 import 'package:employee_management/features/data/models/leave/leave_type.dart';
 import 'package:employee_management/features/data/models/leave/role_user.dart';
@@ -730,10 +730,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           margin: const EdgeInsets.only(top: 8),
                           width: 40,
                           height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2),),
                         ),
                       ),
                       SizedBox(height: 10),
@@ -747,10 +744,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           ),
                           const Spacer(),
                           _buildStatusIndicator(leave.status),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(context),
-                          ),
+                          IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context),),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -1072,15 +1066,9 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
               style: TextStyle(fontSize: 14, color: Colors.black54),
               overflow: TextOverflow.ellipsis,
             ),
-            items: uniqueLeaveTypes
-                .map(
-                  (type) => DropdownMenuItem<String>(
+            items: uniqueLeaveTypes.map((type) => DropdownMenuItem<String>(
                 value: type,
-                child: Text(
-                  type,
-                  style: const TextStyle(fontSize: 14),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Text(type, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis,),
               ),
             )
                 .toList(),
@@ -1099,22 +1087,11 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
             },
             validator: (value) =>
             value == null || value.isEmpty ? 'Please select leave type' : null,
-            buttonStyleData: const ButtonStyleData(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              height: 30,
-              width: double.infinity,
-            ),
-            iconStyleData: const IconStyleData(
-              icon: Icon(Icons.arrow_drop_down),
-              iconSize: 24,
-            ),
+            buttonStyleData: const ButtonStyleData(padding: EdgeInsets.symmetric(horizontal: 10), height: 30, width: double.infinity,),
+            iconStyleData: const IconStyleData(icon: Icon(Icons.arrow_drop_down), iconSize: 24,),
             dropdownStyleData: DropdownStyleData(
               maxHeight: 300,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: Colors.white,
-                border: Border.all(color: Colors.grey),
-              ),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), color: Colors.white, border: Border.all(color: Colors.grey),),
             ),
           ),
           if (_selectedLeaveType == 'Half Day Leave') ...[
@@ -1250,11 +1227,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
           if (_dateRange != null)
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue[200]!),
-              ),
+              decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.blue[200]!),),
               child: Row(
                 children: [
                   const Icon(Icons.calculate, color: Colors.blue, size: 20),
@@ -1282,37 +1255,20 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
               style: TextStyle(fontSize: 14, color: Colors.black54),
               overflow: TextOverflow.ellipsis,
             ),
-            items: uniqueHRs
-                .map(
-                  (hr) => DropdownMenuItem<String>(
+            items: uniqueHRs.map((hr) => DropdownMenuItem<String>(
                 value: hr,
-                child: Text(
-                  hr,
-                  style: const TextStyle(fontSize: 14),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Text(hr, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis,),
               ),
             )
                 .toList(),
             onChanged: (value) => setState(() => _selectedHR = value),
             validator: (value) =>
             value == null || value.isEmpty ? 'Please select an HR' : null,
-            buttonStyleData: const ButtonStyleData(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              height: 30,
-              width: double.infinity,
-            ),
-            iconStyleData: const IconStyleData(
-              icon: Icon(Icons.arrow_drop_down),
-              iconSize: 24,
-            ),
+            buttonStyleData: const ButtonStyleData(padding: EdgeInsets.symmetric(horizontal: 10), height: 30, width: double.infinity,),
+            iconStyleData: const IconStyleData(icon: Icon(Icons.arrow_drop_down), iconSize: 24,),
             dropdownStyleData: DropdownStyleData(
               maxHeight: 300,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: Colors.white,
-                border: Border.all(color: Colors.grey),
-              ),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), color: Colors.white, border: Border.all(color: Colors.grey),),
             ),
           ),
 
@@ -1340,20 +1296,14 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                           errorText: field.errorText,
                         ),
                         child: Text(
-                          _selectedManagers.isEmpty
-                              ? 'Select one or more managers'
-                              : _selectedManagers.map((e) => e.fullName).join(', '),
+                          _selectedManagers.isEmpty ? 'Select one or more managers' : _selectedManagers.map((e) => e.fullName).join(', '),
                           style: const TextStyle(fontSize: 14),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       dropdownStyleData: DropdownStyleData(
                         maxHeight: 200,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          color: Colors.white,
-                          border: Border.all(color: Colors.grey),
-                        ),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), color: Colors.white, border: Border.all(color: Colors.grey),),
                       ),
                       onChanged: (_) {}, // Still required but not used
                       items: widget.managerList.map((manager) {
@@ -1384,26 +1334,18 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                           ),
                         );
                       }).toList(),
-                      iconStyleData: const IconStyleData(
-                        icon: Icon(Icons.arrow_drop_down),
-                        iconSize: 24,
-                      ),
+                      iconStyleData: const IconStyleData(icon: Icon(Icons.arrow_drop_down), iconSize: 24,),
                     ),
                   ),
                   if (field.hasError)
                     Padding(
                       padding: const EdgeInsets.only(left: 12.0, top: 5),
-                      child: Text(
-                        field.errorText!,
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
-                      ),
+                      child: Text(field.errorText!, style: const TextStyle(color: Colors.red, fontSize: 12),),
                     ),
                 ],
               );
             },
           ),
-
-
 
           const SizedBox(height: 12),
           TextFormField(
@@ -1421,10 +1363,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
 
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(8),
-            ),
+            decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(8),),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1437,9 +1376,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                         onPressed: _pickFile,
                         icon: const Icon(Icons.attach_file, size: 18),
                         label: const Text('Choose File', style: TextStyle(fontSize: 14)),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
+                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 8),),
                       ),
                     ),
                   ],
@@ -1452,10 +1389,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
             ),
           ),
           const SizedBox(height: 16),
-
-          SizedBox(
-            width: double.infinity,
-            height: 45,
+          SizedBox(width: double.infinity, height: 45,
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : _submitLeaveRequest,
               style: ElevatedButton.styleFrom(
@@ -1464,12 +1398,9 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               child: _isSubmitting
-                  ? const SizedBox(
-                height: 18,
-                width: 18,
+                  ? const SizedBox(height: 18, width: 18,
                 child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-              )
-                  : const Text('Submit Leave Request', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              ) : const Text('Submit Leave Request', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             ),
           ),
         ],

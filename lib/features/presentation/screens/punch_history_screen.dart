@@ -8,7 +8,6 @@ import 'package:get_it/get_it.dart';
 import '../../../core/utils/network_result.dart';
 import '../../data/models/location/parsed_location.dart';
 import 'package:employee_management/core/services/location_services.dart';
-import 'package:collection/collection.dart';
 import 'package:employee_management/core/utils/util.dart';
 
 enum DateFilter { week, month, custom }
@@ -44,10 +43,8 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
     if (_isLoading || (!_hasMore && isLoadMore)) return;
     setState(() => _isLoading = true);
 
-    final startDateStr =
-        "${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}";
-    final endDateStr =
-        "${_endDate.year}-${_endDate.month.toString().padLeft(2, '0')}-${_endDate.day.toString().padLeft(2, '0')}";
+    final startDateStr = "${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}";
+    final endDateStr = "${_endDate.year}-${_endDate.month.toString().padLeft(2, '0')}-${_endDate.day.toString().padLeft(2, '0')}";
 
     final result = await _useCase(
       startDate: startDateStr,
@@ -120,17 +117,13 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                       _selectedFilter = DateFilter.values[index];
                       final now = DateTime.now();
                       if (_selectedFilter == DateFilter.week) {
-                        _startDate = now.subtract(
-                          Duration(days: now.weekday - 1),
-                        );
+                        _startDate = now.subtract(Duration(days: now.weekday - 1),);
                         _endDate = _startDate.add(const Duration(days: 6));
                       } else if (_selectedFilter == DateFilter.month) {
                         _startDate = DateTime(now.year, now.month, 1);
                         _endDate = DateTime(now.year, now.month + 1, 0);
                       } else if (_selectedFilter == DateFilter.custom) {
-                        _startDate = now.subtract(
-                          Duration(days: now.weekday - 1),
-                        );
+                        _startDate = now.subtract(Duration(days: now.weekday - 1),);
                         _endDate = _startDate.add(const Duration(days: 6));
                       }
                       _currentPage = 1;
@@ -155,9 +148,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                       onPressed: () {
                         setState(() {
                           if (_selectedFilter == DateFilter.week) {
-                            _startDate = _startDate.subtract(
-                              const Duration(days: 7),
-                            );
+                            _startDate = _startDate.subtract(const Duration(days: 7),);
                             _endDate = _endDate.subtract(
                               const Duration(days: 7),
                             );
@@ -242,13 +233,11 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                     _endDate = _endDate.add(
                                       const Duration(days: 7),
                                     );
-                                  } else if (_selectedFilter ==
-                                      DateFilter.month) {
+                                  } else if (_selectedFilter == DateFilter.month) {
                                     final nextMonth = DateTime(_startDate.year, _startDate.month + 1, 1,);
                                     _startDate = nextMonth;
                                     _endDate = DateTime(nextMonth.year, nextMonth.month + 1, 0,);
-                                  } else if (_selectedFilter ==
-                                      DateFilter.custom) {
+                                  } else if (_selectedFilter == DateFilter.custom) {
                                     final diff = _endDate.difference(_startDate).inDays;
                                     _startDate = _startDate.add(
                                       Duration(days: diff + 1),
@@ -271,12 +260,10 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                 ),
               ),
               Expanded(
-                child: _isLoading && _punchHistory.isEmpty
-                    ? const Center(child: CircularProgressIndicator()) : _punchHistory.isEmpty
+                child: _isLoading && _punchHistory.isEmpty ? const Center(child: CircularProgressIndicator()) : _punchHistory.isEmpty
                     ? const Center(child: Text(AppStrings.noPunchEntries)) : NotificationListener<ScrollNotification>(
                         onNotification: (ScrollNotification scrollInfo) {
-                          if (!_isLoading &&
-                              scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 100 && _hasMore) {
+                          if (!_isLoading && scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 100 && _hasMore) {
                             _loadMore();
                           }
                           return false;
@@ -292,7 +279,6 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                   );
                                 }
                                 final item = _punchHistory[index];
-
                                 final punchIn = item.punchIn;
                                 final punchOut = item.punchOut;
 
@@ -315,11 +301,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                   children: [
                                                     Icon(Icons.calendar_today_rounded, color: theme.colorScheme.primary, size: 22,),
                                                     SizedBox(width: 8),
-                                                    Text(
-                                                      DateFormat('EEE, MMM d, yyyy',).format(DateTime.parse(
-                                                          item.date,
-                                                        ),
-                                                      ),
+                                                    Text(DateFormat('EEE, MMM d, yyyy',).format(DateTime.parse(item.date,),),
                                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20,),
                                                     ),
                                                     // if (item.deductionType != null && item.deductionType!.isNotEmpty)
@@ -337,11 +319,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                       context: context,
                                                       isScrollControlled: true,
                                                       shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.vertical(
-                                                              top: Radius.circular(
-                                                                    30,
-                                                                  ),
-                                                            ),
+                                                        borderRadius: BorderRadius.vertical(top: Radius.circular(30),),
                                                       ),
                                                       builder: (context) {
                                                         return DraggableScrollableSheet(
@@ -378,9 +356,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                                             ),
                                                                           ],
                                                                         ),
-                                                                        Divider(height: 24, thickness: 1.3,
-                                                                          color: theme.colorScheme.primary.withOpacity(0.15,),
-                                                                        ),
+                                                                        Divider(height: 24, thickness: 1.3, color: theme.colorScheme.primary.withOpacity(0.15,),),
                                                                         // Punch In/Out details
                                                                         Padding(padding: const EdgeInsets.only(bottom: 18.0,),
                                                                           child: Column(
@@ -425,10 +401,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                                                       children: [
                                                                                         Container(
                                                                                           padding: EdgeInsets.all(6),
-                                                                                          decoration: BoxDecoration(
-                                                                                            shape: BoxShape.circle,
-                                                                                            color: Colors.orange.withOpacity(0.1),
-                                                                                          ),
+                                                                                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.orange.withOpacity(0.1),),
                                                                                           child: Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20),
                                                                                         ),
                                                                                         SizedBox(width: 8),
@@ -445,10 +418,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                                                         Spacer(),
                                                                                         Container(
                                                                                           padding: EdgeInsets.all(6),
-                                                                                          decoration: BoxDecoration(
-                                                                                            shape: BoxShape.circle,
-                                                                                            color: Colors.green.withOpacity(0.1),
-                                                                                          ),
+                                                                                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.green.withOpacity(0.1),),
                                                                                           child: Icon(Icons.play_circle_fill, color: Colors.green, size: 20),
                                                                                         ),
                                                                                         SizedBox(width: 8),
@@ -518,10 +488,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                             const SizedBox(height: 12),
                                             Container(
                                               padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12,),
-                                              decoration: BoxDecoration(
-                                                color: theme.colorScheme.primary.withOpacity(0.03),
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
+                                              decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.03), borderRadius: BorderRadius.circular(12),),
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
@@ -567,8 +534,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                             ),
                                                             SizedBox(height: 4),
                                                             Text(
-                                                              punchOut != null && punchOut.isNotEmpty
-                                                                  ? formatTime(punchOut) : '--',
+                                                              punchOut != null && punchOut.isNotEmpty ? formatTime(punchOut) : '--',
                                                               style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
                                                             ),
                                                           ],
@@ -632,9 +598,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
-                                      boxShadow: [
-                                        BoxShadow(color: Colors.black12, blurRadius: 8,),
-                                      ],
+                                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8,),],
                                     ),
                                     child: const CircularProgressIndicator(),
                                   ),

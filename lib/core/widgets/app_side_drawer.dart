@@ -1,13 +1,13 @@
 import 'package:employee_management/features/presentation/screens/main_screen.dart';
 import 'package:flutter/material.dart';
-import '../../data/models/floor/profile_data.dart';
-import 'history_screen.dart';
-import 'profile_screen.dart';
+import '../../features/data/models/floor/profile_data.dart';
+import '../../features/presentation/screens/history_screen.dart';
+import '../../features/presentation/screens/profile_screen.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/features/presentation/state/profile_controller.dart';
 import 'package:employee_management/core/utils/util.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'settings_screen.dart';
+import '../../features/presentation/screens/settings_screen.dart';
 
 class AppSideDrawer extends StatefulWidget {
   @override

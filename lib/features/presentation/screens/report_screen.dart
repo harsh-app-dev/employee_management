@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../data/models/leave/leave_response.dart';
-import 'app_side_drawer.dart';
+import '../../../core/widgets/app_side_drawer.dart';
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({Key? key}) : super(key: key);
@@ -423,4 +423,43 @@ Widget _buildStatBlock(IconData icon, String label, int value, Color color) {
       ],
     ),
   );
-} 
+}
+
+
+// floating action button for manual punch in and out
+
+/* floatingActionButton: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          if (_isFabExpanded) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 80.0 + 10.0, right: 20.0),
+              child: FloatingActionButton(
+                heroTag: 'manualPunchIn',
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => ManualPunchInDialog(
+                      onSubmit: (dateTime, reason) {
+                        // TODO: Handle the submitted values here
+                        print('Manual Punch In: dateTime="+dateTime.toString()+", reason=$reason');
+                      },
+                    ),
+                  );
+                  setState(() => _isFabExpanded = false);
+                },
+                child: Icon(Icons.fingerprint),
+                tooltip: 'Manual Punch In',
+              ),
+            ),
+          ],
+          Padding(
+            padding: const EdgeInsets.only(bottom: 15.0, right: 20.0),
+            child: FloatingActionButton(
+              onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
+              child: Icon(_isFabExpanded ? Icons.close : Icons.add),
+              tooltip: 'Expand',
+            ),
+          ),
+        ],
+      ),*/

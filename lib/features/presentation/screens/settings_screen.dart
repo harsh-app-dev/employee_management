@@ -9,45 +9,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  String _selectedLanguage = 'English';
-
-  void _showLanguageDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Select Language'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RadioListTile<String>(
-                title: Text('English'),
-                value: 'English',
-                groupValue: _selectedLanguage,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLanguage = value!;
-                  });
-                  Navigator.of(context).pop();
-                },
-              ),
-              RadioListTile<String>(
-                title: Text('Hindi'),
-                value: 'Hindi',
-                groupValue: _selectedLanguage,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLanguage = value!;
-                  });
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,12 +18,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(title: Text('Settings')),
       body: ListView(
         children: [
-          ListTile(
-            leading: Icon(Icons.language),
-            title: Text('Language'),
-            subtitle: Text(_selectedLanguage),
-            onTap: _showLanguageDialog,
-          ),
           Obx(
             () => ListTile(
               leading: Icon(Icons.dark_mode),
