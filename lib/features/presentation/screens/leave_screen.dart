@@ -23,7 +23,6 @@ class LeaveScreen extends StatefulWidget {
 
 class _LeaveScreenState extends State<LeaveScreen> {
   List<LeaveType> _leaveTypes = [];
-  List<HalfDayOption> _halfDayOptions = [];
   List<RoleUser> _hrList = [];
   List<RoleUser> _managerList = [];
   bool _isLoadingLeaveTypes = true;
@@ -34,8 +33,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
   final double _casualTotal = 12;
   final int _shortTotal = 1;
 
-  bool _isLoadingLeaveHistory = false;
-  String? _leaveHistoryError;
 
   final List<LeaveResponse> _leaveRequests = [];
 
@@ -60,7 +57,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
     if (result is NetworkSuccess<Map<String, dynamic>>) {
       setState(() {
         _leaveTypes = result.data['leaveTypes'];
-        _halfDayOptions = result.data['halfDayOptions'];
         _isLoadingLeaveTypes = false;
       });
     } else {
@@ -88,8 +84,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
   Future<void> _fetchLeaveHistory() async {
     setState(() {
-      _isLoadingLeaveHistory = true;
-      _leaveHistoryError = null;
     });
     final leaveRepository = getIt<LeaveRepository>();
     final result = await leaveRepository.fetchLeaveApplications();
@@ -98,11 +92,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
         _leaveRequests.clear();
         _leaveRequests.addAll(result.data);
         _initializeEvents();
-        _isLoadingLeaveHistory = false;
       });
     } else if (result is NetworkError) {
       setState(() {
-        _isLoadingLeaveHistory = false;
         // _leaveHistoryError = result..toString();
       });
     }
@@ -134,11 +126,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
     });
   }
 
-
   List<LeaveResponse> get _filteredLeaveRequests {
     final filtered = _leaveRequests.where((leave) {
       bool statusMatch = _selectedStatusFilter == 'All' || leave.status == _selectedStatusFilter;
-      bool typeMatch = _selectedTypeFilter == 'All' || leave.leaveType == _selectedTypeFilter;
+      bool typeMatch = _selectedTypeFilter == 'All' || leave.leaveTypeName == _selectedTypeFilter;
       bool dateMatch = _selectedDateFilter == null || (
           leave.dateRange.start.isAfter(_selectedDateFilter!.start.subtract(const Duration(days: 1))) &&
               leave.dateRange.end.isBefore(_selectedDateFilter!.end.add(const Duration(days: 1)))
@@ -191,7 +182,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
   Widget _buildLeaveBalanceSection() {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 1,
       color: const Color(0xFFF8FAFC),
@@ -260,7 +251,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: MediaQuery.of(context).viewInsets.bottom + 16, // extra space for keyboard
+                    ),
                     child: _LeaveApplicationForm(
                       leaveTypes: _leaveTypes.map((e) => e.name).toList(),
                       leaveTypeObjects: _leaveTypes,
@@ -286,7 +281,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
   Widget _buildFilterSection() {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: const Color(0xFFF8FAFC),
@@ -537,7 +532,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       itemCount: filteredRequests.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
@@ -559,8 +554,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     children: [
                       CircleAvatar(
                         backgroundColor: _getStatusColor(leave.leaveType).withOpacity(0.13),
-                        radius: 22,
-                        child: Icon(_getLeaveTypeIcon(leave.leaveTypeName), color: _getStatusColor(leave.leaveType), size: 22),
+                        radius: 18,
+                        child: Icon(_getLeaveTypeIcon(leave.leaveTypeName), color: _getStatusColor(leave.leaveType), size: 20),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -573,9 +568,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${DateFormat('dd MMM yyyy').format(leave.dateRange.start)} - ${DateFormat('dd MMM yyyy').format(leave.dateRange.end)} (${leave.totalDays} day${leave.totalDays > 1 ? 's' : ''})',
+                              '${DateFormat('dd MMM yyyy').format(leave.dateRange.start)} - '
+                                  '${DateFormat('dd MMM yyyy').format(leave.dateRange.end)}\n'
+                                  '(${leave.totalDays.toStringAsFixed(1)} day${leave.totalDays != 1 ? 's' : ''})',
                               style: const TextStyle(fontSize: 12, color: Colors.black54),
                             ),
+
                           ],
                         ),
                       ),
@@ -604,7 +602,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        final isEditable = leave.status == 'Pending';
+        // final isEditable = leave.status == 'Pending';
+        final isEditable = !leave.dateRange.start.isBefore(DateTime.now());
         if (isEditable) {
           return DraggableScrollableSheet(
             initialChildSize: 0.9,
@@ -668,27 +667,39 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               width: double.infinity,
                               height: 45,
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  setState(() {
-                                    _leaveRequests[index] = LeaveResponse(
-                                      id: leave.id,
-                                      dateRange: leave.dateRange,
-                                      leaveType: leave.leaveType,
-                                      reason: leave.reason,
-                                      attachmentPath: leave.attachmentPath,
-                                      hr: leave.hr,
-                                      teamLead: leave.teamLead,
-                                      status: 'Cancelled',
-                                      appliedDate: leave.appliedDate,
-                                      managerComment: leave.managerComment,
-                                      processedDate: DateTime.now(),
-                                      totalDays: leave.totalDays,
-                                      leaveTypeName: leave.leaveTypeName
-                                    );
-                                    _initializeEvents();
-                                  });
-                                  Navigator.pop(context);
-                                  showGlobalSnackBar('Leave request withdrawn.');
+                                onPressed: () async {
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (context) => const Center(child: CircularProgressIndicator()),
+                                  );
+                                  final leaveRepository = getIt<LeaveRepository>();
+                                  final result = await leaveRepository.withdrawLeave(leave.id);
+                                  Navigator.of(context, rootNavigator: true).pop(); // Hide loader
+                                  if (result is NetworkSuccess) {
+                                    setState(() {
+                                      _leaveRequests[index] = LeaveResponse(
+                                        id: leave.id,
+                                        dateRange: leave.dateRange,
+                                        leaveType: leave.leaveType,
+                                        reason: leave.reason,
+                                        attachmentPath: leave.attachmentPath,
+                                        hr: leave.hr,
+                                        teamLead: leave.teamLead,
+                                        status: 'Cancelled',
+                                        appliedDate: leave.appliedDate,
+                                        managerComment: leave.managerComment,
+                                        processedDate: DateTime.now(),
+                                        totalDays: leave.totalDays,
+                                        leaveTypeName: leave.leaveTypeName
+                                      );
+                                      _initializeEvents();
+                                    });
+                                    Navigator.pop(context);
+                                    showGlobalSnackBar('Leave request withdrawn.');
+                                  } else if (result is NetworkError) {
+                                    showGlobalSnackBar('Failed to withdraw leave: \\${result.message}');
+                                  }
                                 },
                                 label: const Text('Withdraw Leave', style: TextStyle(fontSize: 16),),
                                 style: ElevatedButton.styleFrom(
@@ -739,9 +750,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           Icon(_getLeaveTypeIcon(leave.leaveTypeName), color: _getStatusColor(leave.leaveType), size: 28),
                           const SizedBox(width: 10),
                           Text(
-                            leave.leaveType,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                            leave.leaveTypeName,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                           ),
+
                           const Spacer(),
                           _buildStatusIndicator(leave.status),
                           IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context),),
@@ -751,12 +763,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       Text('Date Range:', style: TextStyle(fontWeight: FontWeight.bold)),
                       Text('${DateFormat('dd MMM yyyy').format(leave.dateRange.start)} - ${DateFormat('dd MMM yyyy').format(leave.dateRange.end)}'),
                       const SizedBox(height: 10),
-                      if (leave.leaveType == 'Half Day' && leave.halfDayType != null) ...[
+                      if (leave.leaveTypeName == 'Half Day Leave' && leave.halfDayType != null) ...[
                         Text('Half Day:', style: TextStyle(fontWeight: FontWeight.bold)),
                         Text(leave.halfDayType!),
                         const SizedBox(height: 10),
                       ],
-                      if (leave.leaveType == 'Short Leave' && leave.shortLeaveTime != null) ...[
+                      if (leave.leaveTypeName == 'Short Leave' && leave.shortLeaveTime != null) ...[
                         Text('Short Leave Time:', style: TextStyle(fontWeight: FontWeight.bold)),
                         Text(leave.shortLeaveTime!),
                         const SizedBox(height: 10),
@@ -923,7 +935,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
   void initState() {
     super.initState();
     if (widget.initialLeave != null) {
-      _selectedLeaveType = widget.initialLeave!.leaveTypeName ?? widget.initialLeave!.leaveType;
+      _selectedLeaveType = widget.initialLeave!.leaveTypeName;
       _selectedHR = widget.initialLeave!.hr;
       final initialManager = widget.managerList.firstWhere(
             (m) => m.fullName == widget.initialLeave!.teamLead,
@@ -969,19 +981,19 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
     if (!_formKey.currentState!.validate()) return;
     if ((_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day Leave') &&
         _dateRange!.start != _dateRange!.end) {
-      showGlobalSnackBar('Short Leave and Half Day can only be applied for a single day.');
+      showGlobalSnackBarOverlay('Short Leave and Half Day can only be applied for a single day.');
       return;
     }
     if (_selectedLeaveType == 'Short Leave' && _shortLeaveStartTime == null) {
-      showGlobalSnackBar('Please select the start time for your short leave.');
+      showGlobalSnackBarOverlay('Please select the start time for your short leave.');
       return;
     }
     if (_selectedLeaveType == 'Half Day Leave' && _selectedHalf == null) {
-      showGlobalSnackBar('Please select which half for Half Day leave.');
+      showGlobalSnackBarOverlay('Please select which half for Half Day leave.');
       return;
     }
     if (_selectedManagers.isEmpty) {
-      showGlobalSnackBar('Please select at least one manager.');
+      showGlobalSnackBarOverlay('Please select at least one manager.');
       return;
     }
 
@@ -994,7 +1006,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
 
       if (_dateRange!.start.isBefore(existingLeave.dateRange.end.add(const Duration(days: 1))) &&
           _dateRange!.end.isAfter(existingLeave.dateRange.start.subtract(const Duration(days: 1)))) {
-        showGlobalSnackBar('Leave request already exists for the selected date range. Please choose different dates.');
+        showGlobalSnackBarOverlay('Leave request already exists for the selected date range. Please choose different dates.');
         return;
       }
     }
@@ -1095,35 +1107,40 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
             ),
           ),
           if (_selectedLeaveType == 'Half Day Leave') ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: const Text('First Half'),
-                    value: 'First Half',
-                    groupValue: _selectedHalf,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedHalf = value;
-                      });
-                    },
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Radio<String>(
+                      value: 'First Half',
+                      groupValue: _selectedHalf,
+                      onChanged: (value) {
+                        setState(() => _selectedHalf = value);
+                      },
+                    ),
+                    const Text('First Half', style: TextStyle(fontSize: 16),),
+                  ],
                 ),
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: const Text('Second Half'),
-                    value: 'Second Half',
-                    groupValue: _selectedHalf,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedHalf = value;
-                      });
-                    },
-                  ),
+                SizedBox(width: 20), // adjustable gap between radios
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Radio<String>(
+                      value: 'Second Half',
+                      groupValue: _selectedHalf,
+                      onChanged: (value) {
+                        setState(() => _selectedHalf = value);
+                      },
+                    ),
+                    const Text('Second Half',style: TextStyle(fontSize: 16),),
+                  ],
                 ),
               ],
-            ),
+            )
+
           ],
           if (_selectedLeaveType == 'Short Leave') ...[
             const SizedBox(height: 12),
@@ -1337,11 +1354,6 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                       iconStyleData: const IconStyleData(icon: Icon(Icons.arrow_drop_down), iconSize: 24,),
                     ),
                   ),
-                  if (field.hasError)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12.0, top: 5),
-                      child: Text(field.errorText!, style: const TextStyle(color: Colors.red, fontSize: 12),),
-                    ),
                 ],
               );
             },
@@ -1391,7 +1403,64 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
           const SizedBox(height: 16),
           SizedBox(width: double.infinity, height: 45,
             child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitLeaveRequest,
+              onPressed: _isSubmitting ? null : () async {
+                if (widget.initialLeave != null) {
+                  // Update mode
+                  if (!_formKey.currentState!.validate()) return;
+                  if ((_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day Leave') &&
+                      _dateRange!.start != _dateRange!.end) {
+                    showGlobalSnackBarOverlay('Short Leave and Half Day can only be applied for a single day.');
+                    return;
+                  }
+                  if (_selectedLeaveType == 'Short Leave' && _shortLeaveStartTime == null) {
+                    showGlobalSnackBarOverlay('Please select the start time for your short leave.');
+                    return;
+                  }
+                  if (_selectedLeaveType == 'Half Day Leave' && _selectedHalf == null) {
+                    showGlobalSnackBarOverlay('Please select which half for Half Day leave.');
+                    return;
+                  }
+                  if (_selectedManagers.isEmpty) {
+                    showGlobalSnackBarOverlay('Please select at least one manager.');
+                    return;
+                  }
+                  setState(() { _isSubmitting = true; });
+                  final selectedLeaveType = widget.leaveTypeObjects.firstWhere((t) => t.name == _selectedLeaveType);
+                  final selectedHr = widget.hrList.firstWhere((hr) => hr.fullName == _selectedHR);
+                  final selectedManagerIds = _selectedManagers.map((m) => m.id).toList();
+                  final request = LeaveApplyRequest(
+                    startDate: _dateRange!.start,
+                    endDate: _dateRange!.end,
+                    hrId: selectedHr.id,
+                    managerIds: selectedManagerIds,
+                    leaveTypeId: selectedLeaveType.id.toString(),
+                    reason: _reasonController.text.trim(),
+                    attachment: _attachmentPath != null ? File(_attachmentPath!) : null,
+                    isHalfDay: _selectedLeaveType == 'Half Day Leave',
+                    halfDaySession: _selectedHalf == 'First Half' ? 'FH' : _selectedHalf == 'Second Half' ? 'SH' : null,
+                    startTime: _shortLeaveStartTime != null ? _shortLeaveStartTime!.hour.toString().padLeft(2, '0') + ':' + _shortLeaveStartTime!.minute.toString().padLeft(2, '0') : null,
+                    endTime: _shortLeaveEndTime != null ? _shortLeaveEndTime!.hour.toString().padLeft(2, '0') + ':' + _shortLeaveEndTime!.minute.toString().padLeft(2, '0') : null,
+                  );
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(child: CircularProgressIndicator()),
+                  );
+                  final repo = getIt<LeaveRepository>();
+                  final result = await repo.updateLeave(widget.initialLeave!.id, request);
+                  Navigator.of(context, rootNavigator: true).pop();
+                  setState(() { _isSubmitting = false; });
+                  if (result is NetworkSuccess) {
+                    widget.onSubmissionSuccess();
+                    showGlobalSnackBar('Leave request updated successfully!');
+                    Navigator.pop(context);
+                  } else if (result is NetworkError) {
+                    showGlobalSnackBar('Error: \\${result.message}');
+                  }
+                } else {
+                  _submitLeaveRequest();
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
@@ -1400,7 +1469,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
               child: _isSubmitting
                   ? const SizedBox(height: 18, width: 18,
                 child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-              ) : const Text('Submit Leave Request', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              ) : Text(widget.initialLeave != null ? 'Update Leave Request' : 'Submit Leave Request', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             ),
           ),
         ],

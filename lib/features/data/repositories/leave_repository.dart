@@ -83,11 +83,16 @@ class LeaveRepository {
       if (request.halfDaySession != null) {
         multipartRequest.fields['half_day_session'] = request.halfDaySession!;
       }
-      if (request.startTime != null) {
+      if (request.startTime != null && request.startTime!.isNotEmpty) {
         multipartRequest.fields['start_time'] = request.startTime!;
+        if (request.endTime != null && request.endTime!.isNotEmpty) {
+          multipartRequest.fields['end_time'] = request.endTime!;
+        }
       }
-      if (request.endTime != null) {
-        multipartRequest.fields['end_time'] = request.endTime!;
+      // If startTime is null or empty, do not send start_time or end_time fields at all
+      else {
+        multipartRequest.fields['start_time'] = '';
+        multipartRequest.fields['end_time'] = '';
       }
 
       // Add attachment if it exists
@@ -121,7 +126,7 @@ class LeaveRepository {
   Future<NetworkResult<List<LeaveResponse>>> fetchLeaveApplications() async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     try {
-      var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-applications/');
+      var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-history/');
       // Log API request details
       print('Hitting API: ${uri}');
       print('Headers: {"Authorization: Bearer $token","Accept: application/json",}');
@@ -130,6 +135,7 @@ class LeaveRepository {
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
+          'X-CSRFTOKEN': 'euRQJVDZBX8y5dhzWQZA4ig4knJTwag88YnsMB1b24QtpK1xlyYvGgRTNaQasgIK', // Add CSRF Token
         },
       );
       print('Response Status: ${response.statusCode}');
@@ -153,7 +159,7 @@ class LeaveRepository {
             appliedDate: DateTime.parse(item['applied_at']),
             processedDate: null, // Not available in response
             managerComment: null, // Not available in response
-            totalDays: double.tryParse(item['total_days'].toString())?.toInt() ?? 1,
+            totalDays: double.tryParse(item['total_days'].toString()) ?? 1.0,
             shortLeaveTime: item['start_time'] != null && item['end_time'] != null
               ? '${item['start_time']} - ${item['end_time']}'
               : null,
@@ -169,6 +175,92 @@ class LeaveRepository {
       }
     } catch (e) {
       return NetworkError(-1, e.toString());
+    }
+  }
+
+  Future<NetworkResult<void>> withdrawLeave(String leaveId) async {
+    final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+    try {
+      var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-applications/$leaveId/');
+      print('[DELETE] ' + uri.toString());
+      print('Headers: {Authorization: Bearer $token, Accept: application/json}');
+      final response = await http.delete(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          // Add CSRF token if required by backend
+        },
+      );
+      print('Response: ${response.statusCode} ${response.body}');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return NetworkSuccess(null);
+      } else {
+        return NetworkError(response.statusCode, response.body);
+      }
+    } catch (e) {
+      return NetworkError(-1, 'An error occurred: $e');
+    }
+  }
+
+  Future<NetworkResult<dynamic>> updateLeave(String leaveId, LeaveApplyRequest request) async {
+    final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+    try {
+      var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-applications/$leaveId/');
+      var multipartRequest = http.MultipartRequest('PATCH', uri)
+        ..headers.addAll({
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'multipart/form-data',
+          'X-CSRFTOKEN': 'dOcX7diDSJM2H2XQXatOKGUhnMYyTFm2xUHYr1pfOkKzrrB4rGQQpc3H09ayVAMz',
+        });
+
+      multipartRequest.fields['start_date'] = DateFormat('yyyy-MM-dd').format(request.startDate);
+      multipartRequest.fields['end_date'] = DateFormat('yyyy-MM-dd').format(request.endDate);
+      multipartRequest.fields['hr'] = request.hrId;
+      multipartRequest.fields['leave_type'] = request.leaveTypeId;
+      multipartRequest.fields['reason'] = request.reason;
+      multipartRequest.fields['is_half_day'] = request.isHalfDay ? 'true' : '';
+      for (int i = 0; i < request.managerIds.length; i++) {
+        multipartRequest.fields['managers'] = request.managerIds[i];
+      }
+      if (request.halfDaySession != null) {
+        multipartRequest.fields['half_day_session'] = request.halfDaySession!;
+      }
+      if (request.startTime != null && request.startTime!.isNotEmpty) {
+        multipartRequest.fields['start_time'] = request.startTime!;
+        if (request.endTime != null && request.endTime!.isNotEmpty) {
+          multipartRequest.fields['end_time'] = request.endTime!;
+        }
+      }
+      // If startTime is null or empty, do not send start_time or end_time fields at all
+      else {
+        multipartRequest.fields['start_time'] = '';
+        multipartRequest.fields['end_time'] = '';
+      }
+      if (request.attachment != null) {
+        multipartRequest.files.add(
+          await http.MultipartFile.fromPath(
+            'attachment',
+            request.attachment!.path,
+          ),
+        );
+      } else {
+        multipartRequest.fields['attachment'] = '';
+      }
+      print('[PATCH] ${multipartRequest.url}');
+      print('Headers: ${multipartRequest.headers}');
+      print('Fields: ${multipartRequest.fields}');
+      final response = await multipartRequest.send();
+      final responseBody = await response.stream.bytesToString();
+      print('Response: ${response.statusCode} ${responseBody}');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return NetworkSuccess(json.decode(responseBody));
+      } else {
+        return NetworkError(response.statusCode, responseBody);
+      }
+    } catch (e) {
+      return NetworkError(-1, 'An error occurred: $e');
     }
   }
 }

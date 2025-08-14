@@ -37,7 +37,12 @@ class NetworkClient {
     print('[GET] $uri');
     print('Headers: $mergedHeaders');
     try {
-      final response = await _client.get(uri, headers: mergedHeaders);
+      final response = await _client.get(uri, headers: mergedHeaders).timeout(
+        const Duration(seconds: 15), // set your timeout here
+        onTimeout: () {
+          throw TimeoutException('Request timed out after 15 seconds');
+        },
+      );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
     } on http.ClientException catch (e) {
@@ -74,6 +79,11 @@ class NetworkClient {
         uri,
         headers: mergedHeaders,
         body: body != null ? jsonEncode(body) : null,
+      ).timeout(
+        const Duration(seconds: 15), // set your timeout here
+        onTimeout: () {
+          throw TimeoutException('Request timed out after 15 seconds');
+        },
       );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
@@ -111,6 +121,11 @@ class NetworkClient {
         uri,
         headers: mergedHeaders,
         body: body != null ? jsonEncode(body) : null,
+      ).timeout(
+        const Duration(seconds: 15), // set your timeout here
+        onTimeout: () {
+          throw TimeoutException('Request timed out after 15 seconds');
+        },
       );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
@@ -148,6 +163,11 @@ class NetworkClient {
         uri,
         headers: mergedHeaders,
         body: body != null ? jsonEncode(body) : null,
+      ).timeout(
+        const Duration(seconds: 15), // set your timeout here
+        onTimeout: () {
+          throw TimeoutException('Request timed out after 15 seconds');
+        },
       );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);
@@ -185,6 +205,11 @@ class NetworkClient {
         uri,
         headers: mergedHeaders,
         body: body != null ? jsonEncode(body) : null,
+      ).timeout(
+        const Duration(seconds: 15), // set your timeout here
+        onTimeout: () {
+          throw TimeoutException('Request timed out after 15 seconds');
+        },
       );
       print('Response: ${response.statusCode} ${response.body}');
       return _handleResponse<T>(response, parser);

@@ -12,7 +12,7 @@ class LeaveResponse {
   final DateTime appliedDate;
   final String? managerComment;
   final DateTime? processedDate;
-  final int totalDays;
+  final double totalDays;
   final String? shortLeaveTime;
   final String? halfDayType;
   final bool isNewlyApplied;
@@ -49,7 +49,7 @@ class LeaveResponse {
     DateTime? appliedDate,
     String? managerComment,
     DateTime? processedDate,
-    int? totalDays,
+    double? totalDays,
     String? shortLeaveTime,
     String? halfDayType,
     bool? isNewlyApplied,

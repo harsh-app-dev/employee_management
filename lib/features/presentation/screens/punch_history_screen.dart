@@ -139,7 +139,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 1.w, vertical: 1.h),
+                padding: EdgeInsets.symmetric( vertical: 1.h),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -299,16 +299,16 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                               children: [
                                                 Row(
                                                   children: [
-                                                    Icon(Icons.calendar_today_rounded, color: theme.colorScheme.primary, size: 22,),
+                                                    Icon(Icons.calendar_today_rounded, color: theme.colorScheme.primary, size: 20,),
                                                     SizedBox(width: 8),
                                                     Text(DateFormat('EEE, MMM d, yyyy',).format(DateTime.parse(item.date,),),
-                                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20,),
+                                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
                                                     ),
                                                     // if (item.deductionType != null && item.deductionType!.isNotEmpty)
                                                       Padding(
-                                                        padding: const EdgeInsets.only(left: 8.0),
+                                                        padding: const EdgeInsets.only(left: 6.0),
                                                         // child: Chip(label: Text(getDeductionInitials(item.deductionType!)), backgroundColor: Colors.red,),
-                                                        child: Chip(label: Text(getDeductionInitials("half"), style: TextStyle(color: Colors.white),), backgroundColor: Colors.red, ),
+                                                        child: Chip(label: Text(getDeductionInitials("half"), style: TextStyle(color: Colors.white, fontSize: 12),), backgroundColor: Colors.red, ),
 
                                                       ),
                                                   ],
@@ -446,7 +446,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                                             Icon(Icons.timer, color: theme.colorScheme.primary, size: 22,),
                                                                             SizedBox(width: 3,),
                                                                             Text(
-                                                                              'Total Work: ',
+                                                                              '${AppStrings.workedHrs}: ',
                                                                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15,),
                                                                             ),
                                                                             Text(
@@ -459,7 +459,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                                             Icon(Icons.pause_circle_filled, color: Colors.orange, size: 22,),
                                                                             SizedBox(width: 3,),
                                                                             Text(
-                                                                              'Total Break: ',
+                                                                              '${AppStrings.breakHrs}: ',
                                                                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15,),
                                                                             ),
                                                                             Text(
@@ -480,7 +480,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                   },
                                                   child: Text(
                                                     AppStrings.viewAll,
-                                                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary,),
+                                                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 14),
                                                   ),
                                                 ),
                                               ],
@@ -558,21 +558,21 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                 mainAxisAlignment: MainAxisAlignment.start,
                                                 children: [
                                                   Icon(Icons.timer, color: theme.colorScheme.primary, size: 20,),
-                                                  SizedBox(width: 6),
+                                                  SizedBox(width: 3),
                                                   Text(
-                                                    '${AppStrings.activeHours}: ',
-                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15,),
+                                                    '${AppStrings.workedHrs}: ',
+                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),
                                                   ),
                                                   Text(
                                                     formatDuration(item.totalWorkTime,),
                                                     style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
                                                   ),
-                                                  SizedBox(width: 30),
+                                                  SizedBox(width: 20),
                                                   Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20,),
-                                                  SizedBox(width: 6),
+                                                  SizedBox(width: 3),
                                                   Text(
-                                                    '${AppStrings.breaks}: ',
-                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15,),
+                                                    '${AppStrings.breakHrs}: ',
+                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),
                                                   ),
                                                   Text(
                                                     formatDuration(item.totalBreakTime,),

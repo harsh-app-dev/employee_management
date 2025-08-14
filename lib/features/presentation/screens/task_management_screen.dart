@@ -79,7 +79,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
+                  padding: EdgeInsets.symmetric( vertical: 2.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -94,17 +94,14 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                           borderRadius: BorderRadius.circular(12),
                           onTap: () async {
                             final picked = await showDatePicker(
-                              context: context,
-                              initialDate: _selectedDate,
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2100),
+                              context: context, initialDate: _selectedDate, firstDate: DateTime(2000), lastDate: DateTime(2100),
                             );
                             if (picked != null) {
                               _onDateChanged(picked);
                             }
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 10),
                             decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.07), borderRadius: BorderRadius.circular(12),),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -113,10 +110,10 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                                 SizedBox(width: 8),
                                 Text(
                                   DateFormat('E, d MMMM yyyy').format(_selectedDate),
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, letterSpacing: 0.5, color: theme.colorScheme.primary,),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5, color: theme.colorScheme.primary,),
                                 ),
                                 SizedBox(width: 4),
-                                Icon(Icons.arrow_drop_down_rounded, color: theme.colorScheme.primary, size: 28),
+                                Icon(Icons.arrow_drop_down_rounded, color: theme.colorScheme.primary, size: 26),
                               ],
                             ),
                           ),
@@ -173,11 +170,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                           return Center(
                             child: SizedBox(height: 40.h,
                               child: Center(
-                                child: Text(
-                                  'No task found.',
-                                  style: TextStyle(fontSize: 20.sp),
-                                  textAlign: TextAlign.center,
-                                ),
+                                child: Text('No task found.', style: TextStyle(fontSize: 20.sp), textAlign: TextAlign.center,),
                               ),
                             ),
                           );
@@ -232,9 +225,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                                       if (_controller.submitTasksApiState.value.isSuccess) {
                                         showGlobalSnackBar(AppStrings.successSubmission);
                                       } else if (_controller.submitTasksApiState.value.isError) {
-                                        showGlobalSnackBar(
-                                          _controller.submitTasksApiState.value.error ?? AppStrings.failedSubmission,
-                                        );
+                                        showGlobalSnackBar(_controller.submitTasksApiState.value.error ?? AppStrings.failedSubmission,);
                                       }
                                     } else {
                                       showGlobalSnackBar('You have no pending tasks to submit');
@@ -258,8 +249,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                           ),
                         );
                       },
-                    )
-                  : const SizedBox.shrink(),
+                    ) : const SizedBox.shrink(),
               );
             },
           );

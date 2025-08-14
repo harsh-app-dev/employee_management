@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 TextTheme createTextTheme(
     BuildContext context, String bodyFontString, String displayFontString) {
@@ -17,6 +20,38 @@ void showGlobalSnackBar(String message) {
   key.currentState?.showSnackBar(
     SnackBar(content: Text(message)),
   );
+}
+
+void showGlobalSnackBarOverlay(String message) {
+  final overlay = getIt<GlobalKey<NavigatorState>>().currentState?.overlay;
+  if (overlay == null) return;
+
+  final entry = OverlayEntry(
+    builder: (context) => Positioned(
+      bottom: 50,
+      left: 10,
+      right: 10,
+      child: Material(
+        color: Colors.transparent,
+        child: SafeArea(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  overlay.insert(entry);
+  Future.delayed(const Duration(seconds: 3), () => entry.remove());
 }
 
 void showGlobalSnackBarWithIcon(String message, {IconData? icon, Color? iconColor}) {
@@ -115,4 +150,37 @@ String getDeductionInitials(String type) {
   if (t.contains('full')) return 'FD';
   if (t.contains('short')) return 'SL';
   return t.split(' ').map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').join();
+}
+
+
+Future<bool> checkInternet(BuildContext context) async {
+  final connectivityResult = await Connectivity().checkConnectivity();
+
+  if (connectivityResult == ConnectivityResult.none) {
+    _showNoInternet(context);
+    return false;
+  }
+
+  // Extra step: verify actual internet access
+  try {
+    final result = await InternetAddress.lookup('example.com');
+    if (result.isEmpty || result[0].rawAddress.isEmpty) {
+      _showNoInternet(context);
+      return false;
+    }
+  } on SocketException {
+    _showNoInternet(context);
+    return false;
+  }
+
+  return true;
+}
+
+void _showNoInternet(BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("No internet connection"),
+      backgroundColor: Colors.red,
+    ),
+  );
 }

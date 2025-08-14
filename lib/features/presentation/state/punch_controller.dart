@@ -76,7 +76,7 @@ import 'dart:io';
         }
       } catch (e) {
         punchInOutApiState.value = ApiState.error(
-          "Something went wrong. Please try again.",
+          "Check internet connection or app permissions.",
         );
       }
     }
@@ -99,7 +99,7 @@ import 'dart:io';
         }
       } catch (e) {
         punchStateApiState.value = ApiState.error(
-          "Something Went Wrong. Please try again.",
+          "Check internet connection or app permissions.",
         );
       }
     }

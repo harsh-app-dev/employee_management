@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: EdgeInsets.only(bottom: 5.h), // Moves everything up
           child: SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 600),
+              constraints: BoxConstraints(maxWidth: 400),
               child: Padding(
                 padding: EdgeInsets.all(4.w),
                 child: ValueListenableBuilder(
@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   child: loginApiState.isLoading
                                       ? SizedBox(height: 4.h, width: 4.h,
-                                          child: const CircularProgressIndicator(strokeWidth: 4,),
+                                          child: const CircularProgressIndicator(strokeWidth: 4, color: Colors.white,),
                                         )
                                       : Text(
                                           AppStrings.login,
