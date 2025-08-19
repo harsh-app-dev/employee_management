@@ -2,27 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../data/models/leave/leave_response.dart';
 import '../../../core/widgets/app_side_drawer.dart';
+import 'package:intl/intl.dart';
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final List<LeaveResponse> leaveRequests = [];
+    final List<LeaveResponse>
+    leaveRequests = [
+      LeaveResponse(
+        id: "1",
+        dateRange: DateTimeRange(
+          start: DateTime.now().subtract(const Duration(days: 2)),
+          end: DateTime.now().subtract(const Duration(days: 1)),
+        ),
+        leaveType: "Sick Leave",
+        reason: "Fever",
+        hr: "HR1",
+        teamLead: "Lead1",
+        status: "Approved",
+        appliedDate: DateTime.now().subtract(const Duration(days: 3)),
+        totalDays: 2,
+        isNewlyApplied: false,
+        leaveTypeName: "Sick Leave",
+      ),
+    ];
     try {
     } catch (_) {}
     final theme = Theme.of(context);
 
-    // Demo: Calculate for current month
     final now = DateTime.now();
     final firstDayOfMonth = DateTime(now.year, now.month, 1);
     final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
-    // Working days: Mon-Fri
+
     int totalWorkingDays = 0;
     for (DateTime d = firstDayOfMonth; !d.isAfter(lastDayOfMonth); d = d.add(Duration(days: 1))) {
       if (d.weekday >= 1 && d.weekday <= 5) totalWorkingDays++;
     }
-    // Paid days: working days + approved leaves (count unique leave days in month)
+
     Set<DateTime> approvedLeaveDays = {};
     for (final leave in leaveRequests.where((l) => l.status == 'Approved')) {
       for (int i = 0; i <= leave.dateRange.duration.inDays; i++) {
@@ -30,9 +48,9 @@ class ReportScreen extends StatelessWidget {
         if (day.month == now.month && day.year == now.year) approvedLeaveDays.add(DateTime(day.year, day.month, day.day));
       }
     }
-    int totalAbsent = 1; // Demo value, replace with real calculation if available
+    int totalAbsent = 1;
     int totalPaidDays = totalWorkingDays - totalAbsent;
-    // Leave summary: count by type for current month
+
     Map<String, int> leaveTypeCounts = {};
     for (final leave in leaveRequests.where((l) => l.status == 'Approved')) {
       if (leave.dateRange.start.month == now.month && leave.dateRange.start.year == now.year) {
@@ -40,9 +58,10 @@ class ReportScreen extends StatelessWidget {
       }
     }
 
+
     void _showPunchDetailSheet(DateTime date) {
       final theme = Theme.of(context);
-      // Demo punch sessions for the selected date
+
       final punchSessions = [
         {'in': '09:00 AM', 'out': '11:30 AM', 'worked': '2h 30m'},
         {'in': '12:00 PM', 'out': '02:00 PM', 'worked': '2h 0m'},
@@ -52,6 +71,8 @@ class ReportScreen extends StatelessWidget {
       final totalHours = totalMinutes ~/ 60;
       final totalMins = totalMinutes % 60;
 
+      final formattedDate = DateFormat('EEEE, d MMM yyyy').format(date);
+
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -60,113 +81,143 @@ class ReportScreen extends StatelessWidget {
         ),
         builder: (context) => DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.5,
-          minChildSize: 0.3,
+          initialChildSize: 0.55,
+          minChildSize: 0.35,
           maxChildSize: 0.95,
-          builder: (context, scrollController) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          builder: (context, scrollController) => Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+            ),
             child: SingleChildScrollView(
               controller: scrollController,
+              padding: const EdgeInsets.all(20),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      margin: const EdgeInsets.only(bottom: 18),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[400],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                  // Handle bar
+                  Container(
+                    width: 50,
+                    height: 6,
+                    margin: const EdgeInsets.only(bottom: 18),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+
+                  // Date & Close button
                   Row(
                     children: [
-                      Icon(Icons.access_time, color: theme.colorScheme.primary, size: 28),
+                      Icon(Icons.calendar_today, color: theme.colorScheme.primary, size: 22),
                       const SizedBox(width: 8),
-                      const Text('Punch Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                      const Spacer(),
+                      Expanded(
+                        child: Text(
+                          formattedDate,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                      ),
                       IconButton(
-                        icon: Icon(Icons.close, color: theme.colorScheme.primary),
+                        icon: const Icon(Icons.close),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
                   ),
-                  Divider(height: 24, thickness: 1.3, color: theme.colorScheme.primary.withOpacity(0.15)),
+                  const SizedBox(height: 12),
+
+                  Divider(color: Colors.grey[300], thickness: 1.2, height: 20),
+
+                  const SizedBox(height: 10),
+
+                  // Punch Sessions List
                   ...punchSessions.asMap().entries.map((entry) {
                     final idx = entry.key;
                     final punch = entry.value;
                     return Column(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.06),
-                            borderRadius: BorderRadius.circular(12),
+                        Card(
+                          elevation: 2,
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.login, color: Colors.green, size: 22),
-                              const SizedBox(width: 8),
-                              Text('In: ${punch['in']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                              const Spacer(),
-                              Icon(Icons.logout, color: Colors.red, size: 22),
-                              const SizedBox(width: 8),
-                              Text('Out: ${punch['out']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                            ],
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.login, color: Colors.green[700], size: 22),
+                                    const SizedBox(width: 6),
+                                    Text('In: ${punch['in']}',
+                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                                    const Spacer(),
+                                    Icon(Icons.logout, color: Colors.red[700], size: 22),
+                                    const SizedBox(width: 6),
+                                    Text('Out: ${punch['out']}',
+                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Icon(Icons.timer, color: theme.colorScheme.primary, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text("Worked: ${punch['worked']}",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          color: theme.colorScheme.primary,
+                                        )),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 4),
-                              Icon(Icons.timer, color: theme.colorScheme.primary, size: 18),
-                              const SizedBox(width: 6),
-                              const Text('Worked: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                              Text(punch['worked']!, style: TextStyle(fontSize: 14, color: theme.colorScheme.primary)),
-                            ],
-                          ),
-                        ),
+
+                        // Break separator
                         if (idx < punchSessions.length - 1)
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Row(
                               children: [
-                                const Expanded(child: Divider(thickness: 1, color: Color(0xFFE0E0E0))),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
-                                  child: Text('— Break —', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
-                                ),
-                                const Expanded(child: Divider(thickness: 1, color: Color(0xFFE0E0E0))),
+                                Expanded(child: Divider(color: Colors.grey[300], thickness: 1, endIndent: 8)),
+                                const Text("Break", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
+                                Expanded(child: Divider(color: Colors.grey[300], thickness: 1, indent: 8)),
                               ],
                             ),
                           ),
                       ],
                     );
-                  }),
+                  }).toList(),
+
                   const SizedBox(height: 20),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.timer, color: theme.colorScheme.primary, size: 22),
-                          const SizedBox(width: 8),
-                          const Text('Total Worked: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text('$totalHours hrs $totalMins mins', style: TextStyle(fontSize: 16, color: theme.colorScheme.primary)),
-                        ],
-                      ),
+
+                  // Total Worked
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 28),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.access_time, color: theme.colorScheme.primary, size: 22),
+                        const SizedBox(width: 10),
+                        Text(
+                          "Total Worked: $totalHours hrs $totalMins mins",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -183,7 +234,7 @@ class ReportScreen extends StatelessWidget {
     final bool sandwichEligible = sandwichDaysElapsed >= 60;
 
     return DefaultTabController(
-      length: 2, // Number of tabs
+      length: 2,
       child: Scaffold(
         drawer: AppSideDrawer(),
         appBar: AppBar(
@@ -203,13 +254,13 @@ class ReportScreen extends StatelessWidget {
           ),
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Attractive & Compact Sandwich Relief Card ---
+
               Card(
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 elevation: 3,
                 child: Container(
@@ -278,7 +329,7 @@ class ReportScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // --- Summary Section ---
+
               Card(
                 margin: const EdgeInsets.only(bottom: 18, left: 4, right: 4, top: 4),
                 elevation: 6,
@@ -305,9 +356,9 @@ class ReportScreen extends StatelessWidget {
                           _buildStatBlock(Icons.monetization_on, 'Paid', totalPaidDays, Colors.orange),
                         ],
                       ),
-                      const SizedBox(height: 18),
-                      Text('Leave Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: theme.colorScheme.primary)),
                       const SizedBox(height: 10),
+                      Text('Leave Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: theme.colorScheme.primary)),
+                      const SizedBox(height: 4),
                       leaveTypeCounts.isEmpty
                           ? Text('No leaves taken this month.', style: TextStyle(color: Colors.grey[700], fontSize: 15))
                           : Wrap(
@@ -325,26 +376,26 @@ class ReportScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // --- Calendar Section ---
+
               SizedBox(
-                height: 400, // Adjust height as needed for your design
+                height: 400,
                 child: TableCalendar(
-                  firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDay: DateTime.now().add(const Duration(days: 365)),
+                  firstDay: DateTime.now().subtract(const Duration(days: 365 * 5)),
+                  lastDay: DateTime.now().add(const Duration(days: 365 * 5)),
                   focusedDay: DateTime.now(),
                   calendarFormat: CalendarFormat.month,
                   availableCalendarFormats: const {CalendarFormat.month: 'Month'},
                   calendarStyle: CalendarStyle(
                     todayDecoration: BoxDecoration(
-                      color: Colors.green[700], // Darker green for today
+                      color: Colors.green[700],
                       shape: BoxShape.circle,
                     ),
                     selectedDecoration: BoxDecoration(
-                      color: Colors.blue[800], // Darker blue for selected day
+                      color: Colors.blue[800],
                       shape: BoxShape.circle,
                     ),
-                    weekendTextStyle: TextStyle(color: Colors.red[800]), // Darker red for weekends
-                    defaultTextStyle: TextStyle(color: Colors.grey[900]), // Darker text
+                    weekendTextStyle: TextStyle(color: Colors.red[800]),
+                    defaultTextStyle: TextStyle(color: Colors.grey[900]),
                   ),
                   daysOfWeekStyle: DaysOfWeekStyle(
                     weekdayStyle: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.bold),
@@ -357,29 +408,27 @@ class ReportScreen extends StatelessWidget {
                     defaultBuilder: (context, day, focusedDay) {
                       final now = DateTime.now();
                       final isPast = !day.isAfter(DateTime(now.year, now.month, now.day));
-                      if (!isPast) return null; // Only color past and today
+                      if (!isPast) return null;
 
-                      // Demo: Mark weekends as incomplete (red), others as present (green)
-                      bool isIncomplete = day.weekday == 6 || day.weekday == 7; // Sat/Sun
+                      bool isIncomplete = day.weekday == 6 || day.weekday == 7;
                       Color bgColor = isIncomplete
-                          ? const Color(0xFFFF4D4F).withOpacity(0.30) // Vibrant red
-                          : const Color(0xFF4CAF50).withOpacity(0.30); // Vibrant green
+                          ? const Color(0xFFFF4D4F).withOpacity(0.30)
+                          : const Color(0xFF4CAF50).withOpacity(0.30);
 
-                      // Add a subtle border/shadow for today
                       bool isToday = day.year == now.year && day.month == now.month && day.day == now.day;
-                      BoxDecoration decoration = BoxDecoration(
-                        color: bgColor,
-                        shape: BoxShape.circle,
-                        boxShadow: isToday
-                            ? [BoxShadow(color: Colors.black26, blurRadius: 6, spreadRadius: 1)]
-                            : [],
-                        border: isToday
-                            ? Border.all(color: const Color(0xFF388E3C), width: 2)
-                            : null,
-                      );
 
                       return Container(
-                        decoration: decoration,
+                        margin: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: bgColor,
+                          border: isToday
+                              ? Border.all(
+                            color: const Color(0xFF388E3C),
+                            width: 2.5,
+                          )
+                              : null,
+                        ),
                         alignment: Alignment.center,
                         child: Text(
                           '${day.day}',
@@ -392,6 +441,7 @@ class ReportScreen extends StatelessWidget {
                       );
                     },
                   ),
+
                 ),
               ),
             ],
@@ -415,9 +465,9 @@ Widget _buildStatBlock(IconData icon, String label, int value, Color color) {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 28),
+        Icon(icon, color: color, size: 22),
         const SizedBox(height: 6),
-        Text('$value', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: color)),
+        Text('$value', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
         const SizedBox(height: 2),
         Text(label, style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500)),
       ],

@@ -74,10 +74,22 @@ class LeaveRepository {
       multipartRequest.fields['reason'] = request.reason;
       multipartRequest.fields['is_half_day'] = request.isHalfDay.toString();
 
-      // Add list of managers using the key 'managers'
+      /*// Add list of managers using the key 'managers' as overwritten and send the last one only
       for (int i = 0; i < request.managerIds.length; i++) {
         multipartRequest.fields['managers'] = request.managerIds[i];
+      }*/
+
+     /* manager ID is send in a repeated key way
+      for (var managerId in request.managerIds) {
+        multipartRequest.fields.addAll({'managers': managerId});
+      }*/
+
+      // Add list of managers as comma-separated string
+      if (request.managerIds.isNotEmpty) {
+        multipartRequest.fields['managers'] = request.managerIds.join(',');
       }
+
+
 
       // Optional fields
       if (request.halfDaySession != null) {

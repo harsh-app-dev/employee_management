@@ -71,15 +71,23 @@ void showGlobalSnackBarWithIcon(String message, {IconData? icon, Color? iconColo
   );
 }
 
-String formatDuration(String? durationStr) {
+String? formatDuration(String? durationStr) {
   if (durationStr == null || durationStr.isEmpty) return '--';
   try {
+    if (durationStr.contains('.')) {
+      durationStr = durationStr.split('.')[0];
+    }
+
     final parts = durationStr.split(':');
     final hours = int.parse(parts[0]);
     final minutes = int.parse(parts[1]);
+    final seconds = parts.length > 2 ? int.parse(parts[2]) : 0;
+
     String result = '';
     if (hours > 0) result += '${hours}h ';
     if (minutes > 0) result += '${minutes}m ';
+    if (seconds > 0) result += '${seconds}s ';
+
     return result.trim();
   } catch (_) {
     return durationStr;
@@ -183,4 +191,65 @@ void _showNoInternet(BuildContext context) {
       backgroundColor: Colors.red,
     ),
   );
+}
+
+Future<bool> showPunchConfirmationDialog(
+    BuildContext context, {required bool isPunchOut,}) async {
+  return await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
+        backgroundColor: const Color(0xFFF5F7EC),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "${isPunchOut ? 'Punch Out' : 'Punch In'} Confirmation!",
+                style: TextStyle(fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Are you sure you want to ${isPunchOut
+                    ? 'punch out'
+                    : 'punch in'} for today?",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, color: Colors.black54),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.green.shade700,
+                      textStyle: const TextStyle(fontSize: 14),),
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade700,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10,),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Yes'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  ) ?? false;
 }
