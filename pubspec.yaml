@@ -60,6 +60,7 @@ dependencies:
   flutter_speed_dial: ^7.0.0
   get: ^4.7.2
   dropdown_button2: ^2.3.9
+  flutter_native_splash: ^2.4.6
 
 dev_dependencies:
   flutter_test:
@@ -132,3 +133,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_native_splash:
+  android: true
+  ios: false
+  web: false
+  color: "#FFFFFF"
+  image: assets/images/light/splash_logo_1.png

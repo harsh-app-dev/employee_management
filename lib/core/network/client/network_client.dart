@@ -38,7 +38,7 @@ class NetworkClient {
     print('Headers: $mergedHeaders');
     try {
       final response = await _client.get(uri, headers: mergedHeaders).timeout(
-        const Duration(seconds: 15), // set your timeout here
+        const Duration(seconds: 10), // set your timeout here
         onTimeout: () {
           throw TimeoutException('Request timed out after 15 seconds');
         },
@@ -80,7 +80,7 @@ class NetworkClient {
         headers: mergedHeaders,
         body: body != null ? jsonEncode(body) : null,
       ).timeout(
-        const Duration(seconds: 15), // set your timeout here
+        const Duration(seconds: 10), // set your timeout here
         onTimeout: () {
           throw TimeoutException('Request timed out after 15 seconds');
         },
@@ -122,7 +122,7 @@ class NetworkClient {
         headers: mergedHeaders,
         body: body != null ? jsonEncode(body) : null,
       ).timeout(
-        const Duration(seconds: 15), // set your timeout here
+        const Duration(seconds: 10), // set your timeout here
         onTimeout: () {
           throw TimeoutException('Request timed out after 15 seconds');
         },
@@ -164,7 +164,7 @@ class NetworkClient {
         headers: mergedHeaders,
         body: body != null ? jsonEncode(body) : null,
       ).timeout(
-        const Duration(seconds: 15), // set your timeout here
+        const Duration(seconds: 10), // set your timeout here
         onTimeout: () {
           throw TimeoutException('Request timed out after 15 seconds');
         },
@@ -206,7 +206,7 @@ class NetworkClient {
         headers: mergedHeaders,
         body: body != null ? jsonEncode(body) : null,
       ).timeout(
-        const Duration(seconds: 15), // set your timeout here
+        const Duration(seconds: 10), // set your timeout here
         onTimeout: () {
           throw TimeoutException('Request timed out after 15 seconds');
         },

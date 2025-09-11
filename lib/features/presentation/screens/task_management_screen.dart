@@ -66,8 +66,8 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
-          labelStyle: TextStyle(fontWeight: FontWeight.bold),
-          unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal),
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
         ),
       ),
       backgroundColor: const Color(0xFFF5F7FA),
@@ -78,15 +78,16 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                /// Date navigation
                 Padding(
-                  padding: EdgeInsets.symmetric( vertical: 2.h),
+                  padding: EdgeInsets.symmetric(vertical: 1.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.arrow_left, size: 35),
+                        icon: const Icon(Icons.arrow_left, size: 35),
                         onPressed: () {
-                          _onDateChanged(_selectedDate.subtract(Duration(days: 1)));
+                          _onDateChanged(_selectedDate.subtract(const Duration(days: 1)));
                         },
                       ),
                       Expanded(
@@ -94,25 +95,36 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                           borderRadius: BorderRadius.circular(12),
                           onTap: () async {
                             final picked = await showDatePicker(
-                              context: context, initialDate: _selectedDate, firstDate: DateTime(2000), lastDate: DateTime(2100),
+                              context: context,
+                              initialDate: _selectedDate,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
                             );
                             if (picked != null) {
                               _onDateChanged(picked);
                             }
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-                            decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.07), borderRadius: BorderRadius.circular(12),),
+                            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.07),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.calendar_today_rounded, color: theme.colorScheme.primary, size: 22),
-                                SizedBox(width: 8),
+                                Icon(Icons.calendar_today_rounded, color: theme.colorScheme.primary, size: 20),
+                                const SizedBox(width: 4),
                                 Text(
                                   DateFormat('E, d MMMM yyyy').format(_selectedDate),
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5, color: theme.colorScheme.primary,),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    letterSpacing: 0.5,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                 ),
-                                SizedBox(width: 4),
+                                const SizedBox(width: 4),
                                 Icon(Icons.arrow_drop_down_rounded, color: theme.colorScheme.primary, size: 26),
                               ],
                             ),
@@ -120,71 +132,87 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.arrow_right, size: 35),
+                        icon: const Icon(Icons.arrow_right, size: 35),
                         onPressed: () {
-                          _onDateChanged(_selectedDate.add(Duration(days: 1)));
+                          _onDateChanged(_selectedDate.add(const Duration(days: 1)));
                         },
                       ),
                     ],
                   ),
                 ),
+
+                /// Task overview header
                 Padding(
                   padding: EdgeInsets.only(bottom: 1.5.h, left: 2.w),
                   child: Row(
                     children: [
-                      Icon(Icons.assignment_turned_in_rounded, color: theme.colorScheme.primary, size: 28,),
+                      Icon(Icons.assignment_turned_in_rounded, color: theme.colorScheme.primary, size: 28),
                       SizedBox(width: 2.w),
                       Text(
                         AppStrings.taskOverview,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, letterSpacing: 0.5,),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ],
                   ),
                 ),
+
+                /// Tasks list
                 Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                    child: ValueListenableBuilder(
-                      valueListenable: _controller.tasksApiState,
-                      builder: (context, apiState, _) {
-                        if (apiState.isLoading) {
-                          return const Center(child: CircularProgressIndicator());
-                        } else if (apiState.isError) {
-                          return Center(
-                            child: Text(apiState.error ?? 'Failed to load tasks'),
-                          );
-                        } else if (apiState.isSuccess && apiState.data?.data != null && apiState.data!.data!.isNotEmpty) {
-                          final tasks = apiState.data!.data!;
-                          return ListView.separated(
-                            itemCount: tasks.length,
-                            separatorBuilder: (context, index) => Divider(height: 1.5.h, color: Colors.grey[800]),
-                            itemBuilder: (context, taskIndex) {
-                              final task = tasks[taskIndex];
-                              return Padding(
-                                padding: EdgeInsets.symmetric(vertical: 1.h),
-                                child: TaskCard(task: task, isHistoryTask: false,),
-                              );
-                            },
-                          );
-                        } else {
-                          return Center(
-                            child: SizedBox(height: 40.h,
-                              child: Center(
-                                child: Text('No task found.', style: TextStyle(fontSize: 20.sp), textAlign: TextAlign.center,),
+                  child: ValueListenableBuilder(
+                    valueListenable: _controller.tasksApiState,
+                    builder: (context, apiState, _) {
+                      if (apiState.isLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (apiState.isError) {
+                        return Center(
+                          child: Text(apiState.error ?? 'Failed to load tasks'),
+                        );
+                      } else if (apiState.isSuccess &&
+                          apiState.data?.data != null &&
+                          apiState.data!.data!.isNotEmpty) {
+                        final tasks = apiState.data!.data!;
+                        return ListView.separated(
+                          itemCount: tasks.length,
+                          separatorBuilder: (context, index) => Divider(height: 1.5.h, color: Colors.grey[800]),
+                          itemBuilder: (context, taskIndex) {
+                            final task = tasks[taskIndex];
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 1.h),
+                              child: TaskCard(task: task, isHistoryTask: false),
+                            );
+                          },
+                        );
+                      } else {
+                        return Center(
+                          child: SizedBox(
+                            height: 40.h,
+                            child: Center(
+                              child: Text(
+                                'No task found.',
+                                style: TextStyle(fontSize: 20.sp),
+                                textAlign: TextAlign.center,
                               ),
                             ),
-                          );
-                        }
-                      },
-                    ),
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ),
               ],
             ),
           ),
+
+          /// History tab
           const TaskHistoryScreen(),
         ],
       ),
+
+      /// Floating Action Button
       floatingActionButton: Builder(
         builder: (context) {
           final tabController = DefaultTabController.of(context);
@@ -192,21 +220,38 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
             animation: tabController,
             builder: (context, _) {
               if (tabController.index != 0) return const SizedBox.shrink();
+
               final now = DateTime.now();
-              final isToday = _selectedDate.year == now.year && _selectedDate.month == now.month && _selectedDate.day == now.day;
+              final isToday = _selectedDate.year == now.year &&
+                  _selectedDate.month == now.month &&
+                  _selectedDate.day == now.day;
+
               return AnimatedScale(
                 scale: isToday ? 1.0 : 0.0,
-                duration: Duration(milliseconds: 400),
+                duration: const Duration(milliseconds: 400),
                 curve: Curves.easeOutBack,
                 child: isToday
-                  ? ValueListenableBuilder<ApiState<SubmitTasksResponse>>(
+                    ? ValueListenableBuilder<ApiState>(
+                  valueListenable: _controller.tasksApiState,
+                  builder: (context, tasksState, _) {
+                    final hasTasks = tasksState.isSuccess &&
+                        tasksState.data?.data != null &&
+                        tasksState.data!.data!.isNotEmpty;
+
+                    if (!hasTasks) return const SizedBox.shrink();
+
+                    return ValueListenableBuilder<ApiState<SubmitTasksResponse>>(
                       valueListenable: _controller.submitTasksApiState,
                       builder: (context, submitState, _) {
                         final isLoading = submitState.isLoading;
+
                         return Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
+                              colors: [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.primary.withOpacity(0.7),
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -220,12 +265,17 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                                   _submitDebouncer.run(() async {
                                     if (isLoading) return;
                                     final tasks = _controller.tasksApiState.value.data;
-                                    if (tasks != null && tasks.data != null && tasks.data!.isNotEmpty) {
+                                    if (tasks != null &&
+                                        tasks.data != null &&
+                                        tasks.data!.isNotEmpty) {
                                       await _controller.submitTasks(tasks);
                                       if (_controller.submitTasksApiState.value.isSuccess) {
                                         showGlobalSnackBar(AppStrings.successSubmission);
                                       } else if (_controller.submitTasksApiState.value.isError) {
-                                        showGlobalSnackBar(_controller.submitTasksApiState.value.error ?? AppStrings.failedSubmission,);
+                                        showGlobalSnackBar(
+                                          _controller.submitTasksApiState.value.error ??
+                                              AppStrings.failedSubmission,
+                                        );
                                       }
                                     } else {
                                       showGlobalSnackBar('You have no pending tasks to submit');
@@ -235,7 +285,10 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                                 label: Text(
                                   isLoading ? 'Submitting...' : AppStrings.submit,
                                   style: TextStyle(
-                                    color: isLoading ? Colors.transparent : theme.colorScheme.surface, fontSize: 14.sp,
+                                    color: isLoading
+                                        ? Colors.transparent
+                                        : theme.colorScheme.surface,
+                                    fontSize: 14.sp,
                                   ),
                                 ),
                                 backgroundColor: Colors.transparent,
@@ -249,7 +302,10 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                           ),
                         );
                       },
-                    ) : const SizedBox.shrink(),
+                    );
+                  },
+                )
+                    : const SizedBox.shrink(),
               );
             },
           );
@@ -258,4 +314,3 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
     );
   }
 }
-

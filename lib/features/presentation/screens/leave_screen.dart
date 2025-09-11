@@ -227,7 +227,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
                       const Text('Apply for Leave', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
                       const Spacer(),
                       IconButton(
@@ -240,7 +240,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollController,
-                    padding: EdgeInsets.only(left: 16, right: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16,),
+                    padding: EdgeInsets.only(left: 16, right: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16, top: 16),
                     child: _LeaveApplicationForm(
                       leaveTypes: _leaveTypes.map((e) => e.name).toList(),
                       leaveTypeObjects: _leaveTypes,
@@ -907,18 +907,6 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
       showGlobalSnackBarOverlay('Short Leave and Half Day can only be applied for a single day.');
       return;
     }
-    if (_selectedLeaveType == 'Short Leave' && _shortLeaveStartTime == null) {
-      showGlobalSnackBarOverlay('Please select the start time for your short leave.');
-      return;
-    }
-    if (_selectedLeaveType == 'Half Day Leave' && _selectedHalf == null) {
-      showGlobalSnackBarOverlay('Please select which half for Half Day leave.');
-      return;
-    }
-    if (_selectedManagers.isEmpty) {
-      showGlobalSnackBarOverlay('Please select at least one manager.');
-      return;
-    }
 
     final currentLeaveId = widget.initialLeave?.id;
 
@@ -1055,35 +1043,57 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
           ),
           if (_selectedLeaveType == 'Half Day Leave') ...[
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+            FormField<String>(
+              validator: (value) {
+                if (_selectedLeaveType == 'Half Day Leave' && (_selectedHalf == null || _selectedHalf!.isEmpty)) {
+                  return 'Please select which half for Half Day leave';
+                }
+                return null;
+              },
+              builder: (field) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Radio<String>(
-                      value: 'First Half',
-                      groupValue: _selectedHalf,
-                      onChanged: (value) {setState(() => _selectedHalf = value);},
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Radio<String>(
+                              value: 'First Half',
+                              groupValue: _selectedHalf,
+                              onChanged: (value) {setState(() => _selectedHalf = value); field.didChange(value);},
+                            ),
+                            const Text('First Half', style: TextStyle(fontSize: 16),),
+                          ],
+                        ),
+                        SizedBox(width: 20),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Radio<String>(
+                              value: 'Second Half',
+                              groupValue: _selectedHalf,
+                              onChanged: (value) {setState(() => _selectedHalf = value); field.didChange(value);},
+                            ),
+                            const Text('Second Half',style: TextStyle(fontSize: 16),),
+                          ],
+                        ),
+                      ],
                     ),
-                    const Text('First Half', style: TextStyle(fontSize: 16),),
+                    if (field.hasError)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0, left: 8.0),
+                        child: Text(
+                          field.errorText ?? '',
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
                   ],
-                ),
-                SizedBox(width: 20),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Radio<String>(
-                      value: 'Second Half',
-                      groupValue: _selectedHalf,
-                      onChanged: (value) {setState(() => _selectedHalf = value);},
-                    ),
-                    const Text('Second Half',style: TextStyle(fontSize: 16),),
-                  ],
-                ),
-              ],
-            )
-
+                );
+              },
+            ),
           ],
           if (_selectedLeaveType == 'Short Leave') ...[
             const SizedBox(height: 12),
@@ -1336,18 +1346,6 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                     if ((_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day Leave') &&
                         _dateRange!.start != _dateRange!.end) {
                       showGlobalSnackBarOverlay('Short Leave and Half Day can only be applied for a single day.');
-                      return;
-                    }
-                    if (_selectedLeaveType == 'Short Leave' && _shortLeaveStartTime == null) {
-                      showGlobalSnackBarOverlay('Please select the start time for your short leave.');
-                      return;
-                    }
-                    if (_selectedLeaveType == 'Half Day Leave' && _selectedHalf == null) {
-                      showGlobalSnackBarOverlay('Please select which half for Half Day leave.');
-                      return;
-                    }
-                    if (_selectedManagers.isEmpty) {
-                      showGlobalSnackBarOverlay('Please select at least one manager.');
                       return;
                     }
 
