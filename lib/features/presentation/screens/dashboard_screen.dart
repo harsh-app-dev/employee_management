@@ -1,16 +1,13 @@
-import 'dart:convert';
-
+import 'dart:io';
+import 'dart:async';
 import 'package:employee_management/core/configs/strings.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/core/utils/util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'dart:async';
 import 'package:collection/collection.dart';
 import '../../../core/utils/network_result.dart';
 import '../../../core/widgets/debouncing_state.dart';
@@ -18,7 +15,6 @@ import '../../data/models/floor/profile_data.dart';
 import '../../domain/use_cases/punch_in_out_use_case.dart';
 import '../state/profile_controller.dart';
 import '../state/punch_controller.dart';
-import '../widgets/manual_punch_in_dialog.dart';
 import '../../../core/widgets/app_side_drawer.dart';
 import 'package:employee_management/features/data/models/punch/response/punch_history_response.dart';
 import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
@@ -55,6 +51,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isOnBreak = false;
   bool _isBreakLoading = false;
 
+  // Timer related variables
+  Timer? _workingTimer;
+  Duration _workingDuration = Duration.zero;
+  DateTime? _punchInTime;
+
   @override
   void initState() {
     super.initState();
@@ -68,14 +69,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadWorkBreakFromPrefs();
     _startWorkBreakUiTimer();
     _fetchTodaysPunchHistory();
-    // _controller.fetchTasks();
+    _loadPunchInTime();
+
+   /* WidgetsBinding.instance.addPostFrameCallback((_) {
+      showAnnouncementDialog(
+        context,
+        announcementText:  "Your company has assigned you to work from home. "
+            "Please read the following terms carefully before giving your consent.\n\n"
+            "1. You will comply with all company policies while working remotely.\n"
+            "2. Ensure secure handling of company data.\n"
+            "3. Your working hours will remain as per company norms.\n"
+            "4. The company can revoke remote work privileges at any time.\n\n"
+            "By checking the box below, you confirm that you have read and understood "
+            "the Work From Home policy and agree to follow it.",
+      );
+    });*/
   }
 
   @override
   void dispose() {
     _workBreakTimer?.cancel();
+    _workingTimer?.cancel();
     super.dispose();
   }
+
+  // Timer related methods
+  void _startWorkingTimer() {
+    _workingTimer?.cancel();
+    _workingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (_punchInTime != null) {
+        setState(() {
+          _workingDuration = DateTime.now().difference(_punchInTime!);
+        });
+      }
+    });
+  }
+
+  void _stopWorkingTimer() {
+    _workingTimer?.cancel();
+    _workingTimer = null;
+  }
+
+  Future<void> _loadPunchInTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final punchInTimeStr = prefs.getString('punchInTime');
+    if (punchInTimeStr != null) {
+      setState(() {
+        _punchInTime = DateTime.parse(punchInTimeStr);
+        _workingDuration = DateTime.now().difference(_punchInTime!);
+        _startWorkingTimer();
+      });
+    }
+  }
+
+  Future<void> _savePunchInTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_punchInTime != null) {
+      await prefs.setString('punchInTime', _punchInTime!.toIso8601String());
+    } else {
+      await prefs.remove('punchInTime');
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String hours = twoDigits(duration.inHours);
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$hours:$minutes:$seconds";
+  }
+
 
   Future<void> _checkAndResetPunchTimes() async {
     final prefs = await SharedPreferences.getInstance();
@@ -95,25 +158,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await prefs.remove('punchOutTime');
       await prefs.setString('lastPunchDate', today.toIso8601String());
       setState(() {
+        _punchInTime = null;
+        _workingDuration = Duration.zero;
+        _stopWorkingTimer();
       });
-    } else {
     }
   }
-
-  Future<void> _savePunchInTime(TimeOfDay time) async {
-    final prefs = await SharedPreferences.getInstance();
-    final timeStr = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-    await prefs.setString('punchInTime', timeStr);
-    await prefs.setString('lastPunchDate', DateTime.now().toIso8601String());
-  }
-
-  Future<void> _savePunchOutTime(TimeOfDay time) async {
-    final prefs = await SharedPreferences.getInstance();
-    final timeStr = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-    await prefs.setString('punchOutTime', timeStr);
-    await prefs.setString('lastPunchDate', DateTime.now().toIso8601String());
-  }
-
 
   Future<void> _fetchProfileData() async {
     final profiles = await _profileController.profileDao.getAllProfiles();
@@ -177,55 +227,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {});
   }
 
-  Future<void> _updateWorkedAndBreakTimes() async {
-    final now = DateTime.now();
-    final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-    final result = await _punchHistoryUseCase(startDate: todayStr, endDate: todayStr, page: 1, pageSize: 1,);
-
-    if (result is NetworkSuccess<PunchHistoryResponse>) {
-      final data = result.data.results;
-      if (data.isNotEmpty) {
-        final entry = data[0];
-        String? firstIn = entry.punchIn;
-        String? lastOut = entry.punchOut;
-        setState(() {
-          _workedDuration = _formatApiDuration(entry.totalWorkTime);
-          _breakDuration = _formatApiDuration(entry.totalBreakTime);
-          _firstPunchIn = firstIn != null && firstIn.isNotEmpty ? _formatTime(firstIn) : '--';
-          _lastPunchOut = lastOut != null && lastOut.isNotEmpty ? _formatTime(lastOut) : '--';
-        });
-      } else {
-        setState(() {
-          _workedDuration = '--';
-          _breakDuration = '--';
-          _firstPunchIn = '--';
-          _lastPunchOut = '--';
-        });
-      }
-    } else {
-      setState(() {
-        _workedDuration = '--';
-        _breakDuration = '--';
-        _firstPunchIn = '--';
-        _lastPunchOut = '--';
-      });
-    }
-  }
-
-  String _formatApiDuration(String? durationStr) {
+  String? _formatApiDuration(String? durationStr) {
     if (durationStr == null || durationStr.isEmpty) return '--';
     try {
+      // Remove milliseconds if present (anything after a decimal point in the seconds part)
+      if (durationStr.contains('.')) {
+        durationStr = durationStr.split('.')[0];
+      }
+
       final parts = durationStr.split(':');
       final hours = int.parse(parts[0]);
       final minutes = int.parse(parts[1]);
+      final seconds = parts.length > 2 ? int.parse(parts[2]) : 0;
+
       String result = '';
       if (hours > 0) result += '${hours}h ';
       if (minutes > 0) result += '${minutes}m ';
+      if (seconds > 0) result += '${seconds}s ';
+
       return result.trim();
     } catch (_) {
       return durationStr;
     }
   }
+
 
   String _formatTime(String isoTime) {
     try {
@@ -254,8 +279,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final date = entry.date;
         final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
         final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
-        _workedDuration = _formatApiDuration(entry.totalWorkTime);
-        _breakDuration = _formatApiDuration(entry.totalBreakTime);
+        _workedDuration = _formatApiDuration(entry.totalWorkTime)!;
+        _breakDuration = _formatApiDuration(entry.totalBreakTime)!;
+        _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
+        _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
+        _isBreakButtonEnabled = entry.punchIn != null && entry.punchOut == null;
+        if (entry.breaks.isNotEmpty) {
+          final lastBreak = entry.breaks.last;
+          _isOnBreak = lastBreak.breakStart != null && (lastBreak.breakOver == null || lastBreak.breakOver!.isEmpty);
+        } else {
+          _isOnBreak = false;
+        }
+      } else {
+        _workedDuration = '--';
+        _breakDuration = '--';
+        _firstPunchIn = '--';
+        _lastPunchOut = '--';
+        _isBreakButtonEnabled = false;
+        _isOnBreak = false;
+      }
+    } else {
+      _workedDuration = '--';
+      _breakDuration = '--';
+      _firstPunchIn = '--';
+      _lastPunchOut = '--';
+      _isBreakButtonEnabled = false;
+      _isOnBreak = false;
+    }
+    setState(() { });
+  }
+
+  Future<void> _refreshPunchHistoryAndWorkedTimes() async {
+    setState(() { });
+    final today = DateTime.now();
+    final dateStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+    final result = await _punchHistoryUseCase(
+      startDate: dateStr,
+      endDate: dateStr,
+      page: 1,
+      pageSize: 1,
+    );
+    if (result is NetworkSuccess<PunchHistoryResponse>) {
+      final entries = result.data.results;
+      _todaysPunchEntries = entries;
+      if (_todaysPunchEntries.isNotEmpty) {
+        final entry = _todaysPunchEntries.first;
+        final date = entry.date;
+        final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
+        final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
+        _workedDuration = _formatApiDuration(entry.totalWorkTime)!;
+        _breakDuration = _formatApiDuration(entry.totalBreakTime)!;
         _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
         _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
         _isBreakButtonEnabled = entry.punchIn != null && entry.punchOut == null;
@@ -389,32 +462,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           ],
                                         ),
                                         SizedBox(height: 2.h),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        Column(
                                           children: [
-                                            Row(
-                                              children: [
-                                                Icon(Icons.timer, color: theme.colorScheme.primary, size: 20),
-                                                SizedBox(width: 1.w),
-                                                Text('Worked: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                                                Text(_workedDuration, style: TextStyle(fontWeight: FontWeight.w500)),
-                                              ],
+                                            // Worked Hours Box
+                                            Container(
+                                              padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
+                                              decoration: BoxDecoration(
+                                                color: theme.colorScheme.primary.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.timer, color: theme.colorScheme.primary),
+                                                  SizedBox(width: 2.w),
+                                                  Text(
+                                                    '${AppStrings.workedHrs}: ',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: theme.colorScheme.primary,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    (_workedDuration != '--' && _workedDuration.isNotEmpty)
+                                                        ? _workedDuration
+                                                        : (_punchInTime != null
+                                                        ? _formatDuration(_workingDuration)
+                                                        : '00:00:00'),
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16.sp,
+                                                      color: theme.colorScheme.primary,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                            SizedBox(width: 4.w),
-                                            Row(
-                                              children: [
-                                                Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20),
-                                                SizedBox(width: 1.w),
-                                                Text('Break: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                                                Text(_breakDuration, style: TextStyle(fontWeight: FontWeight.w500)),
-                                              ],
+                                            SizedBox(height: 1.h),
+
+                                            // Break Hours Box
+                                            Container(
+                                              padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.pause_circle_filled, color: Colors.orange),
+                                                  SizedBox(width: 2.w),
+                                                  Text(
+                                                    '${AppStrings.breakHrs}: ',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.orange,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    _breakDuration != '--' ? _breakDuration : '00:00:00',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16.sp,
+                                                      color: Colors.orange,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
                                         SizedBox(height: 2.h),
                                         SizedBox(
                                           width: double.infinity,
-                                          height: 7.h,
+                                          height: 9.h,
                                           child: Builder(
                                             builder: (context) {
                                               String buttonText;
@@ -431,22 +552,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 buttonIcon = Icons.login;
                                                 buttonColor = theme.colorScheme.primary;
                                                 onPressed = () async {
+
+                                                  if (!await checkInternet(context)) return;
+
                                                   final XFile? image = await _picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front,);
                                                   if (image != null) {
-                                                    setState(() { _selfieImage = File(image.path); _isApiLoading = true; });
+                                                    setState(() {
+                                                      _selfieImage = File(image.path);
+                                                      _isApiLoading = true;
+                                                    });
                                                     await _submitDebouncer.run(() async {
                                                       await _punchController.punchInOut('In', punchPhoto: _selfieImage);
                                                       if (!mounted) return;
                                                       if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
-                                                        final now = TimeOfDay.now();
-                                                        if (!mounted) return;
                                                         setState(() {
                                                           _isApiLoading = false;
+                                                          _punchInTime = DateTime.now();
+                                                          _startWorkingTimer();
+                                                          _savePunchInTime();
                                                         });
-                                                        await _savePunchInTime(now);
                                                         _updateWorkBreakOnPunch('in');
-                                                        await _updateWorkedAndBreakTimes();
-                                                        await _fetchTodaysPunchHistory();
+                                                        await _refreshPunchHistoryAndWorkedTimes();
                                                         if (_currentProfile != null) {
                                                           final updated = Profile(
                                                             id: _currentProfile!.id,
@@ -487,26 +613,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 buttonIcon = Icons.logout;
                                                 buttonColor = Colors.red;
                                                 onPressed = () async {
+
+                                                  if (!await checkInternet(context)) return;
+
                                                   final confirm = await showPunchConfirmationDialog(context, isPunchOut: true);
                                                   if(!confirm) return;
 
                                                   final XFile? image = await _picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front,);
 
                                                   if (image != null) {
-                                                    setState(() { _selfieImage = File(image.path); _isApiLoading = true; });
+                                                    setState(() {
+                                                      _selfieImage = File(image.path);
+                                                      _isApiLoading = true;
+                                                    });
                                                     await _submitDebouncer.run(() async {
                                                       await _punchController.punchInOut('out', punchPhoto: _selfieImage);
                                                       if (!mounted) return;
                                                       if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
-                                                        final now = TimeOfDay.now();
-                                                        if (!mounted) return;
                                                         setState(() {
                                                           _isApiLoading = false;
+                                                          _stopWorkingTimer();
+                                                          _punchInTime = null;
+                                                          _savePunchInTime();
                                                         });
-                                                        await _savePunchOutTime(now);
                                                         _updateWorkBreakOnPunch('out');
-                                                        await _updateWorkedAndBreakTimes();
-                                                        await _fetchTodaysPunchHistory();
+                                                        await _refreshPunchHistoryAndWorkedTimes();
                                                         if (_currentProfile != null) {
                                                           final updated = Profile(
                                                             id: _currentProfile!.id,
@@ -598,8 +729,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                           setState(() { _isBreakLoading = false; });
                                                           if (result is NetworkSuccess) {
                                                             setState(() { _isOnBreak = ! _isOnBreak; });
-                                                            await _fetchTodaysPunchHistory();
-                                                            await _updateWorkedAndBreakTimes();
+                                                            await _refreshPunchHistoryAndWorkedTimes();
                                                             if (_todaysPunchEntries.isNotEmpty) {
                                                               final entry = _todaysPunchEntries.first;
                                                               final date = entry.date;
@@ -640,8 +770,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                           setState(() { _isBreakLoading = false; });
                                                           if (result is NetworkSuccess) {
                                                             setState(() { _isOnBreak = ! _isOnBreak; });
-                                                            await _fetchTodaysPunchHistory();
-                                                            await _updateWorkedAndBreakTimes();
+                                                            await _refreshPunchHistoryAndWorkedTimes();
                                                             if (_todaysPunchEntries.isNotEmpty) {
                                                               final entry = _todaysPunchEntries.first;
                                                               final date = entry.date;
@@ -749,7 +878,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       ),
                                     ),
                                   ),
-
                               ]
                           ),
                         )
@@ -818,55 +946,115 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 }
 
-Future<bool> showPunchConfirmationDialog(
-    BuildContext context, {required bool isPunchOut,}) async {
-  return await showDialog<bool>(
+
+/*
+// This dialog is used when the company provide a work from home and we get a push notification for that and we open this dialog
+Future<bool?> showAnnouncementDialog(
+    BuildContext context, {
+      required String announcementText,
+    }) {
+  return showDialog<bool>(
     context: context,
-    barrierDismissible: false,
+    barrierDismissible: false, // cannot close by tapping outside
     builder: (context) {
-      return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
-        backgroundColor: const Color(0xFFF5F7EC),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Confirm ${isPunchOut ? 'Punch Out' : 'Punch In'}",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black,),
+      bool isChecked = false;
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          final theme = Theme.of(context);
+
+          return WillPopScope(
+            onWillPop: () async => false, // disable back button
+            child: Dialog(
+              backgroundColor: Colors.white,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(height: 12),
-              Text(
-                "Are you sure you want to ${isPunchOut ? 'punch out' : 'punch in'} for today?",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.black54),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton(
-                    style: TextButton.styleFrom(foregroundColor: Colors.green.shade700, textStyle: const TextStyle(fontSize: 14),),
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10,),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 🔹 Header Icon (speaker)
+                    Icon(
+                      Icons.campaign_rounded,
+                      size: 64,
+                      color: theme.colorScheme.primary,
                     ),
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('Yes'),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+
+                    // 🔹 Fixed Title
+                    Text(
+                      "Announcement",
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 🔹 Scrollable Announcement Text
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Text(
+                          announcementText,
+                          style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 🔹 Compact Checkbox
+                    CheckboxListTile(
+                      value: isChecked,
+                      onChanged: (val) => setState(() => isChecked = val ?? false),
+                      dense: true, // compact vertical spacing
+                      contentPadding: EdgeInsets.zero, // remove left/right padding
+                      controlAffinity: ListTileControlAffinity.leading, // checkbox before text
+                      title: Text(
+                        "I agree to the terms, conditions and policy.",
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // 🔹 Agree Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isChecked
+                              ? theme.colorScheme.primary
+                              : Colors.grey.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: isChecked
+                            ? () => Navigator.of(context).pop(true)
+                            : null,
+                        child: const Text(
+                          "I Agree",
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       );
     },
-  ) ?? false;
+  );
 }
+
+
+*/
