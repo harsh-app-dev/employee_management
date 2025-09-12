@@ -141,37 +141,55 @@ class _LeaveScreenState extends State<LeaveScreen> {
     if (_isLoadingLeaveTypes || _isLoadingRoles) {
       return const Center(child: CircularProgressIndicator());
     }
-    return Scaffold(
-      drawer: AppSideDrawer(),
-      appBar: AppBar(
-        title: const Text('Leave Management', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 1,
-      ),
-      backgroundColor: const Color(0xFFF5F7FA),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        drawer: AppSideDrawer(),
+        appBar: AppBar(
+          title: const Text('Leave Management', style: TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: true,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 1,
+          bottom: TabBar(
+            tabs: const [
+              Tab(icon: Icon(Icons.history), text: 'My Leaves'),
+              Tab(icon: Icon(Icons.approval), text: 'Leave Requests'),
+            ],
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.white,
+            indicatorWeight: 4,
+            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+          ),
+        ),
+        backgroundColor: const Color(0xFFF5F7FA),
+        body: TabBarView(
           children: [
-            _buildLeaveBalanceSection(),
-            const SizedBox(height: 8),
-            _buildFilterSection(),
-            const SizedBox(height: 8),
-            SizedBox(height: 500,
-              child: _buildLeaveHistoryList(),
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLeaveBalanceSection(),
+                  const SizedBox(height: 8),
+                  _buildFilterSection(),
+                  const SizedBox(height: 8),
+                  SizedBox(height: 500, child: _buildLeaveHistoryList()),
+                ],
+              ),
             ),
+            _StaticLeaveRequestTab(),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showLeaveApplicationBottomSheet(),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 2,
-        child: const Icon(Icons.add, size: 28),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _showLeaveApplicationBottomSheet(),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          child: const Icon(Icons.add, size: 28),
+        ),
       ),
     );
   }
@@ -1411,6 +1429,93 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StaticLeaveRequestTab extends StatelessWidget {
+  const _StaticLeaveRequestTab({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Static sample leave requests
+    final staticRequests = [
+      {
+        'name': 'John Doe',
+        'type': 'Casual Leave',
+        'date': '12 Sep 2025',
+        'reason': 'Family function',
+        'status': 'Pending',
+      },
+      {
+        'name': 'Jane Smith',
+        'type': 'Sick Leave',
+        'date': '14 Sep 2025',
+        'reason': 'Fever',
+        'status': 'Pending',
+      },
+    ];
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: staticRequests.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder: (context, index) {
+        final req = staticRequests[index];
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 1,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.person, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Text(req['name']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+                      ),
+                      child: Text(req['status']!, style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w500)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text('Type: ${req['type']}'),
+                Text('Date: ${req['date']}'),
+                Text('Reason: ${req['reason']}'),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Leave Approved! (Static)'), duration: Duration(seconds: 1)),
+                        );
+                      },
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const Text('Approve'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

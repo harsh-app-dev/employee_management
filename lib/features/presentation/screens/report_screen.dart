@@ -7,10 +7,29 @@ import 'package:intl/intl.dart';
 class ReportScreen extends StatelessWidget {
   const ReportScreen({Key? key}) : super(key: key);
 
+  // Helper functions for calendar indicators (moved outside build method)
+  bool _isLeaveDay(DateTime day, Set<DateTime> approvedLeaveDays) {
+    return approvedLeaveDays.any((leaveDay) =>
+    leaveDay.day == day.day && leaveDay.month == day.month && leaveDay.year == day.year);
+  }
+
+  bool _isAbsentDay(DateTime day, List<DateTime> absentDays) {
+    return absentDays.any((absentDay) =>
+    absentDay.day == day.day && absentDay.month == day.month && absentDay.year == day.year);
+  }
+
+  bool _isHoliday(DateTime day, List<DateTime> holidayDays) {
+    return holidayDays.any((holiday) =>
+    holiday.day == day.day && holiday.month == day.month && holiday.year == day.year);
+  }
+
+  bool _isWeekend(DateTime day) {
+    return day.weekday == 6 || day.weekday == 7;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<LeaveResponse>
-    leaveRequests = [
+    final List<LeaveResponse> leaveRequests = [
       LeaveResponse(
         id: "1",
         dateRange: DateTimeRange(
@@ -27,11 +46,35 @@ class ReportScreen extends StatelessWidget {
         isNewlyApplied: false,
         leaveTypeName: "Sick Leave",
       ),
+      LeaveResponse(
+        id: "2",
+        dateRange: DateTimeRange(
+          start: DateTime.now().add(const Duration(days: 5)),
+          end: DateTime.now().add(const Duration(days: 7)),
+        ),
+        leaveType: "Casual Leave",
+        reason: "Family function",
+        hr: "HR1",
+        teamLead: "Lead1",
+        status: "Approved",
+        appliedDate: DateTime.now().subtract(const Duration(days: 1)),
+        totalDays: 3,
+        isNewlyApplied: false,
+        leaveTypeName: "Casual Leave",
+      ),
     ];
-    try {
-    } catch (_) {}
-    final theme = Theme.of(context);
 
+    // Dummy data for calendar indicators
+    final List<DateTime> absentDays = [
+      DateTime.now().subtract(const Duration(days: 3)),
+    ];
+
+    final List<DateTime> holidayDays = [
+      DateTime(DateTime.now().year, DateTime.now().month, 25), // 25th of current month
+      DateTime(DateTime.now().year, DateTime.now().month + 1, 1), // 1st of next month
+    ];
+
+    final theme = Theme.of(context);
     final now = DateTime.now();
     final firstDayOfMonth = DateTime(now.year, now.month, 1);
     final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
@@ -48,7 +91,7 @@ class ReportScreen extends StatelessWidget {
         if (day.month == now.month && day.year == now.year) approvedLeaveDays.add(DateTime(day.year, day.month, day.day));
       }
     }
-    int totalAbsent = 1;
+    int totalAbsent = absentDays.where((day) => day.month == now.month && day.year == now.year).length;
     int totalPaidDays = totalWorkingDays - totalAbsent;
 
     Map<String, int> leaveTypeCounts = {};
@@ -57,7 +100,6 @@ class ReportScreen extends StatelessWidget {
         leaveTypeCounts[leave.leaveType] = (leaveTypeCounts[leave.leaveType] ?? 0) + 1;
       }
     }
-
 
     void _showPunchDetailSheet(DateTime date) {
       final theme = Theme.of(context);
@@ -175,15 +217,35 @@ class ReportScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // Break separator
+                        // Break separator with pierced effect
                         if (idx < punchSessions.length - 1)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
+                            child: Stack(
+                              alignment: Alignment.center,
                               children: [
-                                Expanded(child: Divider(color: Colors.grey[300], thickness: 1, endIndent: 8)),
-                                const Text("Break", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
-                                Expanded(child: Divider(color: Colors.grey[300], thickness: 1, indent: 8)),
+                                // The continuous line
+                                Divider(
+                                    color: Colors.grey[300],
+                                    thickness: 1,
+                                    height: 20
+                                ),
+                                // The "break" indicator that appears to pierce through the line
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white, // This creates the "pierced" effect
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    "Break",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontStyle: FontStyle.italic,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -227,11 +289,35 @@ class ReportScreen extends StatelessWidget {
     }
 
     // --- Sandwich Relief Section ---
-    final DateTime sandwichStart = DateTime(DateTime.now().year, 7, 1);
+    final DateTime sandwichStart = DateTime(DateTime.now().year, 9, 1);
     final DateTime nowDate = DateTime.now();
     final int sandwichDaysElapsed = nowDate.difference(sandwichStart).inDays;
     final int sandwichDaysRemaining = 60 - sandwichDaysElapsed;
     final bool sandwichEligible = sandwichDaysElapsed >= 60;
+
+    final List<Map<String, dynamic>> upcomingLeavesAndHolidays = [
+      {
+        "date": DateTime(2025, 10, 29),
+        "type": "Applied Leave",
+        "label": "Diwali Vacation",
+        "icon": Icons.beach_access,
+        "color": Colors.blue[700],
+      },
+      {
+        "date": DateTime(2026, 1, 26),
+        "type": "National Holiday",
+        "label": "Republic Day",
+        "icon": Icons.flag,
+        "color": Colors.deepOrange[700],
+      },
+      {
+        "date": DateTime(2025, 11, 10),
+        "type": "Planned Leave",
+        "label": "Goa Trip",
+        "icon": Icons.beach_access,
+        "color": Colors.blue[500],
+      },
+    ];
 
     return DefaultTabController(
       length: 2,
@@ -320,8 +406,8 @@ class ReportScreen extends StatelessWidget {
                               Text('Congratulations!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.amberAccent)),
                               const SizedBox(height: 4),
                               Text('You are eligible for a sandwich relief! No leave taken in the last 60 days since July 1.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.white, fontSize: 12)),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.white, fontSize: 12)),
                             ],
                           ),
                       ],
@@ -347,41 +433,80 @@ class ReportScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Stat cards row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildStatBlock(Icons.calendar_today, 'Working', totalWorkingDays, Colors.blue),
-                          _buildStatBlock(Icons.check_circle, 'Present', 20, Colors.green),
-                          _buildStatBlock(Icons.cancel, 'Absent', 1, Colors.red),
+                          _buildStatBlock(Icons.check_circle, 'Present', 19, Colors.green),
+                          _buildStatBlock(Icons.cancel, 'Absent', totalAbsent, Colors.red),
                           _buildStatBlock(Icons.monetization_on, 'Paid', totalPaidDays, Colors.orange),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      Text('Leave Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: theme.colorScheme.primary)),
-                      const SizedBox(height: 4),
-                      leaveTypeCounts.isEmpty
-                          ? Text('No leaves taken this month.', style: TextStyle(color: Colors.grey[700], fontSize: 15))
-                          : Wrap(
-                              spacing: 14,
-                              runSpacing: 8,
-                              children: leaveTypeCounts.entries
-                                  .map((e) => Chip(
-                                        label: Text('${e.key}: ${e.value}', style: TextStyle(fontWeight: FontWeight.w600)),
-                                        backgroundColor: theme.colorScheme.primary.withOpacity(0.13),
-                                        labelStyle: TextStyle(color: theme.colorScheme.primary),
-                                      ))
-                                  .toList(),
-                            ),
+                      const SizedBox(height: 12),
+
+                      // Expandable Upcoming Leaves & Holidays Section
+                      ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        iconColor: theme.colorScheme.primary,
+                        collapsedIconColor: theme.colorScheme.primary,
+                        title: Text(
+                          'Upcoming Leaves & Holidays',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary),
+                        ),
+                        childrenPadding: const EdgeInsets.only(left: 0, right: 0, bottom: 8),
+                        children: upcomingLeavesAndHolidays.map((event) {
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                            dense: true,
+                            leading: Icon(event["icon"], color: event["color"], size: 20),
+                            title: Text('${event["type"]} - ${event["label"]}',
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                            subtitle: Text(DateFormat('EEE, d MMM yyyy').format(event["date"]),
+                                style: const TextStyle(fontSize: 12)),
+                          );
+                        }).toList(),
+                      ),
                     ],
                   ),
+                ),
+              ),
+
+              // Color Indicator Legend
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Color Indicators:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
+                      children: [
+                        _buildColorIndicator(Colors.green[900]!.withOpacity(0.5), 'Present'),
+                        _buildColorIndicator(Colors.red[900]!.withOpacity(0.5), 'Absent'),
+                        _buildColorIndicator(Colors.orange[900]!.withOpacity(0.5), 'Leave'),
+                        _buildColorIndicator(Colors.purple[900]!.withOpacity(0.5), 'Holiday'),
+                        _buildColorIndicator(Colors.blue[900]!.withOpacity(0.5), 'Weekend'),
+                      ],
+                    ),
+                  ],
                 ),
               ),
 
               SizedBox(
                 height: 400,
                 child: TableCalendar(
-                  firstDay: DateTime.now().subtract(const Duration(days: 365 * 5)),
-                  lastDay: DateTime.now().add(const Duration(days: 365 * 5)),
+                  firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                  lastDay: DateTime.now().add(const Duration(days: 365)),
                   focusedDay: DateTime.now(),
                   calendarFormat: CalendarFormat.month,
                   availableCalendarFormats: const {CalendarFormat.month: 'Month'},
@@ -406,14 +531,33 @@ class ReportScreen extends StatelessWidget {
                   },
                   calendarBuilders: CalendarBuilders(
                     defaultBuilder: (context, day, focusedDay) {
-                      final now = DateTime.now();
-                      final isPast = !day.isAfter(DateTime(now.year, now.month, now.day));
-                      if (!isPast) return null;
+                      // Determine the day status using helper functions
+                      final bool weekend = _isWeekend(day);
+                      final bool nationalHoliday = _isHoliday(day, holidayDays);
+                      final bool leaveDay = _isLeaveDay(day, approvedLeaveDays);
+                      final bool absentDay = _isAbsentDay(day, absentDays);
 
-                      bool isIncomplete = day.weekday == 6 || day.weekday == 7;
-                      Color bgColor = isIncomplete
-                          ? const Color(0xFFFF4D4F).withOpacity(0.30)
-                          : const Color(0xFF4CAF50).withOpacity(0.30);
+                      // Set colors and icons based on status
+                      Color bgColor;
+                      IconData? icon;
+                      Color textColor;
+
+                      if (absentDay) {
+                        bgColor = Colors.red.withOpacity(0.3);
+                        textColor = Colors.red[900]!;
+                      } else if (leaveDay) {
+                        bgColor = Colors.orange.withOpacity(0.3);
+                        textColor = Colors.orange[900]!;
+                      } else if (nationalHoliday) {
+                        bgColor = Colors.purple.withOpacity(0.3);
+                        textColor = Colors.purple[900]!;
+                      } else if (weekend) {
+                        bgColor = Colors.blue.withOpacity(0.2);
+                        textColor = Colors.blue[900]!;
+                      } else {
+                        bgColor = Colors.green.withOpacity(0.3);
+                        textColor = Colors.green[900]!;
+                      }
 
                       bool isToday = day.year == now.year && day.month == now.month && day.day == now.day;
 
@@ -430,28 +574,56 @@ class ReportScreen extends StatelessWidget {
                               : null,
                         ),
                         alignment: Alignment.center,
-                        child: Text(
-                          '${day.day}',
-                          style: TextStyle(
-                            color: isIncomplete ? const Color(0xFFD32F2F) : const Color(0xFF1B5E20),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Text(
+                              '${day.day}',
+                              style: TextStyle(
+                                color: textColor,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     },
                   ),
-
                 ),
               ),
+
+
             ],
           ),
         ),
       ),
     );
   }
-}
 
+  // Helper widget for color indicators
+  Widget _buildColorIndicator(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14),
+        ),
+      ],
+    );
+  }
+}
 
 Widget _buildStatBlock(IconData icon, String label, int value, Color color) {
   return Container(
@@ -474,42 +646,3 @@ Widget _buildStatBlock(IconData icon, String label, int value, Color color) {
     ),
   );
 }
-
-
-// floating action button for manual punch in and out
-
-/* floatingActionButton: Stack(
-        alignment: Alignment.bottomRight,
-        children: [
-          if (_isFabExpanded) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 80.0 + 10.0, right: 20.0),
-              child: FloatingActionButton(
-                heroTag: 'manualPunchIn',
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => ManualPunchInDialog(
-                      onSubmit: (dateTime, reason) {
-                        // TODO: Handle the submitted values here
-                        print('Manual Punch In: dateTime="+dateTime.toString()+", reason=$reason');
-                      },
-                    ),
-                  );
-                  setState(() => _isFabExpanded = false);
-                },
-                child: Icon(Icons.fingerprint),
-                tooltip: 'Manual Punch In',
-              ),
-            ),
-          ],
-          Padding(
-            padding: const EdgeInsets.only(bottom: 15.0, right: 20.0),
-            child: FloatingActionButton(
-              onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
-              child: Icon(_isFabExpanded ? Icons.close : Icons.add),
-              tooltip: 'Expand',
-            ),
-          ),
-        ],
-      ),*/
