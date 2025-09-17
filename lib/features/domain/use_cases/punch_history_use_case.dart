@@ -3,6 +3,8 @@ import 'package:employee_management/features/data/models/punch/response/punch_hi
 import 'package:employee_management/features/data/repositories/punch_repository.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../data/models/punch/response/attendence_response.dart';
+
 @injectable
 class PunchHistoryUseCase {
   final PunchRepository _repo;
@@ -20,5 +22,9 @@ class PunchHistoryUseCase {
       startDate: startDate,
       endDate: endDate,
     );
+  }
+
+  Future<NetworkResult<AttendanceResponse>> callPunchDetail() async {
+    return await _repo.getPunchHistoryDetail();
   }
 }

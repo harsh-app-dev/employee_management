@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -252,4 +253,23 @@ Future<bool> showPunchConfirmationDialog(
       );
     },
   ) ?? false;
+}
+/// ✅ New: Request Location Permission
+Future<void> requestLocationPermission() async {
+  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    await Geolocator.openLocationSettings();
+    return;
+  }
+
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+
+  if (permission == LocationPermission.denied ||
+      permission == LocationPermission.deniedForever) {
+    showGlobalSnackBarWithIcon("Location permission is required",
+        icon: Icons.location_off, iconColor: Colors.red);
+  }
 }

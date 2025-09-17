@@ -31,7 +31,7 @@ class PunchInOutUseCase {
   }
 
   // Break logs use case
-  Future<NetworkResult<dynamic>> createBreakLog({
+  /*Future<NetworkResult<dynamic>> createBreakLog({
     required String breakStart,
     required String breakOver,
     required int attendanceId,
@@ -41,5 +41,5 @@ class PunchInOutUseCase {
       breakOver: breakOver,
       attendanceId: attendanceId,
     );
-  }
+  }*/
 }

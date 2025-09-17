@@ -3,6 +3,7 @@ import 'package:employee_management/core/storage/local_storage.dart';
 import 'package:employee_management/core/storage/shared_preference_keys.dart';
 import 'package:employee_management/core/utils/network_result.dart';
 import 'package:employee_management/features/data/models/punch/request/punch_in_out_request.dart';
+import 'package:employee_management/features/data/models/punch/response/attendence_response.dart';
 import 'package:employee_management/features/data/models/punch/response/punch_in_out_response.dart';
 import 'package:employee_management/features/data/models/punch/response/punch_history_response.dart';
 import 'package:employee_management/features/data/models/punch/state/PunchStateResponse.dart';
@@ -22,17 +23,46 @@ class PunchRepository {
       PunchInOutRequest punchInOutRequest,
       ) async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
-    return await _networkClient.post<PunchInOutResponse>(
-      "/attendance/punch/",
-      headers: {"Authorization": "Bearer $token"},
-      body: punchInOutRequest,
-      parser: (json) => PunchInOutResponse.fromJson(json),
-    );
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${_networkClient.baseUrl}attendence/attendence-create/')
+      );
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'accept': '*/*',
+        'X-CSRFTOKEN': '5OtGmZanAgPHuHg1tScbBiOiWx2xiLS6jrJ7KLMnvVaLas84OkKeI8Th9qqIEFUv',
+      });
+      // Add fields from PunchInOutRequest
+      final data = punchInOutRequest.toJson();
+      data.forEach((key, value) {
+        if (value != null) request.fields[key] = value.toString();
+      });
+      // Print request details for debugging
+      print('[POST] ${request.url}');
+      print('Body: {fields: ${request.fields}}');
+      if (request.fields.containsKey('type')) {
+        print('Type sent: \'${request.fields['type']}\'');
+      }
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      print('Response: ${response.statusCode} $responseBody');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final jsonData = json.decode(responseBody);
+        return NetworkSuccess(PunchInOutResponse.fromJson(jsonData));
+      } else {
+        return NetworkError(response.statusCode, responseBody);
+      }
+    } catch (e) {
+      return NetworkError(-1, 'Upload failed: $e');
+    }
   }
 
   // New method for multipart form data upload
   Future<NetworkResult<PunchInOutResponse>> punchInOutWithPhoto(
-    String punchType, // 'in' or 'out'
+    String type, // 'punch_in', 'punch_out', 'break_start', 'break_end'
     String? punchedInLatLong,
     String? punchedOutLatLong,
     File? photoFile,
@@ -41,7 +71,7 @@ class PunchRepository {
     try {
       var request = http.MultipartRequest(
         'POST',
-          Uri.parse('${_networkClient.baseUrl}attendence/attendence-create/')
+        Uri.parse('${_networkClient.baseUrl}attendence/attendence-create/')
       );
 
       request.headers.addAll({
@@ -50,11 +80,10 @@ class PunchRepository {
         'X-CSRFTOKEN': '5OtGmZanAgPHuHg1tScbBiOiWx2xiLS6jrJ7KLMnvVaLas84OkKeI8Th9qqIEFUv',
       });
 
-      // Set fields according to punch type
-      if (punchType == 'in') {
+      request.fields['type'] = type;
+
+      if (type == 'punch_in') {
         request.fields['punched_in_lat_long'] = punchedInLatLong ?? '';
-        request.fields['punched_out_lat_long'] = '';
-        request.fields['punch_out_photo'] = '';
         if (photoFile != null && await photoFile.exists()) {
           final stream = http.ByteStream(photoFile.openRead());
           final length = await photoFile.length();
@@ -66,10 +95,8 @@ class PunchRepository {
           );
           request.files.add(multipartFile);
         }
-      } else if (punchType == 'out') {
-        request.fields['punched_in_lat_long'] = '';
+      } else if (type == 'punch_out') {
         request.fields['punched_out_lat_long'] = punchedOutLatLong ?? '';
-        request.fields['punch_in_photo'] = '';
         if (photoFile != null && await photoFile.exists()) {
           final stream = http.ByteStream(photoFile.openRead());
           final length = await photoFile.length();
@@ -81,14 +108,13 @@ class PunchRepository {
           );
           request.files.add(multipartFile);
         }
+      } else if (type == 'break_start') {
+        // Optionally add break_start photo/latlong if needed in future
+      } else if (type == 'break_end') {
+        // Only send type for break_end
       }
 
-      // Set other fields to null or empty as required by backend
-      request.fields['punch_in'] = '';
-      request.fields['punch_out'] = '';
-      request.fields['attendance'] = '';
-
-      // Print request details for debugging in consistent format
+      // Print request details for debugging
       print('[POST] ${request.url}');
       print('Body: {fields: ${request.fields}, files: ${request.files.map((f) => f.filename).toList()}}');
 
@@ -125,12 +151,12 @@ class PunchRepository {
     String? endDate,
   }) async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
-    String url = "attendence/attendence-history/";
+    String url = "attendence/attendence-history";
     List<String> params = [];
-    if (page != null) params.add('page=$page');
-    if (pageSize != null) params.add('page_size=$pageSize');
-    if (startDate != null) params.add('start_date=$startDate');
     if (endDate != null) params.add('end_date=$endDate');
+    if (page != null) params.add('page=$page');
+    // if (pageSize != null) params.add('page_size=$pageSize');
+    if (startDate != null) params.add('start_date=$startDate');
     if (params.isNotEmpty) {
       url += '?${params.join('&')}';
     }
@@ -141,35 +167,22 @@ class PunchRepository {
     );
   }
 
-  // Break logs API
-  Future<NetworkResult<dynamic>> createBreakLog({
-    required String breakStart,
-    required String breakOver,
-    required int attendanceId,
-  }) async {
+  Future<NetworkResult<AttendanceResponse>> getPunchHistoryDetail() async {
+
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
-    final url = "attendence/break-logs-create/";
-    final headers = {
-      "Authorization": "Bearer $token",
-      "accept": "application/json",
-      "Content-Type": "application/json",
-      "X-CSRFTOKEN": "Fv7MpkgvSv78FBaj8SVHV0TSlz2dhmTJ0qdeu5g8N3TuCSNzkTLpCUg0usy6K0Dq",
-    };
-    final body = jsonEncode({
-      "break_start": breakStart,
-      "break_over": breakOver,
-      "attendance": attendanceId,
-    });
-    try {
-      final response = await _networkClient.post(
-        url,
-        headers: headers,
-        body: body,
-        parser: (json) => json,
-      );
-      return response;
-    } catch (e) {
-      return NetworkError(-1, e.toString());
+    String url = "attendence/attendence-details-history";
+    List<String> params = [];
+    // if (endDate != null) params.add('end_date=$endDate');
+    // if (page != null) params.add('page=$page');
+    // if (pageSize != null) params.add('page_size=$pageSize');
+    // if (startDate != null) params.add('start_date=$startDate');
+    if (params.isNotEmpty) {
+      url += '?${params.join('&')}';
     }
+    return await _networkClient.get<AttendanceResponse>(
+      url,
+      headers: {"Authorization": "Bearer $token"},
+      parser: (json) => AttendanceResponse.fromJson(json),
+    );
   }
 }

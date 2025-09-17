@@ -5,14 +5,12 @@ import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/core/utils/util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:collection/collection.dart';
 import '../../../core/utils/network_result.dart';
 import '../../../core/widgets/debouncing_state.dart';
 import '../../data/models/floor/profile_data.dart';
-import '../../domain/use_cases/punch_in_out_use_case.dart';
+import '../../data/models/punch/response/attendence_response.dart';
 import '../state/profile_controller.dart';
 import '../state/punch_controller.dart';
 import '../../../core/widgets/app_side_drawer.dart';
@@ -46,15 +44,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _firstPunchIn = '--';
   String _lastPunchOut = '--';
   final PunchHistoryUseCase _punchHistoryUseCase = getIt<PunchHistoryUseCase>();
-  List<PunchEntry> _todaysPunchEntries = [];
+  List<Attendance> _todaysPunchEntries = [];
   bool _isBreakButtonEnabled = false;
   bool _isOnBreak = false;
   bool _isBreakLoading = false;
-
-  // Timer related variables
-  Timer? _workingTimer;
-  Duration _workingDuration = Duration.zero;
-  DateTime? _punchInTime;
 
   @override
   void initState() {
@@ -64,79 +57,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _profileController.fetchAndSaveProfile().then((_) async {
       await _fetchProfileData();
     });
-    _requestLocationPermission();
+    requestLocationPermission();
     _checkAndResetPunchTimes();
     _loadWorkBreakFromPrefs();
     _startWorkBreakUiTimer();
     _fetchTodaysPunchHistory();
-    _loadPunchInTime();
-
-   /* WidgetsBinding.instance.addPostFrameCallback((_) {
-      showAnnouncementDialog(
-        context,
-        announcementText:  "Your company has assigned you to work from home. "
-            "Please read the following terms carefully before giving your consent.\n\n"
-            "1. You will comply with all company policies while working remotely.\n"
-            "2. Ensure secure handling of company data.\n"
-            "3. Your working hours will remain as per company norms.\n"
-            "4. The company can revoke remote work privileges at any time.\n\n"
-            "By checking the box below, you confirm that you have read and understood "
-            "the Work From Home policy and agree to follow it.",
-      );
-    });*/
+    // add announcement dialog
   }
 
   @override
   void dispose() {
-    _workBreakTimer?.cancel();
-    _workingTimer?.cancel();
     super.dispose();
-  }
-
-  // Timer related methods
-  void _startWorkingTimer() {
-    _workingTimer?.cancel();
-    _workingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (_punchInTime != null) {
-        setState(() {
-          _workingDuration = DateTime.now().difference(_punchInTime!);
-        });
-      }
-    });
-  }
-
-  void _stopWorkingTimer() {
-    _workingTimer?.cancel();
-    _workingTimer = null;
-  }
-
-  Future<void> _loadPunchInTime() async {
-    final prefs = await SharedPreferences.getInstance();
-    final punchInTimeStr = prefs.getString('punchInTime');
-    if (punchInTimeStr != null) {
-      setState(() {
-        _punchInTime = DateTime.parse(punchInTimeStr);
-        _workingDuration = DateTime.now().difference(_punchInTime!);
-        _startWorkingTimer();
-      });
-    }
-  }
-
-  Future<void> _savePunchInTime() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (_punchInTime != null) {
-      await prefs.setString('punchInTime', _punchInTime!.toIso8601String());
-    } else {
-      await prefs.remove('punchInTime');
-    }
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String hours = twoDigits(duration.inHours);
-    String minutes = twoDigits(duration.inMinutes.remainder(60));
-    String seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$hours:$minutes:$seconds";
   }
 
 
@@ -157,11 +88,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await prefs.remove('punchInTime');
       await prefs.remove('punchOutTime');
       await prefs.setString('lastPunchDate', today.toIso8601String());
-      setState(() {
-        _punchInTime = null;
-        _workingDuration = Duration.zero;
-        _stopWorkingTimer();
-      });
     }
   }
 
@@ -230,7 +156,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _formatApiDuration(String? durationStr) {
     if (durationStr == null || durationStr.isEmpty) return '--';
     try {
-      // Remove milliseconds if present (anything after a decimal point in the seconds part)
       if (durationStr.contains('.')) {
         durationStr = durationStr.split('.')[0];
       }
@@ -262,82 +187,232 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _fetchTodaysPunchHistory() async {
-    setState(() { });
+    setState(() {});
+
     final today = DateTime.now();
     final dateStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
-    final result = await _punchHistoryUseCase(
-      startDate: dateStr,
-      endDate: dateStr,
-      page: 1,
-      pageSize: 1,
-    );
-    if (result is NetworkSuccess<PunchHistoryResponse>) {
-      final entries = result.data.results;
-      _todaysPunchEntries = entries;
-      if (_todaysPunchEntries.isNotEmpty) {
-        final entry = _todaysPunchEntries.first;
-        final date = entry.date;
-        final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
-        final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
-        _workedDuration = _formatApiDuration(entry.totalWorkTime)!;
-        _breakDuration = _formatApiDuration(entry.totalBreakTime)!;
-        _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
-        _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
-        _isBreakButtonEnabled = entry.punchIn != null && entry.punchOut == null;
-        if (entry.breaks.isNotEmpty) {
-          final lastBreak = entry.breaks.last;
-          _isOnBreak = lastBreak.breakStart != null && (lastBreak.breakOver == null || lastBreak.breakOver!.isEmpty);
-        } else {
-          _isOnBreak = false;
+
+    final result = await _punchHistoryUseCase.callPunchDetail();
+    print("===============================$result");
+
+    if (result is NetworkSuccess<AttendanceResponse>) {
+      print("checking passed");
+
+      final records = result.data.attendances;
+      _todaysPunchEntries = records;
+
+      List<DateTime> punchInTimes = [];
+      List<DateTime> punchOutTimes = [];
+      List<DateTime> breakStartTimes = [];
+      List<DateTime> breakEndTimes = [];
+
+      // Collect all work logs from ALL attendance records for today
+      List<WorkLog> allTodaysWorkLogs = [];
+
+      for (var attendance in records) {
+        if (attendance.attendanceDate == dateStr && attendance.workLogs != null) {
+          allTodaysWorkLogs.addAll(attendance.workLogs!);
+          print("Found attendance for today with ${attendance.workLogs!.length} work logs");
+        }
+      }
+
+      if (allTodaysWorkLogs.isNotEmpty) {
+        print("Total work logs for today: ${allTodaysWorkLogs.length}");
+
+        for (var log in allTodaysWorkLogs) {
+          try {
+            print("Log type: ${log.type}, time: ${log.time}");
+
+            if (log.time != null && log.time!.isNotEmpty) {
+              DateTime? eventDateTime;
+
+              try {
+                // Find the attendance record that contains this log to get the date
+                String? logDate;
+                for (var attendance in records) {
+                  if (attendance.workLogs != null && attendance.workLogs!.contains(log)) {
+                    logDate = attendance.attendanceDate;
+                    break;
+                  }
+                }
+
+                if (logDate != null) {
+                  eventDateTime = DateTime.parse("${logDate}T${log.time}");
+                  print("Parsing successful: $eventDateTime");
+                }
+              } catch (e) {
+                print("Date parsing failed: $e");
+              }
+
+              if (eventDateTime != null) {
+                switch (log.type) {
+                  case 'punch_in':
+                    punchInTimes.add(eventDateTime);
+                    print("Added punch_in time: $eventDateTime");
+                    break;
+                  case 'punch_out':
+                    punchOutTimes.add(eventDateTime);
+                    print("Added punch_out time: $eventDateTime");
+                    break;
+                  case 'break_start':
+                    breakStartTimes.add(eventDateTime);
+                    print("Added break_start time: $eventDateTime");
+                    break;
+                  case 'break_end':
+                    breakEndTimes.add(eventDateTime);
+                    print("Added break_end time: $eventDateTime");
+                    break;
+                }
+              }
+            }
+          } catch (e) {
+            print("Error processing log: $e");
+          }
         }
       } else {
-        _workedDuration = '--';
-        _breakDuration = '--';
-        _firstPunchIn = '--';
-        _lastPunchOut = '--';
-        _isBreakButtonEnabled = false;
-        _isOnBreak = false;
+        print("No work logs found for today");
       }
+
+      // Sort all times
+      punchInTimes.sort();
+      punchOutTimes.sort();
+      breakStartTimes.sort();
+      breakEndTimes.sort();
+
+      print("Punch in times: $punchInTimes");
+      print("Punch out times: $punchOutTimes");
+      print("Break start times: $breakStartTimes");
+      print("Break end times: $breakEndTimes");
+
+      // Get first punch in and last punch out
+      _firstPunchIn = punchInTimes.isNotEmpty ? DateFormat('hh:mm a').format(punchInTimes.first) : '--';
+      _lastPunchOut = punchOutTimes.isNotEmpty ? DateFormat('hh:mm a').format(punchOutTimes.last) : '--';
+
+      // Calculate total work and break duration from all today's attendance records
+      Duration totalWorkDuration = Duration();
+      Duration totalBreakDuration = Duration();
+
+      for (var attendance in records) {
+        if (attendance.attendanceDate == dateStr) {
+          if (attendance.totalWorkHour != null && attendance.totalWorkHour!.isNotEmpty) {
+            totalWorkDuration += _parseDurationFromString(attendance.totalWorkHour!);
+          }
+          if (attendance.totalBreakHour != null && attendance.totalBreakHour!.isNotEmpty) {
+            totalBreakDuration += _parseDurationFromString(attendance.totalBreakHour!);
+          }
+        }
+      }
+
+      _workedDuration = _formatDuration(totalWorkDuration);
+      _breakDuration = _formatDuration(totalBreakDuration);
+
+      print("Work duration: $_workedDuration, Break duration: $_breakDuration");
+
+      // Enable break button if user is punched in but not punched out
+      _isBreakButtonEnabled = punchInTimes.isNotEmpty &&
+          (punchOutTimes.isEmpty || punchOutTimes.last.isBefore(punchInTimes.last));
+
+      // Check if currently on break (break started but not ended)
+      _isOnBreak = breakStartTimes.isNotEmpty &&
+          (breakEndTimes.isEmpty || breakEndTimes.last.isBefore(breakStartTimes.last));
+
     } else {
-      _workedDuration = '--';
-      _breakDuration = '--';
+      print("checking failed - Network error");
+      _todaysPunchEntries = [];
       _firstPunchIn = '--';
       _lastPunchOut = '--';
+      _workedDuration = '--';
+      _breakDuration = '--';
       _isBreakButtonEnabled = false;
       _isOnBreak = false;
     }
-    setState(() { });
+
+    setState(() {});
+  }
+
+  Duration _parseDurationFromString(String durationStr) {
+    try {
+      final parts = durationStr.split(':');
+      final hours = int.parse(parts[0]);
+      final minutes = int.parse(parts[1]);
+      final seconds = parts.length > 2 ? int.parse(parts[2]) : 0;
+      return Duration(hours: hours, minutes: minutes, seconds: seconds);
+    } catch (e) {
+      return Duration();
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration.inSeconds == 0) return '--';
+
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+
+    String result = '';
+    if (hours > 0) result += '${hours}h ';
+    if (minutes > 0) result += '${minutes}m ';
+
+    return result.trim();
   }
 
   Future<void> _refreshPunchHistoryAndWorkedTimes() async {
-    setState(() { });
+    setState(() {});
     final today = DateTime.now();
     final dateStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
-    final result = await _punchHistoryUseCase(
-      startDate: dateStr,
-      endDate: dateStr,
-      page: 1,
-      pageSize: 1,
-    );
-    if (result is NetworkSuccess<PunchHistoryResponse>) {
-      final entries = result.data.results;
+    final result = await _punchHistoryUseCase.callPunchDetail();
+
+    if (result is NetworkSuccess<AttendanceResponse>) {
+      final entries = result.data.attendances;
       _todaysPunchEntries = entries;
-      if (_todaysPunchEntries.isNotEmpty) {
-        final entry = _todaysPunchEntries.first;
-        final date = entry.date;
-        final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
-        final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
-        _workedDuration = _formatApiDuration(entry.totalWorkTime)!;
-        _breakDuration = _formatApiDuration(entry.totalBreakTime)!;
-        _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
-        _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
-        _isBreakButtonEnabled = entry.punchIn != null && entry.punchOut == null;
-        if (entry.breaks.isNotEmpty) {
-          final lastBreak = entry.breaks.last;
-          _isOnBreak = lastBreak.breakStart != null && (lastBreak.breakOver == null || lastBreak.breakOver!.isEmpty);
-        } else {
-          _isOnBreak = false;
+
+      // Collect all work logs from all today's attendance records
+      List<WorkLog> allTodaysWorkLogs = [];
+      for (var attendance in entries) {
+        if (attendance.attendanceDate == dateStr && attendance.workLogs != null) {
+          allTodaysWorkLogs.addAll(attendance.workLogs!);
         }
+      }
+
+      if (allTodaysWorkLogs.isNotEmpty) {
+        final punchInEvents = allTodaysWorkLogs.where((e) => e.type == 'punch_in').toList();
+        final punchOutEvents = allTodaysWorkLogs.where((e) => e.type == 'punch_out').toList();
+        final breakStartEvents = allTodaysWorkLogs.where((e) => e.type == 'break_start').toList();
+        final breakEndEvents = allTodaysWorkLogs.where((e) => e.type == 'break_end').toList();
+
+        // Sort events by time (you might need to parse the time strings to DateTime for proper sorting)
+        punchInEvents.sort((a, b) => (a.time ?? '').compareTo(b.time ?? ''));
+        punchOutEvents.sort((a, b) => (a.time ?? '').compareTo(b.time ?? ''));
+        breakStartEvents.sort((a, b) => (a.time ?? '').compareTo(b.time ?? ''));
+        breakEndEvents.sort((a, b) => (a.time ?? '').compareTo(b.time ?? ''));
+
+        bool isPunchedIn = punchInEvents.isNotEmpty &&
+            (punchOutEvents.isEmpty || punchOutEvents.last.time!.compareTo(punchInEvents.last.time!) < 0);
+
+        bool isOnBreak = breakStartEvents.isNotEmpty &&
+            (breakEndEvents.isEmpty || breakEndEvents.last.time!.compareTo(breakStartEvents.last.time!) < 0);
+
+        // Calculate total durations from all today's attendance records
+        Duration totalWorkDuration = Duration();
+        Duration totalBreakDuration = Duration();
+
+        for (var attendance in entries) {
+          if (attendance.attendanceDate == dateStr) {
+            if (attendance.totalWorkHour != null && attendance.totalWorkHour!.isNotEmpty) {
+              totalWorkDuration += _parseDurationFromString(attendance.totalWorkHour!);
+            }
+            if (attendance.totalBreakHour != null && attendance.totalBreakHour!.isNotEmpty) {
+              totalBreakDuration += _parseDurationFromString(attendance.totalBreakHour!);
+            }
+          }
+        }
+
+        _workedDuration = _formatDuration(totalWorkDuration);
+        _breakDuration = _formatDuration(totalBreakDuration);
+        _firstPunchIn = punchInEvents.isNotEmpty ? punchInEvents.first.time ?? '--' : '--';
+        _lastPunchOut = punchOutEvents.isNotEmpty ? punchOutEvents.last.time ?? '--' : '--';
+
+        _isBreakButtonEnabled = isPunchedIn;
+        _isOnBreak = isOnBreak;
       } else {
         _workedDuration = '--';
         _breakDuration = '--';
@@ -354,12 +429,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _isBreakButtonEnabled = false;
       _isOnBreak = false;
     }
-    setState(() { });
+    setState(() {});
   }
+
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final activityEvents = _getAllTodaysActivityEvents();
 
     return Scaffold(
       backgroundColor: theme.colorScheme.onPrimary,
@@ -464,7 +541,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         SizedBox(height: 2.h),
                                         Column(
                                           children: [
-                                            // Worked Hours Box
                                             Container(
                                               padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
                                               decoration: BoxDecoration(
@@ -478,23 +554,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   SizedBox(width: 2.w),
                                                   Text(
                                                     '${AppStrings.workedHrs}: ',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      color: theme.colorScheme.primary,
-                                                    ),
+                                                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary,),
                                                   ),
                                                   Text(
-                                                    (_workedDuration != '--' && _workedDuration.isNotEmpty)
-                                                        ? _workedDuration
-                                                        : (_punchInTime != null
-                                                        ? _formatDuration(_workingDuration)
-                                                        : '00:00:00'),
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 16.sp,
-                                                      color: theme.colorScheme.primary,
-                                                    ),
+                                                    _workedDuration.isNotEmpty && _workedDuration != '--' ? _workedDuration : '00:00:00',
+                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp, color: theme.colorScheme.primary,),
                                                   ),
+
                                                 ],
                                               ),
                                             ),
@@ -503,10 +569,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             // Break Hours Box
                                             Container(
                                               padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
-                                              decoration: BoxDecoration(
-                                                color: Colors.orange.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
+                                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10),),
                                               child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
@@ -514,18 +577,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   SizedBox(width: 2.w),
                                                   Text(
                                                     '${AppStrings.breakHrs}: ',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.orange,
-                                                    ),
+                                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange,),
                                                   ),
                                                   Text(
                                                     _breakDuration != '--' ? _breakDuration : '00:00:00',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 16.sp,
-                                                      color: Colors.orange,
-                                                    ),
+                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp, color: Colors.orange,),
                                                   ),
                                                 ],
                                               ),
@@ -544,10 +600,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                               IconData buttonIcon;
 
                                               final isActive = _currentProfile?.is_active == 'active';
-                                              final isAbsent = _currentProfile?.is_active == 'absent';
-                                              final isLeft = _currentProfile?.is_active == 'left';
+                                              final isLeft = _currentProfile?.is_active == 'left' || _currentProfile?.is_active == 'absent';
 
-                                              if (isAbsent) {
+                                              if (isActive) {
+                                                buttonText = AppStrings.punchOut;
+                                                buttonIcon = Icons.logout;
+                                                buttonColor = Colors.red;
+                                                onPressed = () async {
+
+                                                  if (!await checkInternet(context)) return;
+
+                                                  final confirm = await showPunchConfirmationDialog(context, isPunchOut: true);
+                                                  if(!confirm) return;
+
+                                                  final XFile? image = await _picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front,);
+
+                                                  if (image != null) {
+                                                    setState(() {
+                                                      _selfieImage = File(image.path);
+                                                      _isApiLoading = true;
+                                                    });
+                                                    await _submitDebouncer.run(() async {
+                                                      await _punchController.punchInOut('punch_out', punchPhoto: _selfieImage);
+                                                      if (!mounted) return;
+                                                      if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
+                                                        setState(() {
+                                                          _isApiLoading = false;
+                                                          _isBreakButtonEnabled = false;
+                                                          _isOnBreak = false;
+                                                        });
+                                                        _updateWorkBreakOnPunch('out');
+                                                        await _refreshPunchHistoryAndWorkedTimes();
+                                                        if (_currentProfile != null) {
+                                                          final updated = Profile(
+                                                            id: _currentProfile!.id,
+                                                            first_name: _currentProfile!.first_name,
+                                                            last_name: _currentProfile!.last_name,
+                                                            email: _currentProfile!.email,
+                                                            dob: _currentProfile!.dob,
+                                                            phoneNo: _currentProfile!.phoneNo,
+                                                            designation: _currentProfile!.designation,
+                                                            organization: _currentProfile!.organization,
+                                                            is_active: 'left',
+                                                          );
+                                                          await _profileController.profileDao.insertProfile(updated);
+                                                          setState(() {
+                                                            _currentProfile = updated;
+                                                          });
+                                                        }
+                                                        showGlobalSnackBarWithIcon(AppStrings.punchOutSuccess, icon: Icons.logout, iconColor: Colors.red);
+                                                      } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
+                                                        if (!mounted) return;
+                                                        setState(() { _isApiLoading = false; });
+                                                        showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? AppStrings.punchFailed, icon: Icons.error_outline, iconColor: Colors.red);
+                                                      } else {
+                                                        if (!mounted) return;
+                                                        setState(() { _isApiLoading = false; });
+                                                      }
+                                                    });
+                                                  } else {
+                                                    showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
+                                                  }
+                                                };
+                                              } else if (isLeft) {
                                                 buttonText = AppStrings.punchIn;
                                                 buttonIcon = Icons.login;
                                                 buttonColor = theme.colorScheme.primary;
@@ -562,14 +677,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                       _isApiLoading = true;
                                                     });
                                                     await _submitDebouncer.run(() async {
-                                                      await _punchController.punchInOut('In', punchPhoto: _selfieImage);
+                                                      await _punchController.punchInOut('punch_in', punchPhoto: _selfieImage);
                                                       if (!mounted) return;
                                                       if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
                                                         setState(() {
                                                           _isApiLoading = false;
-                                                          _punchInTime = DateTime.now();
-                                                          _startWorkingTimer();
-                                                          _savePunchInTime();
+                                                          _isBreakButtonEnabled = true;
+                                                          _isOnBreak = false;
                                                         });
                                                         _updateWorkBreakOnPunch('in');
                                                         await _refreshPunchHistoryAndWorkedTimes();
@@ -608,35 +722,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
                                                   }
                                                 };
-                                              } else if (isActive) {
-                                                buttonText = AppStrings.punchOut;
-                                                buttonIcon = Icons.logout;
-                                                buttonColor = Colors.red;
+                                              } else {
+                                                buttonText = AppStrings.punchIn;
+                                                buttonIcon = Icons.login;
+                                                buttonColor = theme.colorScheme.primary;
                                                 onPressed = () async {
 
                                                   if (!await checkInternet(context)) return;
 
-                                                  final confirm = await showPunchConfirmationDialog(context, isPunchOut: true);
-                                                  if(!confirm) return;
-
                                                   final XFile? image = await _picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front,);
-
                                                   if (image != null) {
                                                     setState(() {
                                                       _selfieImage = File(image.path);
                                                       _isApiLoading = true;
                                                     });
                                                     await _submitDebouncer.run(() async {
-                                                      await _punchController.punchInOut('out', punchPhoto: _selfieImage);
+                                                      await _punchController.punchInOut('punch_in', punchPhoto: _selfieImage);
                                                       if (!mounted) return;
                                                       if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
                                                         setState(() {
                                                           _isApiLoading = false;
-                                                          _stopWorkingTimer();
-                                                          _punchInTime = null;
-                                                          _savePunchInTime();
                                                         });
-                                                        _updateWorkBreakOnPunch('out');
+                                                        _updateWorkBreakOnPunch('in');
                                                         await _refreshPunchHistoryAndWorkedTimes();
                                                         if (_currentProfile != null) {
                                                           final updated = Profile(
@@ -648,16 +755,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                             phoneNo: _currentProfile!.phoneNo,
                                                             designation: _currentProfile!.designation,
                                                             organization: _currentProfile!.organization,
-                                                            is_active: 'left',
+                                                            is_active: 'active',
                                                           );
                                                           await _profileController.profileDao.insertProfile(updated);
                                                           setState(() {
                                                             _currentProfile = updated;
                                                           });
                                                         }
-                                                        showGlobalSnackBarWithIcon(AppStrings.punchOutSuccess, icon: Icons.logout, iconColor: Colors.red);
+                                                        showGlobalSnackBarWithIcon(AppStrings.punchInSuccess, icon: Icons.login, iconColor: Colors.green);
                                                         setState(() {
-                                                          _isBreakButtonEnabled = false;
+                                                          _isBreakButtonEnabled = true;
                                                           _isOnBreak = false;
                                                         });
                                                       } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
@@ -673,16 +780,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     showGlobalSnackBarWithIcon('Please take a selfie to proceed.', icon: Icons.camera_alt, iconColor: Colors.orange);
                                                   }
                                                 };
-                                              } else if (isLeft) {
-                                                buttonText = AppStrings.punchOut;
-                                                buttonIcon = Icons.logout;
-                                                buttonColor = Colors.grey;
-                                                onPressed = null;
-                                              } else {
-                                                buttonText = AppStrings.punchIn;
-                                                buttonIcon = Icons.login;
-                                                buttonColor = theme.colorScheme.primary;
-                                                onPressed = null;
                                               }
                                               return Row(
                                                 children: [
@@ -707,87 +804,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   Expanded(
                                                     flex: 1,
                                                     child: ElevatedButton.icon(
-                                                      onPressed: _isBreakButtonEnabled
-                                                          ? () async {
+                                                      onPressed: (isActive) ? () async {
                                                         if (!_isOnBreak) {
                                                           setState(() { _isBreakLoading = true; });
-                                                          final attendanceId = _todaysPunchEntries.isNotEmpty ? _todaysPunchEntries.first.id : null;
-                                                          if (attendanceId == null) {
-                                                            setState(() { _isBreakLoading = false; });
-                                                            showGlobalSnackBarWithIcon('Attendance not found for today', icon: Icons.error, iconColor: Colors.red);
-                                                            return;
-                                                          }
-                                                          final now = DateTime.now();
-                                                          final breakStart = now.toIso8601String();
-                                                          final breakOver = "";
-                                                          final punchInOutUseCase = getIt<PunchInOutUseCase>();
-                                                          final result = await punchInOutUseCase.createBreakLog(
-                                                            breakStart: breakStart,
-                                                            breakOver: breakOver,
-                                                            attendanceId: attendanceId,
-                                                          );
-                                                          setState(() { _isBreakLoading = false; });
-                                                          if (result is NetworkSuccess) {
-                                                            setState(() { _isOnBreak = ! _isOnBreak; });
-                                                            await _refreshPunchHistoryAndWorkedTimes();
-                                                            if (_todaysPunchEntries.isNotEmpty) {
-                                                              final entry = _todaysPunchEntries.first;
-                                                              final date = entry.date;
-                                                              final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
-                                                              final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
-                                                              setState(() {
-                                                                _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
-                                                                _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
-                                                              });
+                                                          await _submitDebouncer.run(() async {
+                                                            await _punchController.punchInOut('break_start');
+                                                            setState(() {
+                                                              _isBreakLoading = false;
+                                                            });
+                                                            if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
+                                                              await _refreshPunchHistoryAndWorkedTimes();
+                                                              showGlobalSnackBarWithIcon('Break started successfully!', icon: Icons.pause_circle, iconColor: Colors.orange);
+                                                              _isOnBreak = true;
+                                                            } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
+                                                              showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? 'Failed to start break', icon: Icons.error, iconColor: Colors.red);
                                                             }
-                                                            showGlobalSnackBarWithIcon('Break started successfully!', icon: Icons.pause_circle, iconColor: Colors.orange);
-                                                          } else {
-                                                            showGlobalSnackBarWithIcon('Failed to start break', icon: Icons.error, iconColor: Colors.red);
-                                                          }
+                                                          });
                                                         } else {
                                                           setState(() { _isBreakLoading = true; });
-                                                          final attendanceId = _todaysPunchEntries.isNotEmpty ? _todaysPunchEntries.first.id : null;
-                                                          if (attendanceId == null) {
-                                                            setState(() { _isBreakLoading = false; });
-                                                            showGlobalSnackBarWithIcon('Attendance not found for today', icon: Icons.error, iconColor: Colors.red);
-                                                            return;
-                                                          }
-                                                          final now = DateTime.now();
-                                                          final lastBreak = _todaysPunchEntries.first.breaks.lastOrNull;
-                                                          if (lastBreak == null) {
-                                                            setState(() { _isBreakLoading = false; });
-                                                            showGlobalSnackBarWithIcon('No break to end.', icon: Icons.error, iconColor: Colors.red);
-                                                            return;
-                                                          }
-                                                          final breakStart = lastBreak.breakStart != null ? "${_todaysPunchEntries.first.date}T${lastBreak.breakStart}" : null;
-                                                          final breakOver = now.toIso8601String();
-                                                          final punchInOutUseCase = getIt<PunchInOutUseCase>();
-                                                          final result = await punchInOutUseCase.createBreakLog(
-                                                            breakStart: breakStart ?? now.toIso8601String(),
-                                                            breakOver: breakOver,
-                                                            attendanceId: attendanceId,
-                                                          );
-                                                          setState(() { _isBreakLoading = false; });
-                                                          if (result is NetworkSuccess) {
-                                                            setState(() { _isOnBreak = ! _isOnBreak; });
-                                                            await _refreshPunchHistoryAndWorkedTimes();
-                                                            if (_todaysPunchEntries.isNotEmpty) {
-                                                              final entry = _todaysPunchEntries.first;
-                                                              final date = entry.date;
-                                                              final punchInIso = entry.punchIn != null ? "${date}T${entry.punchIn}" : null;
-                                                              final punchOutIso = entry.punchOut != null ? "${date}T${entry.punchOut}" : null;
-                                                              setState(() {
-                                                                _firstPunchIn = punchInIso != null ? _formatTime(punchInIso) : '--';
-                                                                _lastPunchOut = punchOutIso != null ? _formatTime(punchOutIso) : '--';
-                                                              });
+                                                          await _submitDebouncer.run(() async {
+                                                            await _punchController.punchInOut('break_end');
+                                                            setState(() {
+                                                              _isBreakLoading = false;
+                                                            });
+                                                            if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
+                                                              await _refreshPunchHistoryAndWorkedTimes();
+                                                              showGlobalSnackBarWithIcon('Break ended successfully!', icon: Icons.play_circle, iconColor: Colors.green);
+                                                            } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
+                                                              showGlobalSnackBarWithIcon(_punchController.punchInOutApiState.value?.error ?? 'Failed to end break', icon: Icons.error, iconColor: Colors.red);
                                                             }
-                                                            showGlobalSnackBarWithIcon('Break ended successfully!', icon: Icons.play_circle, iconColor: Colors.green);
-                                                          } else {
-                                                            showGlobalSnackBarWithIcon('Failed to end break', icon: Icons.error, iconColor: Colors.red);
-                                                          }
+                                                          });
                                                         }
-                                                      }
-                                                          : null,
+                                                      } : null,
                                                       icon: Icon(_isOnBreak ? Icons.play_circle_fill : Icons.pause_circle_outline, size: 22.sp, color: Colors.white),
                                                       label: Text(_isOnBreak ? 'Break Out' : 'Break In',
                                                         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
@@ -809,10 +857,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                 ),
-                                if (_todaysPunchEntries.isNotEmpty && _todaysPunchEntries.first.breaks.isNotEmpty)
+                                if (activityEvents.isNotEmpty)
                                   Card(
                                     elevation: 8,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18),),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                                     margin: EdgeInsets.only(bottom: 3.h),
                                     color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
                                     child: Padding(
@@ -821,59 +869,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Today\'s Break Logs',
+                                            'Today\'s Activity Logs',
                                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
                                           ),
-                                          Divider(
-                                            height: 24,
-                                            thickness: 1.3,
-                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                          ),
-                                          ..._todaysPunchEntries.first.breaks.asMap().entries.map((entry) {
-                                            final i = entry.key;
-                                            final brk = entry.value;
-                                            final parentDate = _todaysPunchEntries.first.date;
-                                            final breakStartIso = brk.breakStart != null ? "${parentDate}T${brk.breakStart}" : null;
-                                            final breakOverIso = brk.breakOver != null ? "${parentDate}T${brk.breakOver}" : null;
-                                            return Padding(
-                                              padding: const EdgeInsets.only(bottom: 14.0, left: 10.0, right: 10.0),
-                                              child: Row(
-                                                children: [
-                                                  Container(
-                                                    padding: EdgeInsets.all(6),
-                                                    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.orange.withOpacity(0.1),),
-                                                    child: Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20),
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text('Break In', style: TextStyle(fontSize: 16, color: Colors.orange, fontWeight: FontWeight.bold)),
-                                                      SizedBox(height: 2),
-                                                      Text(_formatTime(breakStartIso ?? '') ?? '--:--',
-                                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                                                    ],
-                                                  ),
-                                                  Spacer(),
-                                                  Container(
-                                                    padding: EdgeInsets.all(6),
-                                                    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.green.withOpacity(0.1),),
-                                                    child: Icon(Icons.play_circle_fill, color: Colors.green, size: 20),
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text('Break Out', style: TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold)),
-                                                      SizedBox(height: 2),
-                                                      Text(_formatTime(breakOverIso ?? ''),
-                                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                                                    ],
-                                                  ),
-                                                ],
+                                          Divider(height: 24, thickness: 1.3, color: Theme.of(context).colorScheme.primary.withOpacity(0.15),),
+
+                                          Stack(
+                                            children: [
+                                              Positioned(left: 9, top: 10, bottom: 10,
+                                                child: Container(width: 2, color: Colors.grey.shade300,),
                                               ),
-                                            );
-                                          }).toList(),
+                                              // All activity entries
+                                              Column(
+                                                children: activityEvents.expand((activity) {
+                                                  final List<Widget> activityEntries = [];
+                                                  final activityDate = _getActivityDate(activity);
+                                                  final activityTime = "${activityDate}T${activity.time}";
+
+                                                  activityEntries.add(
+                                                    Container(
+                                                      margin: EdgeInsets.only(bottom: 4),
+                                                      child: Row(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Container(
+                                                            width: 20,
+                                                            height: 20,
+                                                            decoration: BoxDecoration(
+                                                              shape: BoxShape.circle,
+                                                              color: _getActivityColor(activity.type),
+                                                              border: Border.all(color: Colors.white, width: 3),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 16),
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                      _getActivityTitle(activity.type),
+                                                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                SizedBox(height: 4),
+                                                                Text(
+                                                                  _formatTime(activityTime) ?? '--:--',
+                                                                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+
+                                                  return activityEntries;
+                                                }).toList(),
+                                              ),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -890,10 +948,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               builder: (context, punchInOutState, _) {
                 final isLoading = punchInOutState?.isLoading ?? false;
                 if (isLoading) {
-                  return Container(
-                    color: Colors.black.withOpacity(0.2),
-                    child: const Center(child: CircularProgressIndicator()),
-                  );
+                  return Container(color: Colors.black.withOpacity(0.2), child: const Center(child: CircularProgressIndicator()),);
                 }
                 return const SizedBox.shrink();
               },
@@ -902,20 +957,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Positioned.fill(
                 child: AbsorbPointer(
                   absorbing: true,
-                  child: Container(
-                    color: Colors.black.withOpacity(0.2),
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
+                  child: Container(color: Colors.black.withOpacity(0.2), child: const Center(child: CircularProgressIndicator()),),
                 ),
               ),
             if (_isBreakLoading)
               Positioned.fill(
                 child: AbsorbPointer(
                   absorbing: true,
-                  child: Container(
-                    color: Colors.black.withOpacity(0.2),
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
+                  child: Container(color: Colors.black.withOpacity(0.2), child: const Center(child: CircularProgressIndicator()),),
                 ),
               ),
           ],
@@ -924,137 +973,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<void> _requestLocationPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      return;
-    }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
+  // Helper method to get all activity events from today's attendance
+  List<WorkLog> _getAllTodaysActivityEvents() {
+    final today = DateTime.now();
+    final dateStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
 
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      if (context.mounted) {
-        showGlobalSnackBarWithIcon(AppStrings.locationPermission);
+    List<WorkLog> allEvents = [];
+    for (var attendance in _todaysPunchEntries) {
+      if (attendance.attendanceDate == dateStr && attendance.workLogs != null) {
+        allEvents.addAll(attendance.workLogs!);
       }
+    }
+
+    // Sort events by time (most recent first for the reversed display)
+    allEvents.sort((a, b) {
+      // Parse dates for proper sorting
+      try {
+        final dateA = _getActivityDate(a);
+        final dateB = _getActivityDate(b);
+        final timeA = DateTime.parse("${dateA}T${a.time}");
+        final timeB = DateTime.parse("${dateB}T${b.time}");
+        return timeB.compareTo(timeA); // Most recent first
+      } catch (e) {
+        return (b.time ?? '').compareTo(a.time ?? '');
+      }
+    });
+
+    return allEvents;
+  }
+
+// Helper to get the date for an activity
+  String _getActivityDate(WorkLog log) {
+    for (var attendance in _todaysPunchEntries) {
+      if (attendance.workLogs != null && attendance.workLogs!.contains(log)) {
+        return attendance.attendanceDate ?? '';
+      }
+    }
+    return '';
+  }
+
+// Helper to get activity color based on type
+  Color _getActivityColor(String? type) {
+    switch (type) {
+      case 'punch_in':
+        return Colors.green;
+      case 'punch_out':
+        return Colors.red;
+      case 'break_start':
+        return Colors.orange;
+      case 'break_end':
+        return Colors.blue;
+      default:
+        return Colors.grey;
     }
   }
 
+  String _getActivityTitle(String? type) {
+    switch (type) {
+      case 'punch_in':
+        return 'Punched In';
+      case 'punch_out':
+        return 'Punched Out';
+      case 'break_start':
+        return 'Break Started';
+      case 'break_end':
+        return 'Break Ended';
+      default:
+        return 'Activity';
+    }
+  }
 }
-
-
-/*
-// This dialog is used when the company provide a work from home and we get a push notification for that and we open this dialog
-Future<bool?> showAnnouncementDialog(
-    BuildContext context, {
-      required String announcementText,
-    }) {
-  return showDialog<bool>(
-    context: context,
-    barrierDismissible: false, // cannot close by tapping outside
-    builder: (context) {
-      bool isChecked = false;
-
-      return StatefulBuilder(
-        builder: (context, setState) {
-          final theme = Theme.of(context);
-
-          return WillPopScope(
-            onWillPop: () async => false, // disable back button
-            child: Dialog(
-              backgroundColor: Colors.white,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.7,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 🔹 Header Icon (speaker)
-                    Icon(
-                      Icons.campaign_rounded,
-                      size: 64,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 🔹 Fixed Title
-                    Text(
-                      "Announcement",
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 🔹 Scrollable Announcement Text
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Text(
-                          announcementText,
-                          style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 🔹 Compact Checkbox
-                    CheckboxListTile(
-                      value: isChecked,
-                      onChanged: (val) => setState(() => isChecked = val ?? false),
-                      dense: true, // compact vertical spacing
-                      contentPadding: EdgeInsets.zero, // remove left/right padding
-                      controlAffinity: ListTileControlAffinity.leading, // checkbox before text
-                      title: Text(
-                        "I agree to the terms, conditions and policy.",
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 🔹 Agree Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isChecked
-                              ? theme.colorScheme.primary
-                              : Colors.grey.shade400,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: isChecked
-                            ? () => Navigator.of(context).pop(true)
-                            : null,
-                        child: const Text(
-                          "I Agree",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
-
-*/

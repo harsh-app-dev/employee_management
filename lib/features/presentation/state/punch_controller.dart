@@ -1,4 +1,4 @@
-  import 'package:employee_management/core/api/api_state.dart';
+import 'package:employee_management/core/api/api_state.dart';
   import 'package:employee_management/core/utils/network_result.dart';
   import 'package:employee_management/core/utils/util.dart';
   import 'package:employee_management/features/data/models/punch/request/punch_in_out_request.dart';
@@ -28,58 +28,54 @@ import 'dart:io';
 
       bool get hasPunchedInAndOutToday => isPunchedIn.value && isPunchedOut.value;
 
-  Future<void> punchInOut(String punchValue, {File? punchPhoto}) async {
-      punchInOutApiState.value = ApiState.loading();
-
-      try {
+  Future<void> punchInOut(String type, {File? punchPhoto}) async {
+    punchInOutApiState.value = ApiState.loading();
+    try {
+      String? latLong;
+      if (type == 'punch_in' || type == 'punch_out') {
         final position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
-
-        final latLong = "${position.latitude},${position.longitude}";
-
-        NetworkResult<PunchInOutResponse> result;
-
-        // Use multipart form data for better performance with images
-        if (punchPhoto != null) {
-          result = await _punchUseCase.callWithPhoto(
-            punchValue.toLowerCase(), // punchType: 'in' or 'out'
-            punchValue.toLowerCase() == 'in' ? latLong : null, // punchedInLatLong
-            punchValue.toLowerCase() == 'out' ? latLong : null, // punchedOutLatLong
-            punchPhoto, // photoFile
-          );
-        } else {
-          // Fallback to JSON for text-only requests
-          final request = punchValue.toLowerCase() == 'in'
-              ? PunchInOutRequest(punchedInLatLong: latLong)
-              : PunchInOutRequest(punchedOutLatLong: latLong);
-          result = await _punchUseCase(request);
-        }
-
-        if (result is NetworkSuccess<PunchInOutResponse>) {
-          punchInOutApiState.value = ApiState.success(result.data);
-
-          // ✅ Update local punch state
-          if (punchValue.toLowerCase() == 'in') {
-            isPunchedIn.value = true;
-            isPunchedOut.value = false;
-          } else if (punchValue.toLowerCase() == 'out') {
-            isPunchedOut.value = true;
-          }
-
-          // await getPunchState(); // Sync again
-
-        } else if (result is NetworkError<PunchInOutResponse>) {
-          punchInOutApiState.value = ApiState.error(result.message);
-        } else {
-          punchInOutApiState.value = ApiState.error("Unknown error occurred");
-        }
-      } catch (e) {
-        punchInOutApiState.value = ApiState.error(
-          "Check internet connection or app permissions.",
-        );
+        latLong = "${position.latitude},${position.longitude}";
       }
+
+      NetworkResult<PunchInOutResponse> result;
+
+      if (punchPhoto != null) {
+        result = await _punchUseCase.callWithPhoto(
+          type,
+          type == 'punch_in' ? latLong : null,
+          type == 'punch_out' ? latLong : null,
+          punchPhoto,
+        );
+      } else {
+        final request = PunchInOutRequest(
+          type: type,
+          punchedInLatLong: type == 'punch_in' ? latLong : null,
+          punchedOutLatLong: type == 'punch_out' ? latLong : null,
+        );
+        result = await _punchUseCase(request);
+      }
+
+      if (result is NetworkSuccess<PunchInOutResponse>) {
+        punchInOutApiState.value = ApiState.success(result.data);
+        if (type == 'punch_in') {
+          isPunchedIn.value = true;
+          isPunchedOut.value = false;
+        } else if (type == 'punch_out') {
+          isPunchedOut.value = true;
+        }
+      } else if (result is NetworkError<PunchInOutResponse>) {
+        punchInOutApiState.value = ApiState.error(result.message);
+      } else {
+        punchInOutApiState.value = ApiState.error("Unknown error occurred");
+      }
+    } catch (e) {
+      punchInOutApiState.value = ApiState.error(
+        "Check internet connection or app permissions.",
+      );
     }
+  }
 
 
     Future<void> getPunchState() async {
