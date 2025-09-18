@@ -23,8 +23,7 @@ class PunchHistoryUseCase {
       endDate: endDate,
     );
   }
-
-  Future<NetworkResult<AttendanceResponse>> callPunchDetail() async {
-    return await _repo.getPunchHistoryDetail();
+  Future<NetworkResult<AttendanceResponse>> callPunchDetail({String? date}) async {
+    return await _repo.getPunchHistoryDetail(date: date);
   }
 }

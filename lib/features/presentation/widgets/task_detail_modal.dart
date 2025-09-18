@@ -23,7 +23,7 @@ class TaskDetailModal extends StatelessWidget {
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.5,
-      minChildSize: 0.3,
+      minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Padding(

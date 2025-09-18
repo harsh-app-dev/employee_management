@@ -151,7 +151,7 @@ class PunchRepository {
     String? endDate,
   }) async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
-    String url = "attendence/attendence-history";
+    String url = "attendence/attendence-list";
     List<String> params = [];
     if (endDate != null) params.add('end_date=$endDate');
     if (page != null) params.add('page=$page');
@@ -166,18 +166,11 @@ class PunchRepository {
       parser: (json) => PunchHistoryResponse.fromJson(json),
     );
   }
-
-  Future<NetworkResult<AttendanceResponse>> getPunchHistoryDetail() async {
-
+  Future<NetworkResult<AttendanceResponse>> getPunchHistoryDetail({String? date}) async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     String url = "attendence/attendence-details-history";
-    List<String> params = [];
-    // if (endDate != null) params.add('end_date=$endDate');
-    // if (page != null) params.add('page=$page');
-    // if (pageSize != null) params.add('page_size=$pageSize');
-    // if (startDate != null) params.add('start_date=$startDate');
-    if (params.isNotEmpty) {
-      url += '?${params.join('&')}';
+    if (date != null) {
+      url += "?start_date=$date";
     }
     return await _networkClient.get<AttendanceResponse>(
       url,
@@ -185,4 +178,5 @@ class PunchRepository {
       parser: (json) => AttendanceResponse.fromJson(json),
     );
   }
+
 }

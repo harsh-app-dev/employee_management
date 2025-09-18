@@ -273,3 +273,33 @@ Future<void> requestLocationPermission() async {
         icon: Icons.location_off, iconColor: Colors.red);
   }
 }
+
+Color getColorForType(String? type) {
+  switch (type) {
+    case 'punch_in':
+      return Colors.green;
+    case 'punch_out':
+      return Colors.red;
+    case 'break_start':
+      return Colors.orange;
+    case 'break_end':
+      return Colors.blue;
+    default:
+      return Colors.grey;
+  }
+}
+
+String getLabelForType(String? type) {
+  switch (type) {
+    case 'punch_in':
+      return 'Punch In';
+    case 'punch_out':
+      return 'Punch Out';
+    case 'break_start':
+      return 'Break Started';
+    case 'break_end':
+      return 'Break Ended';
+    default:
+      return 'Unknown Activity';
+  }
+}

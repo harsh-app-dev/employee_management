@@ -123,8 +123,8 @@ class ReportScreen extends StatelessWidget {
         ),
         builder: (context) => DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.55,
-          minChildSize: 0.35,
+          initialChildSize: 0.6,
+          minChildSize: 0.6,
           maxChildSize: 0.95,
           builder: (context, scrollController) => Container(
             decoration: BoxDecoration(
@@ -592,8 +592,6 @@ class ReportScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-
             ],
           ),
         ),

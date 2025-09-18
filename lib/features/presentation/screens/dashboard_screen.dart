@@ -14,7 +14,6 @@ import '../../data/models/punch/response/attendence_response.dart';
 import '../state/profile_controller.dart';
 import '../state/punch_controller.dart';
 import '../../../core/widgets/app_side_drawer.dart';
-import 'package:employee_management/features/data/models/punch/response/punch_history_response.dart';
 import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
 import 'package:intl/intl.dart';
 import 'notification_screen.dart';
@@ -153,30 +152,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {});
   }
 
-  String? _formatApiDuration(String? durationStr) {
-    if (durationStr == null || durationStr.isEmpty) return '--';
-    try {
-      if (durationStr.contains('.')) {
-        durationStr = durationStr.split('.')[0];
-      }
-
-      final parts = durationStr.split(':');
-      final hours = int.parse(parts[0]);
-      final minutes = int.parse(parts[1]);
-      final seconds = parts.length > 2 ? int.parse(parts[2]) : 0;
-
-      String result = '';
-      if (hours > 0) result += '${hours}h ';
-      if (minutes > 0) result += '${minutes}m ';
-      if (seconds > 0) result += '${seconds}s ';
-
-      return result.trim();
-    } catch (_) {
-      return durationStr;
-    }
-  }
-
-
   String _formatTime(String isoTime) {
     try {
       final dateTime = DateTime.parse(isoTime);
@@ -187,16 +162,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _fetchTodaysPunchHistory() async {
-    setState(() {});
 
     final today = DateTime.now();
     final dateStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
 
     final result = await _punchHistoryUseCase.callPunchDetail();
-    print("===============================$result");
 
     if (result is NetworkSuccess<AttendanceResponse>) {
-      print("checking passed");
 
       final records = result.data.attendances;
       _todaysPunchEntries = records;
@@ -206,28 +178,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       List<DateTime> breakStartTimes = [];
       List<DateTime> breakEndTimes = [];
 
-      // Collect all work logs from ALL attendance records for today
       List<WorkLog> allTodaysWorkLogs = [];
 
       for (var attendance in records) {
         if (attendance.attendanceDate == dateStr && attendance.workLogs != null) {
           allTodaysWorkLogs.addAll(attendance.workLogs!);
-          print("Found attendance for today with ${attendance.workLogs!.length} work logs");
         }
       }
 
       if (allTodaysWorkLogs.isNotEmpty) {
-        print("Total work logs for today: ${allTodaysWorkLogs.length}");
 
         for (var log in allTodaysWorkLogs) {
           try {
-            print("Log type: ${log.type}, time: ${log.time}");
 
             if (log.time != null && log.time!.isNotEmpty) {
               DateTime? eventDateTime;
 
               try {
-                // Find the attendance record that contains this log to get the date
                 String? logDate;
                 for (var attendance in records) {
                   if (attendance.workLogs != null && attendance.workLogs!.contains(log)) {
@@ -238,7 +205,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 if (logDate != null) {
                   eventDateTime = DateTime.parse("${logDate}T${log.time}");
-                  print("Parsing successful: $eventDateTime");
                 }
               } catch (e) {
                 print("Date parsing failed: $e");
@@ -248,19 +214,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 switch (log.type) {
                   case 'punch_in':
                     punchInTimes.add(eventDateTime);
-                    print("Added punch_in time: $eventDateTime");
                     break;
                   case 'punch_out':
                     punchOutTimes.add(eventDateTime);
-                    print("Added punch_out time: $eventDateTime");
                     break;
                   case 'break_start':
                     breakStartTimes.add(eventDateTime);
-                    print("Added break_start time: $eventDateTime");
                     break;
                   case 'break_end':
                     breakEndTimes.add(eventDateTime);
-                    print("Added break_end time: $eventDateTime");
                     break;
                 }
               }
@@ -273,16 +235,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         print("No work logs found for today");
       }
 
-      // Sort all times
       punchInTimes.sort();
       punchOutTimes.sort();
       breakStartTimes.sort();
       breakEndTimes.sort();
-
-      print("Punch in times: $punchInTimes");
-      print("Punch out times: $punchOutTimes");
-      print("Break start times: $breakStartTimes");
-      print("Break end times: $breakEndTimes");
 
       // Get first punch in and last punch out
       _firstPunchIn = punchInTimes.isNotEmpty ? DateFormat('hh:mm a').format(punchInTimes.first) : '--';
@@ -306,15 +262,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _workedDuration = _formatDuration(totalWorkDuration);
       _breakDuration = _formatDuration(totalBreakDuration);
 
-      print("Work duration: $_workedDuration, Break duration: $_breakDuration");
-
       // Enable break button if user is punched in but not punched out
-      _isBreakButtonEnabled = punchInTimes.isNotEmpty &&
-          (punchOutTimes.isEmpty || punchOutTimes.last.isBefore(punchInTimes.last));
+      _isBreakButtonEnabled = punchInTimes.isNotEmpty && (punchOutTimes.isEmpty || punchOutTimes.last.isBefore(punchInTimes.last));
 
       // Check if currently on break (break started but not ended)
-      _isOnBreak = breakStartTimes.isNotEmpty &&
-          (breakEndTimes.isEmpty || breakEndTimes.last.isBefore(breakStartTimes.last));
+      _isOnBreak = breakStartTimes.isNotEmpty && (breakEndTimes.isEmpty || breakEndTimes.last.isBefore(breakStartTimes.last));
 
     } else {
       print("checking failed - Network error");
@@ -356,7 +308,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _refreshPunchHistoryAndWorkedTimes() async {
-    setState(() {});
     final today = DateTime.now();
     final dateStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
     final result = await _punchHistoryUseCase.callPunchDetail();
@@ -365,7 +316,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final entries = result.data.attendances;
       _todaysPunchEntries = entries;
 
-      // Collect all work logs from all today's attendance records
       List<WorkLog> allTodaysWorkLogs = [];
       for (var attendance in entries) {
         if (attendance.attendanceDate == dateStr && attendance.workLogs != null) {
@@ -391,7 +341,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         bool isOnBreak = breakStartEvents.isNotEmpty &&
             (breakEndEvents.isEmpty || breakEndEvents.last.time!.compareTo(breakStartEvents.last.time!) < 0);
 
-        // Calculate total durations from all today's attendance records
         Duration totalWorkDuration = Duration();
         Duration totalBreakDuration = Duration();
 
@@ -437,6 +386,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final activityEvents = _getAllTodaysActivityEvents();
+    final scrollController = ScrollController();
 
     return Scaffold(
       backgroundColor: theme.colorScheme.onPrimary,
@@ -491,7 +441,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   margin: EdgeInsets.only(bottom: 3.h),
                                   color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
                                   child: Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h,),
+                                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h,),
                                     child: Column(
                                       children: [
                                         Row(
@@ -505,8 +455,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 ),
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
-                                              padding: EdgeInsets.all(10),
-                                              child: Icon(Icons.calendar_today, color: Colors.white, size: 24.sp,),
+                                              padding: EdgeInsets.all(8),
+                                              child: Icon(Icons.calendar_today, color: Colors.white, size: 20.sp,),
                                             ),
                                             SizedBox(width: 2.w),
                                             Text(
@@ -515,7 +465,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 2.h),
+                                        SizedBox(height: 1.h),
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                           children: [
@@ -538,7 +488,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 2.h),
+                                        SizedBox(height: 1.5.h),
                                         Column(
                                           children: [
                                             Container(
@@ -566,7 +516,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             ),
                                             SizedBox(height: 1.h),
 
-                                            // Break Hours Box
                                             Container(
                                               padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
                                               decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10),),
@@ -588,10 +537,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 2.h),
+                                        SizedBox(height: 1.5.h),
                                         SizedBox(
                                           width: double.infinity,
-                                          height: 9.h,
+                                          height: 7.h,
                                           child: Builder(
                                             builder: (context) {
                                               String buttonText;
@@ -796,7 +745,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                           backgroundColor: buttonColor,
                                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                           elevation: 0,
-                                                          padding: EdgeInsets.symmetric(vertical: 14)
+                                                          padding: EdgeInsets.symmetric(vertical: 12)
                                                       ),
                                                     ),
                                                   ),
@@ -844,7 +793,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                         backgroundColor: _isOnBreak ? Colors.green : Colors.orange,
                                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                         elevation: 0,
-                                                        padding: EdgeInsets.symmetric(vertical: 14),
+                                                        padding: EdgeInsets.symmetric(vertical: 12),
                                                       ),
                                                     ),
                                                   ),
@@ -859,83 +808,107 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 if (activityEvents.isNotEmpty)
                                   Card(
-                                    elevation: 8,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                    elevation: 10,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
                                     margin: EdgeInsets.only(bottom: 3.h),
                                     color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Today\'s Activity Logs',
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
-                                          ),
-                                          Divider(height: 24, thickness: 1.3, color: Theme.of(context).colorScheme.primary.withOpacity(0.15),),
+                                    child: SizedBox(
+                                      height: 325,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            // 👇 Title (always visible)
+                                            Text(
+                                              "Today's Activity Logs",
+                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
+                                            ),
+                                            Divider(
+                                              height: 24,
+                                              thickness: 1.3,
+                                              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                                            ),
 
-                                          Stack(
-                                            children: [
-                                              Positioned(left: 9, top: 10, bottom: 10,
-                                                child: Container(width: 2, color: Colors.grey.shade300,),
-                                              ),
-                                              // All activity entries
-                                              Column(
-                                                children: activityEvents.expand((activity) {
-                                                  final List<Widget> activityEntries = [];
-                                                  final activityDate = _getActivityDate(activity);
-                                                  final activityTime = "${activityDate}T${activity.time}";
-
-                                                  activityEntries.add(
-                                                    Container(
-                                                      margin: EdgeInsets.only(bottom: 4),
-                                                      child: Row(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Container(
-                                                            width: 20,
-                                                            height: 20,
-                                                            decoration: BoxDecoration(
-                                                              shape: BoxShape.circle,
-                                                              color: _getActivityColor(activity.type),
-                                                              border: Border.all(color: Colors.white, width: 3),
-                                                            ),
-                                                          ),
-                                                          SizedBox(width: 16),
-                                                          Expanded(
-                                                            child: Column(
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                Row(
-                                                                  children: [
-                                                                    Text(
-                                                                      _getActivityTitle(activity.type),
-                                                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                                SizedBox(height: 4),
-                                                                Text(
-                                                                  _formatTime(activityTime) ?? '--:--',
-                                                                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ],
+                                            // 👇 Expandable scrollable timeline
+                                            Expanded(
+                                              child: Scrollbar(
+                                                controller: scrollController,
+                                                thumbVisibility: true,
+                                                radius: const Radius.circular(10),
+                                                thickness: 6,
+                                                child: SingleChildScrollView(
+                                                  controller: scrollController,
+                                                  child: Stack(
+                                                    children: [
+                                                      Positioned(
+                                                        left: 9,
+                                                        top: 10,
+                                                        bottom: 10,
+                                                        child: Container(width: 2, color: Colors.grey.shade300),
                                                       ),
-                                                    ),
-                                                  );
-
-                                                  return activityEntries;
-                                                }).toList(),
+                                                      Column(
+                                                        children: activityEvents.expand((activity) {
+                                                          final List<Widget> activityEntries = [];
+                                                          final activityDate = _getActivityDate(activity);
+                                                          final activityTime = "${activityDate}T${activity.time}";
+                                                          activityEntries.add(
+                                                            Container(
+                                                              margin: const EdgeInsets.only(bottom: 4),
+                                                              child: Row(
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Container(
+                                                                    width: 20,
+                                                                    height: 20,
+                                                                    decoration: BoxDecoration(
+                                                                      shape: BoxShape.circle,
+                                                                      color: getColorForType(activity.type),
+                                                                      border: Border.all(color: Colors.white, width: 3),
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(width: 16),
+                                                                  Expanded(
+                                                                    child: Column(
+                                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                                      children: [
+                                                                        Text(
+                                                                          getLabelForType(activity.type),
+                                                                          style: const TextStyle(
+                                                                            fontWeight: FontWeight.bold,
+                                                                            fontSize: 16,
+                                                                          ),
+                                                                        ),
+                                                                        const SizedBox(height: 4),
+                                                                        Text(
+                                                                          _formatTime(activityTime),
+                                                                          style: TextStyle(
+                                                                            fontSize: 14,
+                                                                            color: Colors.grey.shade600,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          );
+                                                          return activityEntries;
+                                                        }).toList(),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
-                                            ],
-                                          ),
-                                        ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  )
                               ]
                           ),
                         )
@@ -972,7 +945,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
 
   // Helper method to get all activity events from today's attendance
   List<WorkLog> _getAllTodaysActivityEvents() {
@@ -1013,34 +985,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return '';
   }
 
-// Helper to get activity color based on type
-  Color _getActivityColor(String? type) {
-    switch (type) {
-      case 'punch_in':
-        return Colors.green;
-      case 'punch_out':
-        return Colors.red;
-      case 'break_start':
-        return Colors.orange;
-      case 'break_end':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _getActivityTitle(String? type) {
-    switch (type) {
-      case 'punch_in':
-        return 'Punched In';
-      case 'punch_out':
-        return 'Punched Out';
-      case 'break_start':
-        return 'Break Started';
-      case 'break_end':
-        return 'Break Ended';
-      default:
-        return 'Activity';
-    }
-  }
 }

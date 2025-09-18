@@ -1,4 +1,5 @@
 import 'package:employee_management/features/presentation/screens/main_screen.dart';
+import 'package:employee_management/features/presentation/screens/punch_history_screen.dart';
 import 'package:flutter/material.dart';
 import '../../features/data/models/floor/profile_data.dart';
 import '../../features/presentation/screens/history_screen.dart';
@@ -144,7 +145,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                     Navigator.of(context).pop();
                     Navigator.of(
                       context,
-                    ).push(MaterialPageRoute(builder: (_) => HistoryScreen()));
+                    ).push(MaterialPageRoute(builder: (_) => PunchHistoryScreen()));
                   },
                 ),
                 ListTile(

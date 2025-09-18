@@ -1,4 +1,5 @@
 import 'package:employee_management/core/configs/strings.dart';
+import 'package:employee_management/features/presentation/screens/punch_history_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
@@ -8,7 +9,7 @@ import 'package:get_it/get_it.dart';
 import '../../../core/utils/network_result.dart';
 import '../../data/models/location/parsed_location.dart';
 import 'package:employee_management/core/services/location_services.dart';
-import 'package:employee_management/core/utils/util.dart';
+import '../../data/models/punch/response/attendence_response.dart';
 
 enum DateFilter { week, month, custom }
 
@@ -94,12 +95,58 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
     }
   }
 
+  // Helper method to format time
+  String formatTime(String? time, {String? date}) {
+    if (time == null || time.isEmpty) return '--:--';
+
+    try {
+      final timeFormat = DateFormat('HH:mm:ss');
+      final parsedTime = timeFormat.parse(time);
+      return DateFormat('hh:mm a').format(parsedTime);
+    } catch (e) {
+      return time;
+    }
+  }
+
+  // Helper method to format duration
+  String? formatDuration(String duration) {
+    if (duration.isEmpty) return '00:00';
+
+    try {
+      final parts = duration.split(':');
+      if (parts.length >= 2) {
+        return '${parts[0]}h ${parts[1]}m';
+      }
+      return duration;
+    } catch (e) {
+      return duration;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return FlutterSizer(
       builder: (context, orientation, screenType) {
         return Scaffold(
+          appBar: AppBar(
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7),],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+            iconTheme: IconThemeData(color: Colors.white),
+            title: Text(
+              AppStrings.punchHistory,
+              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary,),
+            ),
+            elevation: 0,
+            centerTitle: true,
+          ),
           backgroundColor: const Color(0xFFF5F7FA),
           body: Column(
             children: [
@@ -219,40 +266,40 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                           );
                         }
                         return Opacity(
-                          opacity: canGoForward ? 1.0 : 0.0,
-                          child: IgnorePointer(
-                            ignoring: !canGoForward,
-                            child: IconButton(
-                              icon: Icon(Icons.arrow_right, size: 35),
-                              onPressed: () {
-                                setState(() {
-                                  if (_selectedFilter == DateFilter.week) {
-                                    _startDate = _startDate.add(
-                                      const Duration(days: 7),
-                                    );
-                                    _endDate = _endDate.add(
-                                      const Duration(days: 7),
-                                    );
-                                  } else if (_selectedFilter == DateFilter.month) {
-                                    final nextMonth = DateTime(_startDate.year, _startDate.month + 1, 1,);
-                                    _startDate = nextMonth;
-                                    _endDate = DateTime(nextMonth.year, nextMonth.month + 1, 0,);
-                                  } else if (_selectedFilter == DateFilter.custom) {
-                                    final diff = _endDate.difference(_startDate).inDays;
-                                    _startDate = _startDate.add(
-                                      Duration(days: diff + 1),
-                                    );
-                                    _endDate = _endDate.add(
-                                      Duration(days: diff + 1),
-                                    );
-                                  }
-                                  _currentPage = 1;
-                                  _hasMore = true;
-                                });
-                                _fetchPunchHistory();
-                              },
-                            ),
-                          )
+                            opacity: canGoForward ? 1.0 : 0.0,
+                            child: IgnorePointer(
+                              ignoring: !canGoForward,
+                              child: IconButton(
+                                icon: Icon(Icons.arrow_right, size: 35),
+                                onPressed: () {
+                                  setState(() {
+                                    if (_selectedFilter == DateFilter.week) {
+                                      _startDate = _startDate.add(
+                                        const Duration(days: 7),
+                                      );
+                                      _endDate = _endDate.add(
+                                        const Duration(days: 7),
+                                      );
+                                    } else if (_selectedFilter == DateFilter.month) {
+                                      final nextMonth = DateTime(_startDate.year, _startDate.month + 1, 1,);
+                                      _startDate = nextMonth;
+                                      _endDate = DateTime(nextMonth.year, nextMonth.month + 1, 0,);
+                                    } else if (_selectedFilter == DateFilter.custom) {
+                                      final diff = _endDate.difference(_startDate).inDays;
+                                      _startDate = _startDate.add(
+                                        Duration(days: diff + 1),
+                                      );
+                                      _endDate = _endDate.add(
+                                        Duration(days: diff + 1),
+                                      );
+                                    }
+                                    _currentPage = 1;
+                                    _hasMore = true;
+                                  });
+                                  _fetchPunchHistory();
+                                },
+                              ),
+                            )
                         );
                       },
                     ),
@@ -262,388 +309,234 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
               Expanded(
                 child: _isLoading && _punchHistory.isEmpty ? const Center(child: CircularProgressIndicator()) : _punchHistory.isEmpty
                     ? const Center(child: Text(AppStrings.noPunchEntries)) : NotificationListener<ScrollNotification>(
-                        onNotification: (ScrollNotification scrollInfo) {
-                          if (!_isLoading && scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 100 && _hasMore) {
-                            _loadMore();
+                  onNotification: (ScrollNotification scrollInfo) {
+                    if (!_isLoading && scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 100 && _hasMore) {
+                      _loadMore();
+                    }
+                    return false;
+                  },
+                  child: Stack(
+                    children: [
+                      ListView.builder(
+                        itemCount: _punchHistory.length + (_hasMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == _punchHistory.length) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
-                          return false;
-                        },
-                        child: Stack(
-                          children: [
-                            ListView.builder(
-                              itemCount: _punchHistory.length + (_hasMore ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (index == _punchHistory.length) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
-                                final item = _punchHistory[index];
-                                final punchIn = item.punchIn;
-                                final punchOut = item.punchOut;
+                          final item = _punchHistory[index];
+                          final punchIn = item.punchIn;
+                          final punchOut = item.punchOut;
 
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10,),
-                                  child: Material(
-                                    elevation: 8,
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Container(
-                                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: theme.colorScheme.surface,),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.calendar_today_rounded, color: theme.colorScheme.primary, size: 20,),
-                                                    SizedBox(width: 8),
-                                                    Text(DateFormat('EEE, MMM d, yyyy',).format(DateTime.parse(item.date,),),
-                                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
-                                                    ),
-                                                    // if (item.deductionType != null && item.deductionType!.isNotEmpty)
-                                                      Padding(
-                                                        padding: const EdgeInsets.only(left: 6.0),
-                                                        // child: Chip(label: Text(getDeductionInitials(item.deductionType!)), backgroundColor: Colors.red,),
-                                                        child: Chip(label: Text(getDeductionInitials("half"), style: TextStyle(color: Colors.white, fontSize: 12),), backgroundColor: Colors.red, ),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10,),
+                            child: Material(
+                              elevation: 8,
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: theme.colorScheme.surface,),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(Icons.calendar_today_rounded, color: theme.colorScheme.primary, size: 20,),
+                                              SizedBox(width: 8),
+                                              Text(DateFormat('EEE, MMM d, yyyy',).format(DateTime.parse(item.attendanceDate,),),
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
+                                              ),
+                                            ],
+                                          ),
+                                          TextButton(
+                                            onPressed: () async {
+                                              final result = await _useCase.callPunchDetail(date: item.attendanceDate);
+                                              if (result is NetworkSuccess<AttendanceResponse>) {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  isScrollControlled: true,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                                                  ),
+                                                  builder: (context) {
+                                                    final attendanceDetails = result.data.attendances;
 
-                                                      ),
-                                                  ],
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    showModalBottomSheet(
-                                                      context: context,
-                                                      isScrollControlled: true,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.vertical(top: Radius.circular(30),),
-                                                      ),
-                                                      builder: (context) {
-                                                        return DraggableScrollableSheet(
-                                                          expand: false,
-                                                          initialChildSize: 0.5,
-                                                          minChildSize: 0.3,
-                                                          maxChildSize: 0.95,
-                                                          builder: (context, scrollController,) {
-                                                                return Padding(
-                                                                  padding: EdgeInsets.only(left: 16, right: 16, top: 24, bottom:
-                                                                        MediaQuery.of(context,).viewInsets.bottom + 16,),
-                                                                  child: SingleChildScrollView(
-                                                                    controller: scrollController,
-                                                                    child: Column(
-                                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                                      children: [
-                                                                        Center(
-                                                                          child: Container(width: 40, height: 5, margin: EdgeInsets.only(bottom: 18,),
-                                                                            decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(8,),),
-                                                                          ),
-                                                                        ),
-                                                                        Row(
-                                                                          children: [
-                                                                            Icon(Icons.access_time, color: theme.colorScheme.primary, size: 28,),
-                                                                            SizedBox(width: 8,),
-                                                                            Text(
-                                                                              AppStrings.punchDetails,
-                                                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20,),
-                                                                            ),
-                                                                            Spacer(),
-                                                                            IconButton(
-                                                                              icon: Icon(Icons.close, color: theme.colorScheme.primary,),
-                                                                              onPressed: () => Navigator.of(context,).pop(),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        Divider(height: 24, thickness: 1.3, color: theme.colorScheme.primary.withOpacity(0.15,),),
-                                                                        // Punch In/Out details
-                                                                        Padding(padding: const EdgeInsets.only(bottom: 18.0,),
-                                                                          child: Column(
-                                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                                            children: [
-                                                                              Row(
-                                                                                children: [
-                                                                                  Icon(Icons.login, color: Colors.green, size: 22,),
-                                                                                  SizedBox(width: 6,),
-                                                                                  Text(
-                                                                                    '${AppStrings.inText}: ',
-                                                                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 15,),
-                                                                                  ),
-                                                                                  Text(
-                                                                                    formatTime(punchIn,),
-                                                                                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15,),
-                                                                                  ),
-                                                                                  Spacer(),
-                                                                                  Icon(Icons.logout, color: Colors.red, size: 22,),
-                                                                                  SizedBox(width: 6,),
-                                                                                  Text(
-                                                                                    '${AppStrings.out}: ',
-                                                                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 15,),
-                                                                                  ),
-                                                                                  Text(
-                                                                                    formatTime(punchOut,),
-                                                                                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15,),
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                              // Break logs
-                                                                              if (item.breaks.isNotEmpty) ...[
-                                                                                SizedBox(height: 30),
-                                                                                Text('Break Logs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                                                                Divider(height: 18, thickness: 1.1, color: theme.colorScheme.primary.withOpacity(0.10)),
-                                                                                ...item.breaks.asMap().entries.map((bEntry) {
-                                                                                  final brk = bEntry.value;
-                                                                                  final parentDate = item.date;
-                                                                                  return Column(
-                                                                                    children: [
-                                                                                      Padding(
-                                                                                        padding: const EdgeInsets.only(bottom: 10.0, left: 10.0, right: 10.0),
-                                                                                        child: Row(
-                                                                                          children: [
-                                                                                            // Break In
-                                                                                            Container(
-                                                                                              padding: EdgeInsets.all(6),
-                                                                                              decoration: BoxDecoration(
-                                                                                                shape: BoxShape.circle,
-                                                                                                color: Colors.orange.withOpacity(0.1),
-                                                                                              ),
-                                                                                              child: Icon(Icons.pause_circle_filled, color: Colors.orange, size: 20),
-                                                                                            ),
-                                                                                            SizedBox(width: 4),
-                                                                                            Column(
-                                                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                              children: [
-                                                                                                Text('Break In',
-                                                                                                    style: TextStyle(
-                                                                                                        fontSize: 15,
-                                                                                                        color: Colors.orange,
-                                                                                                        fontWeight: FontWeight.bold)),
-                                                                                                SizedBox(height: 2),
-                                                                                                Text(
-                                                                                                  brk.breakStart != null
-                                                                                                      ? formatTime(brk.breakStart, date: parentDate)
-                                                                                                      : '--:--',
-                                                                                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                            Spacer(),
+                                                    // Extract punch in and punch out times from the response
+                                                    String punchInTime = '--:--';
+                                                    String punchOutTime = '--:--';
 
-                                                                                            // Break Out
-                                                                                            Container(
-                                                                                              padding: EdgeInsets.all(6),
-                                                                                              decoration: BoxDecoration(
-                                                                                                shape: BoxShape.circle,
-                                                                                                color: Colors.green.withOpacity(0.1),
-                                                                                              ),
-                                                                                              child: Icon(Icons.play_circle_fill, color: Colors.green, size: 20),
-                                                                                            ),
-                                                                                            SizedBox(width: 8),
-                                                                                            Column(
-                                                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                              children: [
-                                                                                                Text('Break Out',
-                                                                                                    style: TextStyle(
-                                                                                                        fontSize: 15,
-                                                                                                        color: Colors.green,
-                                                                                                        fontWeight: FontWeight.bold)),
-                                                                                                SizedBox(height: 2),
-                                                                                                Text(
-                                                                                                  brk.breakOver != null
-                                                                                                      ? formatTime(brk.breakOver, date: parentDate)
-                                                                                                      : '--:--',
-                                                                                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                          ],
-                                                                                        ),
-                                                                                      ),
-                                                                                      // 👇 Divider between break entries
-                                                                                      if (bEntry.key < item.breaks.length - 1)
-                                                                                        Padding(
-                                                                                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                                                                                          child: Divider(
-                                                                                            color: Colors.grey.shade300,
-                                                                                            thickness: 1,
-                                                                                          ),
-                                                                                        ),
-                                                                                    ],
-                                                                                  );
-                                                                                }).toList(),
+                                                    for (var attendance in attendanceDetails) {
+                                                      if (attendance.workLogs != null && attendance.workLogs!.isNotEmpty) {
+                                                        final log = attendance.workLogs!.first;
+                                                        if (log.type == 'punch_in') {
+                                                          punchInTime = log.time ?? '--:--';
+                                                        } else if (log.type == 'punch_out') {
+                                                          punchOutTime = log.time ?? '--:--';
+                                                        }
+                                                      }
+                                                    }
 
-                                                                              ],
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                        Divider(height: 28, thickness: 1.3, color: theme.colorScheme.primary.withOpacity(0.15,),),
-                                                                        Row(
-                                                                          children: [
-                                                                            Icon(Icons.timer, color: theme.colorScheme.primary, size: 18,),
-                                                                            SizedBox(width: 1,),
-                                                                            Text(
-                                                                              '${AppStrings.workedHrs}: ',
-                                                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15,),
-                                                                            ),
-                                                                            Text(
-                                                                              formatDuration(item.totalWorkTime,)!,
-                                                                              style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.7,),),
-                                                                            ),
-
-                                                                            SizedBox(width: 10,),
-
-                                                                            Icon(Icons.pause_circle_filled, color: Colors.orange, size: 18,),
-                                                                            SizedBox(width: 1,),
-                                                                            Text(
-                                                                              '${AppStrings.breakHrs}: ',
-                                                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15,),
-                                                                            ),
-                                                                            Text(
-                                                                              formatDuration(item.totalBreakTime,)!,
-                                                                              style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.7,),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                );
-                                                              },
+                                                    return DraggableScrollableSheet(
+                                                      expand: false,
+                                                      initialChildSize: 0.6,
+                                                      minChildSize: 0.6,
+                                                      maxChildSize: 0.95,
+                                                      builder: (context, scrollController) {
+                                                        return AttendanceDetailSheet(
+                                                          attendanceDetails: attendanceDetails,
+                                                          punchIn: punchInTime,
+                                                          punchOut: punchOutTime,
+                                                          scrollController: scrollController,
                                                         );
                                                       },
                                                     );
                                                   },
-                                                  child: Text(
-                                                    AppStrings.viewAll,
-                                                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 14),
+                                                );
+                                              } else {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text("Failed to load punch details")),
+                                                );
+                                              }
+                                            },
+                                            child: Text(
+                                              AppStrings.viewAll,
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme.colorScheme.primary,
+                                                  fontSize: 14
+                                              ),
+                                            ),
+                                          ),
+
+                                        ],
+                                      ),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12,),
+                                        decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.03), borderRadius: BorderRadius.circular(12),),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                                    children: [
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        children: [
+                                                          Icon(Icons.login, color: Colors.green, size: 18,),
+                                                          SizedBox(width: 4,),
+                                                          Text(
+                                                            AppStrings.inText,
+                                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green,),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 4),
+                                                      Text(
+                                                        punchIn != null ? formatTime(punchIn.time) : '--',
+                                                        style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                                    children: [
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        children: [
+                                                          Icon(Icons.logout, color: Colors.red, size: 18,),
+                                                          SizedBox(width: 4,),
+                                                          Text(
+                                                            AppStrings.out,
+                                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red,),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 4),
+                                                      Text(
+                                                        punchOut != null ? formatTime(punchOut.time) : '--',
+                                                        style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 12),
-                                            Container(
-                                              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12,),
-                                              decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.03), borderRadius: BorderRadius.circular(12),),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                                          children: [
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                              children: [
-                                                                Icon(Icons.login, color: Colors.green, size: 18,),
-                                                                SizedBox(width: 4,),
-                                                                Text(
-                                                                  AppStrings.inText,
-                                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green,),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            SizedBox(height: 4),
-                                                            Text(
-                                                              punchIn != null && punchIn.isNotEmpty ? formatTime(punchIn) : '--',
-                                                              style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                                          children: [
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                              children: [
-                                                                Icon(Icons.logout, color: Colors.red, size: 18,),
-                                                                SizedBox(width: 4,),
-                                                                Text(
-                                                                  AppStrings.out,
-                                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red,),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            SizedBox(height: 4),
-                                                            Text(
-                                                              punchOut != null && punchOut.isNotEmpty ? formatTime(punchOut) : '--',
-                                                              style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  _PunchLocationColumn(
-                                                    punchInLatLong: item.punchedInLatLong ?? item.punchedInLatLong,
-                                                    punchOutLatLong: item.punchedOutLatLong ?? item.punchedOutLatLong,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(height: 18),
-                                            Container(
-                                              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 6,),
-                                              decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(16),),
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                children: [
-                                                  Icon(Icons.timer, color: theme.colorScheme.primary, size: 18,),
-                                                  SizedBox(width: 1),
-                                                  Text(
-                                                    '${AppStrings.workedHrs}: ',
-                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),
-                                                  ),
-                                                  Text(
-                                                    formatDuration(item.totalWorkTime,)!,
-                                                    style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.6),),
-                                                  ),
-                                                  SizedBox(width: 10),
-                                                  Icon(Icons.pause_circle_filled, color: Colors.orange, size: 18,),
-                                                  SizedBox(width: 1),
-                                                  Text(
-                                                    '${AppStrings.breakHrs}: ',
-                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),
-                                                  ),
-                                                  Text(
-                                                    formatDuration(item.totalBreakTime,)!,
-                                                    style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.6),),
-                                                  ),
-                                                ],
-                                              ),
+                                            SizedBox(height: 10),
+                                            _PunchLocationColumn(
+                                              punchInLatLong: punchIn?.punchedInLatLong,
+                                              punchOutLatLong: punchOut?.punchedOutLatLong,
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            if (_isLoading && _hasMore && _punchHistory.isNotEmpty)
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                bottom: 16,
-                                child: Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
-                                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8,),],
-                                    ),
-                                    child: const CircularProgressIndicator(),
+                                      const SizedBox(height: 10),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 6,),
+                                        decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(16),),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          children: [
+                                            Icon(Icons.timer, color: theme.colorScheme.primary, size: 18,),
+                                            SizedBox(width: 1),
+                                            Text(
+                                              '${AppStrings.workedHrs}: ',
+                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),
+                                            ),
+                                            Text(
+                                              formatDuration(item.totalWorkHour)!,
+                                              style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.6),),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Icon(Icons.pause_circle_filled, color: Colors.orange, size: 18,),
+                                            SizedBox(width: 1),
+                                            Text(
+                                              '${AppStrings.breakHrs}: ',
+                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),
+                                            ),
+                                            Text(
+                                              formatDuration(item.totalBreakHour)!,
+                                              style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.6),),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                          );
+                        },
                       ),
+                      // the extra loader is coming in the screen
+                      /*if (_isLoading && _hasMore && _punchHistory.isNotEmpty)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 16,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
+                                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8,),],
+                              ),
+                              child: const CircularProgressIndicator(),
+                            ),
+                          ),
+                        ),*/
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -706,33 +599,37 @@ class _PunchLocationColumnState extends State<_PunchLocationColumn> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.location_on, color: theme.colorScheme.primary, size: 18),
-            SizedBox(width: 6),
-            Text('Punch In Location', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),),
-          ],
-        ),
-        SizedBox(height: 4),
-        Text(
-          parsedIn.formatShort().isNotEmpty ? parsedIn.formatShort() : '--:--',
-          style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
-          overflow: TextOverflow.ellipsis,
-        ),
-        SizedBox(height: 12),
-        Row(
-          children: [
-            Icon(Icons.location_on, color: Colors.red, size: 18),
-            SizedBox(width: 6),
-            Text('Punch Out Location', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),),
-          ],
-        ),
-        SizedBox(height: 4),
-        Text(
-          parsedOut.formatShort().isNotEmpty ? parsedOut.formatShort() : '--:--',
-          style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
-          overflow: TextOverflow.ellipsis,
-        ),
+        if (widget.punchInLatLong != null) ...[
+          Row(
+            children: [
+              Icon(Icons.location_on, color: theme.colorScheme.primary, size: 18),
+              SizedBox(width: 6),
+              Text('Punch In Location', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),),
+            ],
+          ),
+          SizedBox(height: 4),
+          Text(
+            parsedIn.formatShort().isNotEmpty ? parsedIn.formatShort() : '--:--',
+            style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 12),
+        ],
+        if (widget.punchOutLatLong != null) ...[
+          Row(
+            children: [
+              Icon(Icons.location_on, color: Colors.red, size: 18),
+              SizedBox(width: 6),
+              Text('Punch Out Location', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),),
+            ],
+          ),
+          SizedBox(height: 4),
+          Text(
+            parsedOut.formatShort().isNotEmpty ? parsedOut.formatShort() : '--:--',
+            style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ],
     );
   }

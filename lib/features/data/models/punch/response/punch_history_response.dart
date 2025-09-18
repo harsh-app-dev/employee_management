@@ -16,77 +16,84 @@ class PunchHistoryResponse {
       count: json['count'] ?? 0,
       next: json['next'],
       previous: json['previous'],
-      results: (json['results'] as List<dynamic>?)?.map((e) => PunchEntry.fromJson(e)).toList() ?? [],
+      results: (json['results'] as List<dynamic>?)
+          ?.map((e) => PunchEntry.fromJson(e))
+          .toList() ??
+          [],
     );
   }
 }
 
 class PunchEntry {
   final int id;
-  final String date;
-  final String employee;
-  final String? punchIn;
-  final String? punchOut;
-  final String? punchInPhoto;
-  final String? punchOutPhoto;
-  final String? punchedInLatLong;
-  final String? punchedOutLatLong;
-  final List<BreakEntry> breaks;
-  final String totalWorkTime;
-  final String totalBreakTime;
+  final String attendanceDate;
+  final String totalWorkHour;
+  final String totalBreakHour;
+
+  final PunchIn? punchIn;
+  final PunchOut? punchOut;
 
   PunchEntry({
     required this.id,
-    required this.date,
-    required this.employee,
+    required this.attendanceDate,
+    required this.totalWorkHour,
+    required this.totalBreakHour,
     this.punchIn,
     this.punchOut,
-    this.punchInPhoto,
-    this.punchOutPhoto,
-    this.punchedInLatLong,
-    this.punchedOutLatLong,
-    required this.breaks,
-    required this.totalWorkTime,
-    required this.totalBreakTime,
   });
 
   factory PunchEntry.fromJson(Map<String, dynamic> json) {
     return PunchEntry(
       id: json['id'],
-      date: json['date'] ?? '',
-      employee: json['employee'] ?? '',
-      punchIn: json['punch_in'],
-      punchOut: json['punch_out'],
-      punchInPhoto: json['punch_in_photo'],
-      punchOutPhoto: json['punch_out_photo'],
-      punchedInLatLong: json['punched_in_lat_long'],
-      punchedOutLatLong: json['punched_out_lat_long'],
-      breaks: (json['breaks'] as List<dynamic>?)?.map((e) => BreakEntry.fromJson(e)).toList() ?? [],
-      totalWorkTime: json['total_work_time'] ?? '',
-      totalBreakTime: json['total_break_time'] ?? '',
+      attendanceDate: json['attendance_date'] ?? '',
+      totalWorkHour: json['total_work_hour']?.toString() ?? '00:00:00',
+      totalBreakHour: json['total_break_hour']?.toString() ?? '00:00:00',
+      punchIn: json['punch_in'] != null
+          ? PunchIn.fromJson(json['punch_in'])
+          : null,
+      punchOut: json['punch_out'] != null
+          ? PunchOut.fromJson(json['punch_out'])
+          : null,
     );
   }
 }
 
-class BreakEntry {
+class PunchIn {
   final int id;
-  final String? breakStart;
-  final String? breakOver;
-  final int? attendance;
+  final String time;
+  final String? punchedInLatLong;
 
-  BreakEntry({
+  PunchIn({
     required this.id,
-    this.breakStart,
-    this.breakOver,
-    this.attendance,
+    required this.time,
+    this.punchedInLatLong,
   });
 
-  factory BreakEntry.fromJson(Map<String, dynamic> json) {
-    return BreakEntry(
+  factory PunchIn.fromJson(Map<String, dynamic> json) {
+    return PunchIn(
       id: json['id'],
-      breakStart: json['break_start'],
-      breakOver: json['break_over'],
-      attendance: json['attendance'],
+      time: json['time'],
+      punchedInLatLong: json['punched_in_lat_long'],
+    );
+  }
+}
+
+class PunchOut {
+  final int id;
+  final String time;
+  final String? punchedOutLatLong;
+
+  PunchOut({
+    required this.id,
+    required this.time,
+    this.punchedOutLatLong,
+  });
+
+  factory PunchOut.fromJson(Map<String, dynamic> json) {
+    return PunchOut(
+      id: json['id'],
+      time: json['time'],
+      punchedOutLatLong: json['punched_out_lat_long'],
     );
   }
 }
