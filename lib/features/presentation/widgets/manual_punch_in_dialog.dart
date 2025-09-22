@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ManualPunchInDialog extends StatefulWidget {
   final void Function(DateTime dateTime, String reason) onSubmit;
 
-  const ManualPunchInDialog({Key? key, required this.onSubmit}) : super(key: key);
+  const ManualPunchInDialog({super.key, required this.onSubmit});
 
   @override
   State<ManualPunchInDialog> createState() => _ManualPunchInDialogState();

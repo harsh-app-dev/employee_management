@@ -14,7 +14,7 @@ import 'task_history_screen.dart';
 import '../../../core/widgets/app_side_drawer.dart';
 
 class TaskManagementScreen extends StatefulWidget {
-  const TaskManagementScreen({Key? key}) : super(key: key);
+  const TaskManagementScreen({super.key});
 
   @override
   State<TaskManagementScreen> createState() => _TaskManagementScreenState();
@@ -32,9 +32,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
   }
 
   void _onDateChanged(DateTime newDate) {
-    setState(() {
-      _selectedDate = newDate;
-    });
+    setState(() {_selectedDate = newDate;});
     _controller.fetchTasks();
   }
 
@@ -52,7 +50,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
+              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -106,10 +104,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.07),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(12),),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -117,12 +112,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   DateFormat('E, d MMMM yyyy').format(_selectedDate),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    letterSpacing: 0.2,
-                                    color: theme.colorScheme.primary,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.2, color: theme.colorScheme.primary,),
                                 ),
                                 const SizedBox(width: 2),
                                 Icon(Icons.arrow_drop_down_rounded, color: theme.colorScheme.primary, size: 26),
@@ -140,8 +130,6 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                     ],
                   ),
                 ),
-
-                /// Task overview header
                 Padding(
                   padding: EdgeInsets.only(bottom: 1.5.h, left: 2.w),
                   child: Row(
@@ -150,17 +138,11 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                       SizedBox(width: 2.w),
                       Text(
                         AppStrings.taskOverview,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          letterSpacing: 0.5,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, letterSpacing: 0.5,),
                       ),
                     ],
                   ),
                 ),
-
-                /// Tasks list
                 Expanded(
                   child: ValueListenableBuilder(
                     valueListenable: _controller.tasksApiState,
@@ -171,9 +153,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                         return Center(
                           child: Text(apiState.error ?? 'Failed to load tasks'),
                         );
-                      } else if (apiState.isSuccess &&
-                          apiState.data?.data != null &&
-                          apiState.data!.data!.isNotEmpty) {
+                      } else if (apiState.isSuccess && apiState.data?.data != null && apiState.data!.data!.isNotEmpty) {
                         final tasks = apiState.data!.data!;
                         return ListView.separated(
                           itemCount: tasks.length,
@@ -191,11 +171,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                           child: SizedBox(
                             height: 40.h,
                             child: Center(
-                              child: Text(
-                                'No task found.',
-                                style: TextStyle(fontSize: 20.sp),
-                                textAlign: TextAlign.center,
-                              ),
+                              child: Text('No task found.', style: TextStyle(fontSize: 20.dp), textAlign: TextAlign.center,),
                             ),
                           ),
                         );
@@ -205,10 +181,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                 ),
               ],
             ),
-          ),
-
-          /// History tab
-          const TaskHistoryScreen(),
+          ), const TaskHistoryScreen(),
         ],
       ),
 
@@ -222,21 +195,16 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
               if (tabController.index != 0) return const SizedBox.shrink();
 
               final now = DateTime.now();
-              final isToday = _selectedDate.year == now.year &&
-                  _selectedDate.month == now.month &&
-                  _selectedDate.day == now.day;
+              final isToday = _selectedDate.year == now.year && _selectedDate.month == now.month && _selectedDate.day == now.day;
 
               return AnimatedScale(
                 scale: isToday ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 400),
                 curve: Curves.easeOutBack,
-                child: isToday
-                    ? ValueListenableBuilder<ApiState>(
+                child: isToday ? ValueListenableBuilder<ApiState>(
                   valueListenable: _controller.tasksApiState,
                   builder: (context, tasksState, _) {
-                    final hasTasks = tasksState.isSuccess &&
-                        tasksState.data?.data != null &&
-                        tasksState.data!.data!.isNotEmpty;
+                    final hasTasks = tasksState.isSuccess && tasksState.data?.data != null && tasksState.data!.data!.isNotEmpty;
 
                     if (!hasTasks) return const SizedBox.shrink();
 
@@ -248,10 +216,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                         return Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [
-                                theme.colorScheme.primary,
-                                theme.colorScheme.primary.withOpacity(0.7),
-                              ],
+                              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7),],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -265,17 +230,12 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                                   _submitDebouncer.run(() async {
                                     if (isLoading) return;
                                     final tasks = _controller.tasksApiState.value.data;
-                                    if (tasks != null &&
-                                        tasks.data != null &&
-                                        tasks.data!.isNotEmpty) {
+                                    if (tasks != null && tasks.data != null && tasks.data!.isNotEmpty) {
                                       await _controller.submitTasks(tasks);
                                       if (_controller.submitTasksApiState.value.isSuccess) {
                                         showGlobalSnackBar(AppStrings.successSubmission);
                                       } else if (_controller.submitTasksApiState.value.isError) {
-                                        showGlobalSnackBar(
-                                          _controller.submitTasksApiState.value.error ??
-                                              AppStrings.failedSubmission,
-                                        );
+                                        showGlobalSnackBar(_controller.submitTasksApiState.value.error ?? AppStrings.failedSubmission,);
                                       }
                                     } else {
                                       showGlobalSnackBar('You have no pending tasks to submit');
@@ -284,12 +244,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                                 },
                                 label: Text(
                                   isLoading ? 'Submitting...' : AppStrings.submit,
-                                  style: TextStyle(
-                                    color: isLoading
-                                        ? Colors.transparent
-                                        : theme.colorScheme.surface,
-                                    fontSize: 14.sp,
-                                  ),
+                                  style: TextStyle(color: isLoading ? Colors.transparent : theme.colorScheme.surface, fontSize: 14.dp,),
                                 ),
                                 backgroundColor: Colors.transparent,
                                 elevation: 0,
@@ -304,8 +259,7 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                       },
                     );
                   },
-                )
-                    : const SizedBox.shrink(),
+                ) : const SizedBox.shrink(),
               );
             },
           );

@@ -12,7 +12,7 @@ import 'package:employee_management/features/presentation/state/profile_controll
 enum DateFilter { week, month, custom }
 
 class TaskHistoryScreen extends StatefulWidget {
-  const TaskHistoryScreen({Key? key}) : super(key: key);
+  const TaskHistoryScreen({super.key});
 
   @override
   State<TaskHistoryScreen> createState() => _TaskHistoryScreenState();
@@ -183,19 +183,19 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
                             onTap: _selectedFilter == DateFilter.custom ? _pickDateRange : null,
-                            splashColor: _selectedFilter == DateFilter.custom ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
-                            hoverColor: _selectedFilter == DateFilter.custom ? theme.colorScheme.primary.withOpacity(0.08) : Colors.transparent,
+                            splashColor: _selectedFilter == DateFilter.custom ? theme.colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+                            hoverColor: _selectedFilter == DateFilter.custom ? theme.colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
                             child: Container(
                               padding: EdgeInsets.symmetric(vertical: 1.8.h, horizontal: 1.w),
                               margin: EdgeInsets.symmetric(horizontal: 0.5.w, vertical: 1.5.h),
                               decoration: BoxDecoration(
                                 color: _selectedFilter == DateFilter.custom
-                                    ? Colors.green.withOpacity(0.12)
+                                    ? Colors.green.withValues(alpha: 0.12)
                                     : Colors.grey.shade200,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3), width: 1.5,),
+                                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 1.5,),
                                 boxShadow: [
-                                  BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 4),),
+                                  BoxShadow(color: Colors.grey.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 4),),
                                 ],
                               ),
                               child: Row(
@@ -203,7 +203,7 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
                                 children: [
                                   Text(
                                     "${DateFormat('dd MMM yyyy').format(_startDate)} → ${DateFormat('dd MMM yyyy').format(_endDate)}",
-                                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: theme.colorScheme.primary,),
+                                    style: TextStyle(fontSize: 14.dp, fontWeight: FontWeight.w600, color: theme.colorScheme.primary,),
                                   ),
                                   if (_selectedFilter == DateFilter.custom) ...[
                                     SizedBox(width: 4),
@@ -294,7 +294,7 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
               if (_isLoading)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     child: const Center(
                       child: CircularProgressIndicator(),
                     ),

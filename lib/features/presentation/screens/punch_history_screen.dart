@@ -14,7 +14,7 @@ import '../../data/models/punch/response/attendence_response.dart';
 enum DateFilter { week, month, custom }
 
 class PunchHistoryScreen extends StatefulWidget {
-  const PunchHistoryScreen({Key? key}) : super(key: key);
+  const PunchHistoryScreen({super.key});
 
   @override
   State<PunchHistoryScreen> createState() => _PunchHistoryScreenState();
@@ -95,7 +95,6 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
     }
   }
 
-  // Helper method to format time
   String formatTime(String? time, {String? date}) {
     if (time == null || time.isEmpty) return '--:--';
 
@@ -108,10 +107,8 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
     }
   }
 
-  // Helper method to format duration
   String? formatDuration(String duration) {
     if (duration.isEmpty) return '00:00';
-
     try {
       final parts = duration.split(':');
       if (parts.length >= 2) {
@@ -133,7 +130,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
             flexibleSpace: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7),],
+                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7),],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -196,9 +193,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                         setState(() {
                           if (_selectedFilter == DateFilter.week) {
                             _startDate = _startDate.subtract(const Duration(days: 7),);
-                            _endDate = _endDate.subtract(
-                              const Duration(days: 7),
-                            );
+                            _endDate = _endDate.subtract(const Duration(days: 7),);
                           } else if (_selectedFilter == DateFilter.month) {
                             final prevMonth = DateTime(_startDate.year, _startDate.month - 1, 1,);
                             _startDate = prevMonth;
@@ -219,17 +214,17 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
                         onTap: _selectedFilter == DateFilter.custom ? _pickDateRange : null,
-                        splashColor: _selectedFilter == DateFilter.custom ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
-                        hoverColor: _selectedFilter == DateFilter.custom ? theme.colorScheme.primary.withOpacity(0.08) : Colors.transparent,
+                        splashColor: _selectedFilter == DateFilter.custom ? theme.colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+                        hoverColor: _selectedFilter == DateFilter.custom ? theme.colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
                         child: Container(
                           padding: EdgeInsets.symmetric(vertical: 1.8.h, horizontal: 1.w,),
                           margin: EdgeInsets.symmetric(horizontal: 0.5.w, vertical: 1.5.h,),
                           decoration: BoxDecoration(
-                            color: _selectedFilter == DateFilter.custom ? Colors.green.withOpacity(0.12) : Colors.grey.shade200,
+                            color: _selectedFilter == DateFilter.custom ? Colors.green.withValues(alpha: 0.12) : Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3), width: 1.5,),
+                            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 1.5,),
                             boxShadow: [
-                              BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 4),),
+                              BoxShadow(color: Colors.grey.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 4),),
                             ],
                           ),
                           child: Row(
@@ -237,7 +232,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                             children: [
                               Text(
                                 "${DateFormat('dd MMM yyyy').format(_startDate)} → ${DateFormat('dd MMM yyyy').format(_endDate)}",
-                                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: theme.colorScheme.primary,),
+                                style: TextStyle(fontSize: 14.dp, fontWeight: FontWeight.w600, color: theme.colorScheme.primary,),
                               ),
                               if (_selectedFilter == DateFilter.custom) ...[
                                 SizedBox(width: 4),
@@ -253,17 +248,11 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                         final now = DateTime.now();
                         bool canGoForward = false;
                         if (_selectedFilter == DateFilter.week) {
-                          canGoForward = _endDate.isBefore(
-                            DateTime(now.year, now.month, now.day),
-                          );
+                          canGoForward = _endDate.isBefore(DateTime(now.year, now.month, now.day),);
                         } else if (_selectedFilter == DateFilter.month) {
-                          canGoForward = _endDate.isBefore(
-                            DateTime(now.year, now.month, now.day),
-                          );
+                          canGoForward = _endDate.isBefore(DateTime(now.year, now.month, now.day),);
                         } else if (_selectedFilter == DateFilter.custom) {
-                          canGoForward = _endDate.isBefore(
-                            DateTime(now.year, now.month, now.day),
-                          );
+                          canGoForward = _endDate.isBefore(DateTime(now.year, now.month, now.day),);
                         }
                         return Opacity(
                             opacity: canGoForward ? 1.0 : 0.0,
@@ -274,24 +263,16 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                 onPressed: () {
                                   setState(() {
                                     if (_selectedFilter == DateFilter.week) {
-                                      _startDate = _startDate.add(
-                                        const Duration(days: 7),
-                                      );
-                                      _endDate = _endDate.add(
-                                        const Duration(days: 7),
-                                      );
+                                      _startDate = _startDate.add(const Duration(days: 7),);
+                                      _endDate = _endDate.add(const Duration(days: 7),);
                                     } else if (_selectedFilter == DateFilter.month) {
                                       final nextMonth = DateTime(_startDate.year, _startDate.month + 1, 1,);
                                       _startDate = nextMonth;
                                       _endDate = DateTime(nextMonth.year, nextMonth.month + 1, 0,);
                                     } else if (_selectedFilter == DateFilter.custom) {
                                       final diff = _endDate.difference(_startDate).inDays;
-                                      _startDate = _startDate.add(
-                                        Duration(days: diff + 1),
-                                      );
-                                      _endDate = _endDate.add(
-                                        Duration(days: diff + 1),
-                                      );
+                                      _startDate = _startDate.add(Duration(days: diff + 1),);
+                                      _endDate = _endDate.add(Duration(days: diff + 1),);
                                     }
                                     _currentPage = 1;
                                     _hasMore = true;
@@ -321,9 +302,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                         itemCount: _punchHistory.length + (_hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (index == _punchHistory.length) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
+                            return const Center(child: CircularProgressIndicator(),);
                           }
                           final item = _punchHistory[index];
                           final punchIn = item.punchIn;
@@ -366,7 +345,6 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                   builder: (context) {
                                                     final attendanceDetails = result.data.attendances;
 
-                                                    // Extract punch in and punch out times from the response
                                                     String punchInTime = '--:--';
                                                     String punchOutTime = '--:--';
 
@@ -380,7 +358,6 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                         }
                                                       }
                                                     }
-
                                                     return DraggableScrollableSheet(
                                                       expand: false,
                                                       initialChildSize: 0.6,
@@ -404,12 +381,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                               }
                                             },
                                             child: Text(
-                                              AppStrings.viewAll,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: theme.colorScheme.primary,
-                                                  fontSize: 14
-                                              ),
+                                              AppStrings.viewAll, style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 14),
                                             ),
                                           ),
 
@@ -417,7 +389,7 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                       ),
                                       Container(
                                         padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12,),
-                                        decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.03), borderRadius: BorderRadius.circular(12),),
+                                        decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(12),),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
@@ -432,16 +404,13 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                         children: [
                                                           Icon(Icons.login, color: Colors.green, size: 18,),
                                                           SizedBox(width: 4,),
-                                                          Text(
-                                                            AppStrings.inText,
-                                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green,),
-                                                          ),
+                                                          Text(AppStrings.inText, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green,),),
                                                         ],
                                                       ),
                                                       SizedBox(height: 4),
                                                       Text(
                                                         punchIn != null ? formatTime(punchIn.time) : '--',
-                                                        style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
+                                                        style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.8,),),
                                                       ),
                                                     ],
                                                   ),
@@ -455,16 +424,13 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                         children: [
                                                           Icon(Icons.logout, color: Colors.red, size: 18,),
                                                           SizedBox(width: 4,),
-                                                          Text(
-                                                            AppStrings.out,
-                                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red,),
-                                                          ),
+                                                          Text(AppStrings.out, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red,),),
                                                         ],
                                                       ),
                                                       SizedBox(height: 4),
                                                       Text(
                                                         punchOut != null ? formatTime(punchOut.time) : '--',
-                                                        style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.8,),),
+                                                        style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.8,),),
                                                       ),
                                                     ],
                                                   ),
@@ -472,41 +438,29 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                               ],
                                             ),
                                             SizedBox(height: 10),
-                                            _PunchLocationColumn(
-                                              punchInLatLong: punchIn?.punchedInLatLong,
-                                              punchOutLatLong: punchOut?.punchedOutLatLong,
-                                            ),
+                                            _PunchLocationColumn(punchInLatLong: punchIn?.punchedInLatLong, punchOutLatLong: punchOut?.punchedOutLatLong,),
                                           ],
                                         ),
                                       ),
                                       const SizedBox(height: 10),
                                       Container(
                                         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 6,),
-                                        decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.10), borderRadius: BorderRadius.circular(16),),
+                                        decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(16),),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.start,
                                           children: [
                                             Icon(Icons.timer, color: theme.colorScheme.primary, size: 18,),
+
                                             SizedBox(width: 1),
-                                            Text(
-                                              '${AppStrings.workedHrs}: ',
-                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),
-                                            ),
-                                            Text(
-                                              formatDuration(item.totalWorkHour)!,
-                                              style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.6),),
-                                            ),
+                                            Text('${AppStrings.workedHrs}: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),),
+                                            Text(formatDuration(item.totalWorkHour)!, style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.6),),),
+
                                             SizedBox(width: 10),
                                             Icon(Icons.pause_circle_filled, color: Colors.orange, size: 18,),
+
                                             SizedBox(width: 1),
-                                            Text(
-                                              '${AppStrings.breakHrs}: ',
-                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),
-                                            ),
-                                            Text(
-                                              formatDuration(item.totalBreakHour)!,
-                                              style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.6),),
-                                            ),
+                                            Text('${AppStrings.breakHrs}: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,),),
+                                            Text(formatDuration(item.totalBreakHour)!, style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.6),),),
                                           ],
                                         ),
                                       ),
@@ -551,10 +505,9 @@ class _PunchLocationColumn extends StatefulWidget {
   final String? punchOutLatLong;
 
   const _PunchLocationColumn({
-    Key? key,
     this.punchInLatLong,
     this.punchOutLatLong,
-  }) : super(key: key);
+  });
 
   @override
   State<_PunchLocationColumn> createState() => _PunchLocationColumnState();
@@ -591,7 +544,7 @@ class _PunchLocationColumnState extends State<_PunchLocationColumn> {
     if (loading) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Text('--:--', style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.4),),),
+        child: Text('--:--', style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.4),),),
       );
     }
     final parsedIn = ParsedLocation.fromString(punchInAddress);
@@ -610,7 +563,7 @@ class _PunchLocationColumnState extends State<_PunchLocationColumn> {
           SizedBox(height: 4),
           Text(
             parsedIn.formatShort().isNotEmpty ? parsedIn.formatShort() : '--:--',
-            style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
+            style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.6),),
             overflow: TextOverflow.ellipsis,
           ),
           SizedBox(height: 12),
@@ -626,7 +579,7 @@ class _PunchLocationColumnState extends State<_PunchLocationColumn> {
           SizedBox(height: 4),
           Text(
             parsedOut.formatShort().isNotEmpty ? parsedOut.formatShort() : '--:--',
-            style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withOpacity(0.6),),
+            style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.6),),
             overflow: TextOverflow.ellipsis,
           ),
         ],

@@ -123,7 +123,7 @@ class LeaveRepository {
 
       final response = await multipartRequest.send();
       final responseBody = await response.stream.bytesToString();
-      print('Response: \\${response.statusCode} \\${responseBody}');
+      print('Response: \\${response.statusCode} \\$responseBody');
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkSuccess(json.decode(responseBody));
@@ -140,7 +140,7 @@ class LeaveRepository {
     try {
       var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-history/');
       // Log API request details
-      print('Hitting API: ${uri}');
+      print('Hitting API: $uri');
       print('Headers: {"Authorization: Bearer $token","Accept: application/json",}');
       final response = await http.get(
         uri,
@@ -194,7 +194,7 @@ class LeaveRepository {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     try {
       var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-applications/$leaveId/');
-      print('[DELETE] ' + uri.toString());
+      print('[DELETE] $uri');
       print('Headers: {Authorization: Bearer $token, Accept: application/json}');
       final response = await http.delete(
         uri,
@@ -265,7 +265,7 @@ class LeaveRepository {
       print('Fields: ${multipartRequest.fields}');
       final response = await multipartRequest.send();
       final responseBody = await response.stream.bytesToString();
-      print('Response: ${response.statusCode} ${responseBody}');
+      print('Response: ${response.statusCode} $responseBody');
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkSuccess(json.decode(responseBody));
       } else {

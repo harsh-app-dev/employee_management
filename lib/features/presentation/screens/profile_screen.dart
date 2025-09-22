@@ -34,7 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             gradient: LinearGradient(
               colors: [
                 theme.colorScheme.primary,
-                theme.colorScheme.primary.withOpacity(0.7),
+                theme.colorScheme.primary.withValues(alpha: 0.7),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -157,10 +157,10 @@ class _ProfileField extends StatelessWidget {
                 label,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                fontSize:  14.sp, fontWeight: FontWeight.bold),
+                fontSize:  14.dp, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 2),
-              Text(value, style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16.sp),),
+              Text(value, style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16.dp),),
             ],
           ),
         ),

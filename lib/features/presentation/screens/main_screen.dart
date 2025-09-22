@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/app_side_drawer.dart';
 import 'dashboard_screen.dart';
 import 'task_management_screen.dart';
 import 'leave_screen.dart';
 import 'report_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -34,7 +33,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // drawer: AppSideDrawer(),
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,

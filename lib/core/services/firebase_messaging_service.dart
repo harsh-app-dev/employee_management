@@ -20,7 +20,7 @@ class FirebaseMessagingService {
 
     // Get the token and print it (use this to send test notifications)
     String? token = await _messaging.getToken();
-    debugPrint('FCM Token: ${token}');
+    debugPrint('FCM Token: $token');
 
     // Listen for foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {

@@ -5,9 +5,8 @@ import '../../../core/widgets/app_side_drawer.dart';
 import 'package:intl/intl.dart';
 
 class ReportScreen extends StatelessWidget {
-  const ReportScreen({Key? key}) : super(key: key);
+  const ReportScreen({super.key});
 
-  // Helper functions for calendar indicators (moved outside build method)
   bool _isLeaveDay(DateTime day, Set<DateTime> approvedLeaveDays) {
     return approvedLeaveDays.any((leaveDay) =>
     leaveDay.day == day.day && leaveDay.month == day.month && leaveDay.year == day.year);
@@ -101,7 +100,7 @@ class ReportScreen extends StatelessWidget {
       }
     }
 
-    void _showPunchDetailSheet(DateTime date) {
+    void showPunchDetailSheet(DateTime date) {
       final theme = Theme.of(context);
 
       final punchSessions = [
@@ -251,7 +250,7 @@ class ReportScreen extends StatelessWidget {
                           ),
                       ],
                     );
-                  }).toList(),
+                  }),
 
                   const SizedBox(height: 20),
 
@@ -259,7 +258,7 @@ class ReportScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 28),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.15),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
@@ -332,7 +331,7 @@ class ReportScreen extends StatelessWidget {
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
+                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -352,7 +351,7 @@ class ReportScreen extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [theme.colorScheme.primary.withOpacity(0.85), theme.colorScheme.secondary.withOpacity(0.85)],
+                      colors: [theme.colorScheme.primary.withValues(alpha: 0.85), theme.colorScheme.secondary.withValues(alpha: 0.85)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -423,7 +422,7 @@ class ReportScreen extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [theme.colorScheme.primary.withOpacity(0.13), theme.colorScheme.primary.withOpacity(0.07)],
+                      colors: [theme.colorScheme.primary.withValues(alpha: 0.13), theme.colorScheme.primary.withValues(alpha: 0.07)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -491,11 +490,11 @@ class ReportScreen extends StatelessWidget {
                       spacing: 16,
                       runSpacing: 8,
                       children: [
-                        _buildColorIndicator(Colors.green[900]!.withOpacity(0.5), 'Present'),
-                        _buildColorIndicator(Colors.red[900]!.withOpacity(0.5), 'Absent'),
-                        _buildColorIndicator(Colors.orange[900]!.withOpacity(0.5), 'Leave'),
-                        _buildColorIndicator(Colors.purple[900]!.withOpacity(0.5), 'Holiday'),
-                        _buildColorIndicator(Colors.blue[900]!.withOpacity(0.5), 'Weekend'),
+                        _buildColorIndicator(Colors.green[900]!.withValues(alpha: 0.5), 'Present'),
+                        _buildColorIndicator(Colors.red[900]!.withValues(alpha: 0.5), 'Absent'),
+                        _buildColorIndicator(Colors.orange[900]!.withValues(alpha: 0.5), 'Leave'),
+                        _buildColorIndicator(Colors.purple[900]!.withValues(alpha: 0.5), 'Holiday'),
+                        _buildColorIndicator(Colors.blue[900]!.withValues(alpha: 0.5), 'Weekend'),
                       ],
                     ),
                   ],
@@ -527,7 +526,7 @@ class ReportScreen extends StatelessWidget {
                     weekendStyle: TextStyle(color: Colors.red[800], fontWeight: FontWeight.bold),
                   ),
                   onDaySelected: (selectedDay, focusedDay) {
-                    _showPunchDetailSheet(selectedDay);
+                    showPunchDetailSheet(selectedDay);
                   },
                   calendarBuilders: CalendarBuilders(
                     defaultBuilder: (context, day, focusedDay) {
@@ -539,23 +538,22 @@ class ReportScreen extends StatelessWidget {
 
                       // Set colors and icons based on status
                       Color bgColor;
-                      IconData? icon;
                       Color textColor;
 
                       if (absentDay) {
-                        bgColor = Colors.red.withOpacity(0.3);
+                        bgColor = Colors.red.withValues(alpha: 0.3);
                         textColor = Colors.red[900]!;
                       } else if (leaveDay) {
-                        bgColor = Colors.orange.withOpacity(0.3);
+                        bgColor = Colors.orange.withValues(alpha: 0.3);
                         textColor = Colors.orange[900]!;
                       } else if (nationalHoliday) {
-                        bgColor = Colors.purple.withOpacity(0.3);
+                        bgColor = Colors.purple.withValues(alpha: 0.3);
                         textColor = Colors.purple[900]!;
                       } else if (weekend) {
-                        bgColor = Colors.blue.withOpacity(0.2);
+                        bgColor = Colors.blue.withValues(alpha: 0.2);
                         textColor = Colors.blue[900]!;
                       } else {
-                        bgColor = Colors.green.withOpacity(0.3);
+                        bgColor = Colors.green.withValues(alpha: 0.3);
                         textColor = Colors.green[900]!;
                       }
 
@@ -614,10 +612,7 @@ class ReportScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14),
-        ),
+        Text(label, style: const TextStyle(fontSize: 14),),
       ],
     );
   }
@@ -628,9 +623,9 @@ Widget _buildStatBlock(IconData icon, String label, int value, Color color) {
     width: 70,
     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.09),
+      color: color.withValues(alpha: 0.09),
       borderRadius: BorderRadius.circular(14),
-      boxShadow: [BoxShadow(color: color.withOpacity(0.08), blurRadius: 8, spreadRadius: 1)],
+      boxShadow: [BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 8, spreadRadius: 1)],
     ),
     child: Column(
       mainAxisSize: MainAxisSize.min,

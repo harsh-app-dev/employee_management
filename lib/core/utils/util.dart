@@ -72,27 +72,17 @@ void showGlobalSnackBarWithIcon(String message, {IconData? icon, Color? iconColo
   );
 }
 
-String? formatDuration(String? durationStr) {
-  if (durationStr == null || durationStr.isEmpty) return '--';
-  try {
-    if (durationStr.contains('.')) {
-      durationStr = durationStr.split('.')[0];
-    }
+String formatDuration(Duration duration) {
+  if (duration.inSeconds == 0) return '--';
 
-    final parts = durationStr.split(':');
-    final hours = int.parse(parts[0]);
-    final minutes = int.parse(parts[1]);
-    final seconds = parts.length > 2 ? int.parse(parts[2]) : 0;
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
 
-    String result = '';
-    if (hours > 0) result += '${hours}h ';
-    if (minutes > 0) result += '${minutes}m ';
-    if (seconds > 0) result += '${seconds}s ';
+  String result = '';
+  if (hours > 0) result += '${hours}h ';
+  if (minutes > 0) result += '${minutes}m ';
 
-    return result.trim();
-  } catch (_) {
-    return durationStr;
-  }
+  return result.trim();
 }
 
 String formatTime(String? time, {String? date}) {
@@ -301,5 +291,17 @@ String getLabelForType(String? type) {
       return 'Break Ended';
     default:
       return 'Unknown Activity';
+  }
+}
+
+Duration parseDurationFromString(String durationStr) {
+  try {
+    final parts = durationStr.split(':');
+    final hours = int.parse(parts[0]);
+    final minutes = int.parse(parts[1]);
+    final seconds = parts.length > 2 ? int.parse(parts[2]) : 0;
+    return Duration(hours: hours, minutes: minutes, seconds: seconds);
+  } catch (e) {
+    return Duration();
   }
 }

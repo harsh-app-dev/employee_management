@@ -16,7 +16,7 @@ import 'package:employee_management/features/data/models/leave/leave_apply_reque
 import 'dart:io';
 
 class LeaveScreen extends StatefulWidget {
-  const LeaveScreen({Key? key}) : super(key: key);
+  const LeaveScreen({super.key});
 
   @override
   State<LeaveScreen> createState() => _LeaveScreenState();
@@ -28,17 +28,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
   List<RoleUser> _managerList = [];
   bool _isLoadingLeaveTypes = true;
   bool _isLoadingRoles = true;
-
   double _casualUsed = 3;
   int _shortUsed = 0;
   final double _casualTotal = 12;
   final int _shortTotal = 1;
-
-
   final List<LeaveResponse> _leaveRequests = [];
-
   Map<DateTime, List<LeaveResponse>> _events = {};
-
   String _selectedStatusFilter = 'All';
   String _selectedTypeFilter = 'All';
   DateTimeRange? _selectedDateFilter;
@@ -79,8 +74,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
   }
 
   Future<void> _fetchLeaveHistory() async {
-    setState(() {
-    });
+    setState(() {});
     final leaveRepository = getIt<LeaveRepository>();
     final result = await leaveRepository.fetchLeaveApplications();
     if (result is NetworkSuccess<List<LeaveResponse>>) {
@@ -91,7 +85,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
       });
     } else if (result is NetworkError) {
       setState(() {
-        // _leaveHistoryError = result..toString();
       });
     }
   }
@@ -315,8 +308,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           ),
                         ),
                         value: _selectedStatusFilter,
-                        items: ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled']
-                            .map((item) => DropdownMenuItem<String>(
+                        items: ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'].map((item) => DropdownMenuItem<String>(
                           value: item,
                           child: Align(
                             alignment: Alignment.centerLeft,
@@ -328,8 +320,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               textAlign: TextAlign.start,
                             ),
                           ),
-                        ))
-                            .toList(),
+                        )).toList(),
                         selectedItemBuilder: (context) {
                           return ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'].map(
                                 (item) => Align(
@@ -383,8 +374,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           ),
                         ),
                         value: _selectedTypeFilter,
-                        items: ['All', ..._leaveTypes.map((e) => e.name)].map(
-                              (type) => DropdownMenuItem<String>(
+                        items: ['All', ..._leaveTypes.map((e) => e.name)].map((type) => DropdownMenuItem<String>(
                             value: type,
                             child: SizedBox(
                               width: double.infinity,
@@ -402,8 +392,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           ),
                         ).toList(),
                         selectedItemBuilder: (context) {
-                          return ['All', ..._leaveTypes.map((e) => e.name)].map(
-                                (type) => SizedBox(
+                          return ['All', ..._leaveTypes.map((e) => e.name)].map((type) => SizedBox(
                               width: double.infinity,
                               child: Align(
                                 alignment: Alignment.centerLeft,
@@ -472,8 +461,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         ),
                         controller: TextEditingController(
-                          text: _selectedDateFilter == null
-                              ? 'Select date range'
+                          text: _selectedDateFilter == null ? 'Select date range'
                               : '${DateFormat('dd MMM yyyy').format(_selectedDateFilter!.start)} - ${DateFormat('dd MMM yyyy').format(_selectedDateFilter!.end)}',
                         ),
                       ),
@@ -524,7 +512,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       CircleAvatar(
-                        backgroundColor: _getStatusColor(leave.leaveType).withOpacity(0.13),
+                        backgroundColor: _getStatusColor(leave.leaveType).withValues(alpha: 0.13),
                         radius: 18,
                         child: Icon(_getLeaveTypeIcon(leave.leaveTypeName), color: _getStatusColor(leave.leaveType), size: 20),
                       ),
@@ -610,10 +598,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               managerList: _managerList,
                               existingLeaveRequests: _leaveRequests,
                               onLeaveSubmitted: (request, {casualDeduct = 0, sickDeduct = 0, shortDeduct = 0}) {
-                                setState(() {
-                                  _leaveRequests[index] = request;
-                                  _initializeEvents();
-                                });
+
+                                setState(() {_leaveRequests[index] = request;_initializeEvents();});
+
                                 Navigator.pop(context);
                                 showGlobalSnackBar('Leave request updated successfully!');
                               },
@@ -782,9 +769,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Text(status, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500,),),
     );
@@ -932,7 +919,6 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
       if (currentLeaveId != null && existingLeave.id == currentLeaveId) {
         continue;
       }
-
       if (_dateRange!.start.isBefore(existingLeave.dateRange.end.add(const Duration(days: 1))) &&
           _dateRange!.end.isAfter(existingLeave.dateRange.start.subtract(const Duration(days: 1)))) {
         showGlobalSnackBarOverlay('Leave request already exists for the selected date range. Please choose different dates.');
@@ -970,9 +956,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
       }
     }*/
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() {_isSubmitting = true;});
 
     final selectedLeaveType = widget.leaveTypeObjects.firstWhere((t) => t.name == _selectedLeaveType);
     final selectedHr = widget.hrList.firstWhere((hr) => hr.fullName == _selectedHR);
@@ -988,8 +972,8 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
       attachment: _attachmentPath != null ? File(_attachmentPath!) : null,
       isHalfDay: _selectedLeaveType == 'Half Day Leave',
       halfDaySession: _selectedHalf == 'First Half' ? 'FH' : _selectedHalf == 'Second Half' ? 'SH' : null,
-      startTime: _shortLeaveStartTime != null ? _shortLeaveStartTime!.hour.toString().padLeft(2, '0') + ':' + _shortLeaveStartTime!.minute.toString().padLeft(2, '0') : null,
-      endTime: _shortLeaveEndTime != null ? _shortLeaveEndTime!.hour.toString().padLeft(2, '0') + ':' + _shortLeaveEndTime!.minute.toString().padLeft(2, '0') : null,
+      startTime: _shortLeaveStartTime != null ? '${_shortLeaveStartTime!.hour.toString().padLeft(2, '0')}:${_shortLeaveStartTime!.minute.toString().padLeft(2, '0')}' : null,
+      endTime: _shortLeaveEndTime != null ? '${_shortLeaveEndTime!.hour.toString().padLeft(2, '0')}:${_shortLeaveEndTime!.minute.toString().padLeft(2, '0')}' : null,
     );
 
     final repo = getIt<LeaveRepository>();
@@ -1009,7 +993,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
   @override
   Widget build(BuildContext context) {
 
-    final Debouncer _submitDebouncer = Debouncer(delay: Duration(seconds: 2));
+    final Debouncer submitDebouncer = Debouncer(delay: Duration(seconds: 2));
 
     final uniqueLeaveTypes = widget.leaveTypes.toSet().toList();
     if (_selectedLeaveType != null && !uniqueLeaveTypes.contains(_selectedLeaveType)) {
@@ -1103,10 +1087,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                     if (field.hasError)
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0, left: 8.0),
-                        child: Text(
-                          field.errorText ?? '',
-                          style: const TextStyle(color: Colors.red, fontSize: 12),
-                        ),
+                        child: Text(field.errorText ?? '', style: const TextStyle(color: Colors.red, fontSize: 12),),
                       ),
                   ],
                 );
@@ -1355,10 +1336,8 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
             width: double.infinity,
             height: 45,
             child: ElevatedButton(
-              onPressed: _isSubmitting
-                  ? null
-                  : () {
-                _submitDebouncer.run(() async {
+              onPressed: _isSubmitting ? null : () {
+                submitDebouncer.run(() async {
                   if (widget.initialLeave != null) {
                     if (!_formKey.currentState!.validate()) return;
                     if ((_selectedLeaveType == 'Short Leave' || _selectedLeaveType == 'Half Day Leave') &&
@@ -1367,9 +1346,7 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                       return;
                     }
 
-                    setState(() {
-                      _isSubmitting = true;
-                    });
+                    setState(() {_isSubmitting = true;});
 
                     final selectedLeaveType =
                     widget.leaveTypeObjects.firstWhere((t) => t.name == _selectedLeaveType);
@@ -1434,11 +1411,10 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
 }
 
 class _StaticLeaveRequestTab extends StatelessWidget {
-  const _StaticLeaveRequestTab({Key? key}) : super(key: key);
+  const _StaticLeaveRequestTab();
 
   @override
   Widget build(BuildContext context) {
-    // Static sample leave requests
     final staticRequests = [
       {
         'name': 'John Doe',
@@ -1478,9 +1454,9 @@ class _StaticLeaveRequestTab extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
+                        color: Colors.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1),
                       ),
                       child: Text(req['status']!, style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w500)),
                     ),

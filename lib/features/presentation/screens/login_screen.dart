@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   return TextFormField(
                                     controller: _emailController,
                                     keyboardType: TextInputType.emailAddress,
-                                    style: TextStyle(color: Theme.of(context,).colorScheme.onSurface, fontSize: 16.sp,),
+                                    style: TextStyle(color: Theme.of(context,).colorScheme.onSurface, fontSize: 16.dp,),
                                     decoration: InputDecoration(
                                       labelText: AppStrings.email,
                                       border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12),),),
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       return TextFormField(
                                         controller: _passwordController,
                                         keyboardType: TextInputType.visiblePassword,
-                                        style: TextStyle(color: Theme.of(context,).colorScheme.onSurface, fontSize: 16.sp,),
+                                        style: TextStyle(color: Theme.of(context,).colorScheme.onSurface, fontSize: 16.dp,),
                                         decoration: InputDecoration(
                                           labelText: AppStrings.password,
                                           border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12),),),
@@ -132,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         )
                                       : Text(
                                           AppStrings.login,
-                                          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
+                                          style: TextStyle(fontSize: 20.dp, fontWeight: FontWeight.bold),
                                         ),
                                 ),
                               ),

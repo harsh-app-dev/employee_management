@@ -95,14 +95,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final profile = profiles.isNotEmpty ? profiles.first : null;
     if (profile != null) {
       _profileInitials.value = getInitials(profile.first_name, profile.last_name);
-      setState(() {
-        _currentProfile = profile;
-      });
+      setState(() {_currentProfile = profile;});
     } else {
       _profileInitials.value = '?';
-      setState(() {
-        _currentProfile = null;
-      });
+      setState(() {_currentProfile = null;});
     }
   }
 
@@ -251,16 +247,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       for (var attendance in records) {
         if (attendance.attendanceDate == dateStr) {
           if (attendance.totalWorkHour != null && attendance.totalWorkHour!.isNotEmpty) {
-            totalWorkDuration += _parseDurationFromString(attendance.totalWorkHour!);
+            totalWorkDuration += parseDurationFromString(attendance.totalWorkHour!);
           }
           if (attendance.totalBreakHour != null && attendance.totalBreakHour!.isNotEmpty) {
-            totalBreakDuration += _parseDurationFromString(attendance.totalBreakHour!);
+            totalBreakDuration += parseDurationFromString(attendance.totalBreakHour!);
           }
         }
       }
 
-      _workedDuration = _formatDuration(totalWorkDuration);
-      _breakDuration = _formatDuration(totalBreakDuration);
+      _workedDuration = formatDuration(totalWorkDuration);
+      _breakDuration = formatDuration(totalBreakDuration);
 
       // Enable break button if user is punched in but not punched out
       _isBreakButtonEnabled = punchInTimes.isNotEmpty && (punchOutTimes.isEmpty || punchOutTimes.last.isBefore(punchInTimes.last));
@@ -280,31 +276,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     setState(() {});
-  }
-
-  Duration _parseDurationFromString(String durationStr) {
-    try {
-      final parts = durationStr.split(':');
-      final hours = int.parse(parts[0]);
-      final minutes = int.parse(parts[1]);
-      final seconds = parts.length > 2 ? int.parse(parts[2]) : 0;
-      return Duration(hours: hours, minutes: minutes, seconds: seconds);
-    } catch (e) {
-      return Duration();
-    }
-  }
-
-  String _formatDuration(Duration duration) {
-    if (duration.inSeconds == 0) return '--';
-
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-
-    String result = '';
-    if (hours > 0) result += '${hours}h ';
-    if (minutes > 0) result += '${minutes}m ';
-
-    return result.trim();
   }
 
   Future<void> _refreshPunchHistoryAndWorkedTimes() async {
@@ -347,16 +318,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         for (var attendance in entries) {
           if (attendance.attendanceDate == dateStr) {
             if (attendance.totalWorkHour != null && attendance.totalWorkHour!.isNotEmpty) {
-              totalWorkDuration += _parseDurationFromString(attendance.totalWorkHour!);
+              totalWorkDuration += parseDurationFromString(attendance.totalWorkHour!);
             }
             if (attendance.totalBreakHour != null && attendance.totalBreakHour!.isNotEmpty) {
-              totalBreakDuration += _parseDurationFromString(attendance.totalBreakHour!);
+              totalBreakDuration += parseDurationFromString(attendance.totalBreakHour!);
             }
           }
         }
 
-        _workedDuration = _formatDuration(totalWorkDuration);
-        _breakDuration = _formatDuration(totalBreakDuration);
+        _workedDuration = formatDuration(totalWorkDuration);
+        _breakDuration = formatDuration(totalBreakDuration);
         _firstPunchIn = punchInEvents.isNotEmpty ? punchInEvents.first.time ?? '--' : '--';
         _lastPunchOut = punchOutEvents.isNotEmpty ? punchOutEvents.last.time ?? '--' : '--';
 
@@ -400,7 +371,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7),],
+              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7),],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -449,19 +420,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             Container(
                                               decoration: BoxDecoration(
                                                 gradient: LinearGradient(
-                                                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7,),],
+                                                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7,),],
                                                   begin: Alignment.topLeft,
                                                   end: Alignment.bottomRight,
                                                 ),
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
                                               padding: EdgeInsets.all(8),
-                                              child: Icon(Icons.calendar_today, color: Colors.white, size: 20.sp,),
+                                              child: Icon(Icons.calendar_today, color: Colors.white, size: 20.dp,),
                                             ),
                                             SizedBox(width: 2.w),
                                             Text(
                                               AppStrings.attendance,
-                                              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 20.sp,),
+                                              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 20.dp,),
                                             ),
                                           ],
                                         ),
@@ -494,7 +465,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             Container(
                                               padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
                                               decoration: BoxDecoration(
-                                                color: theme.colorScheme.primary.withOpacity(0.1),
+                                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
                                               child: Row(
@@ -508,7 +479,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   ),
                                                   Text(
                                                     _workedDuration.isNotEmpty && _workedDuration != '--' ? _workedDuration : '00:00:00',
-                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp, color: theme.colorScheme.primary,),
+                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.dp, color: theme.colorScheme.primary,),
                                                   ),
 
                                                 ],
@@ -518,7 +489,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                                             Container(
                                               padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
-                                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10),),
+                                              decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10),),
                                               child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
@@ -530,7 +501,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   ),
                                                   Text(
                                                     _breakDuration != '--' ? _breakDuration : '00:00:00',
-                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp, color: Colors.orange,),
+                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.dp, color: Colors.orange,),
                                                   ),
                                                 ],
                                               ),
@@ -649,15 +620,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                             is_active: 'active',
                                                           );
                                                           await _profileController.profileDao.insertProfile(updated);
-                                                          setState(() {
-                                                            _currentProfile = updated;
-                                                          });
+                                                          setState(() {_currentProfile = updated;});
                                                         }
                                                         showGlobalSnackBarWithIcon(AppStrings.punchInSuccess, icon: Icons.login, iconColor: Colors.green);
-                                                        setState(() {
-                                                          _isBreakButtonEnabled = true;
-                                                          _isOnBreak = false;
-                                                        });
+                                                        setState(() {_isBreakButtonEnabled = true;_isOnBreak = false;});
                                                       } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
                                                         if (!mounted) return;
                                                         setState(() { _isApiLoading = false; });
@@ -676,22 +642,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 buttonIcon = Icons.login;
                                                 buttonColor = theme.colorScheme.primary;
                                                 onPressed = () async {
-
                                                   if (!await checkInternet(context)) return;
-
                                                   final XFile? image = await _picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front,);
                                                   if (image != null) {
-                                                    setState(() {
-                                                      _selfieImage = File(image.path);
-                                                      _isApiLoading = true;
-                                                    });
+                                                    setState(() {_selfieImage = File(image.path);_isApiLoading = true;});
                                                     await _submitDebouncer.run(() async {
                                                       await _punchController.punchInOut('punch_in', punchPhoto: _selfieImage);
                                                       if (!mounted) return;
                                                       if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
-                                                        setState(() {
-                                                          _isApiLoading = false;
-                                                        });
+                                                        setState(() {_isApiLoading = false;});
                                                         _updateWorkBreakOnPunch('in');
                                                         await _refreshPunchHistoryAndWorkedTimes();
                                                         if (_currentProfile != null) {
@@ -707,15 +666,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                             is_active: 'active',
                                                           );
                                                           await _profileController.profileDao.insertProfile(updated);
-                                                          setState(() {
-                                                            _currentProfile = updated;
-                                                          });
+                                                          setState(() {_currentProfile = updated;});
                                                         }
                                                         showGlobalSnackBarWithIcon(AppStrings.punchInSuccess, icon: Icons.login, iconColor: Colors.green);
-                                                        setState(() {
-                                                          _isBreakButtonEnabled = true;
-                                                          _isOnBreak = false;
-                                                        });
+                                                        setState(() {_isBreakButtonEnabled = true;_isOnBreak = false;});
                                                       } else if (_punchController.punchInOutApiState.value?.isError ?? false) {
                                                         if (!mounted) return;
                                                         setState(() { _isApiLoading = false; });
@@ -736,10 +690,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     flex: 1,
                                                     child: ElevatedButton.icon(
                                                       onPressed: onPressed,
-                                                      icon: Icon(buttonIcon, size: 22.sp, color: Colors.white,),
+                                                      icon: Icon(buttonIcon, size: 22.dp, color: Colors.white,),
                                                       label: Text(
                                                         buttonText,
-                                                        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                                                        style: TextStyle(fontSize: 16.dp, fontWeight: FontWeight.bold, color: Colors.white),
                                                       ),
                                                       style: ElevatedButton.styleFrom(
                                                           backgroundColor: buttonColor,
@@ -758,9 +712,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                           setState(() { _isBreakLoading = true; });
                                                           await _submitDebouncer.run(() async {
                                                             await _punchController.punchInOut('break_start');
-                                                            setState(() {
-                                                              _isBreakLoading = false;
-                                                            });
+                                                            setState(() {_isBreakLoading = false;});
                                                             if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
                                                               await _refreshPunchHistoryAndWorkedTimes();
                                                               showGlobalSnackBarWithIcon('Break started successfully!', icon: Icons.pause_circle, iconColor: Colors.orange);
@@ -773,9 +725,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                           setState(() { _isBreakLoading = true; });
                                                           await _submitDebouncer.run(() async {
                                                             await _punchController.punchInOut('break_end');
-                                                            setState(() {
-                                                              _isBreakLoading = false;
-                                                            });
+                                                            setState(() {_isBreakLoading = false;});
                                                             if (_punchController.punchInOutApiState.value?.isSuccess ?? false) {
                                                               await _refreshPunchHistoryAndWorkedTimes();
                                                               showGlobalSnackBarWithIcon('Break ended successfully!', icon: Icons.play_circle, iconColor: Colors.green);
@@ -785,10 +735,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                           });
                                                         }
                                                       } : null,
-                                                      icon: Icon(_isOnBreak ? Icons.play_circle_fill : Icons.pause_circle_outline, size: 22.sp, color: Colors.white),
-                                                      label: Text(_isOnBreak ? 'Break Out' : 'Break In',
-                                                        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
-                                                      ),
+                                                      icon: Icon(_isOnBreak ? Icons.play_circle_fill : Icons.pause_circle_outline, size: 22.dp, color: Colors.white),
+                                                      label: Text(_isOnBreak ? 'Break Out' : 'Break In', style: TextStyle(fontSize: 16.dp, fontWeight: FontWeight.bold, color: Colors.white),),
                                                       style: ElevatedButton.styleFrom(
                                                         backgroundColor: _isOnBreak ? Colors.green : Colors.orange,
                                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -809,30 +757,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 if (activityEvents.isNotEmpty)
                                   Card(
                                     elevation: 10,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18),),
                                     margin: EdgeInsets.only(bottom: 3.h),
                                     color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
                                     child: SizedBox(
                                       height: 325,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
+                                      child: Padding(padding: const EdgeInsets.all(16.0),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            // 👇 Title (always visible)
                                             Text(
                                               "Today's Activity Logs",
-                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
+                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.dp),
                                             ),
-                                            Divider(
-                                              height: 24,
-                                              thickness: 1.3,
-                                              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                            ),
+                                            Divider(height: 24, thickness: 1.3, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),),
 
-                                            // 👇 Expandable scrollable timeline
                                             Expanded(
                                               child: Scrollbar(
                                                 controller: scrollController,
@@ -843,12 +782,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   controller: scrollController,
                                                   child: Stack(
                                                     children: [
-                                                      Positioned(
-                                                        left: 9,
-                                                        top: 10,
-                                                        bottom: 10,
-                                                        child: Container(width: 2, color: Colors.grey.shade300),
-                                                      ),
+                                                      Positioned(left: 9, top: 10, bottom: 10, child: Container(width: 2, color: Colors.grey.shade300),),
                                                       Column(
                                                         children: activityEvents.expand((activity) {
                                                           final List<Widget> activityEntries = [];
@@ -876,18 +810,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                                       children: [
                                                                         Text(
                                                                           getLabelForType(activity.type),
-                                                                          style: const TextStyle(
-                                                                            fontWeight: FontWeight.bold,
-                                                                            fontSize: 16,
-                                                                          ),
+                                                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
                                                                         ),
                                                                         const SizedBox(height: 4),
                                                                         Text(
                                                                           _formatTime(activityTime),
-                                                                          style: TextStyle(
-                                                                            fontSize: 14,
-                                                                            color: Colors.grey.shade600,
-                                                                          ),
+                                                                          style: TextStyle(fontSize: 14, color: Colors.grey.shade600,),
                                                                         ),
                                                                       ],
                                                                     ),
@@ -895,8 +823,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                                 ],
                                                               ),
                                                             ),
-                                                          );
-                                                          return activityEntries;
+                                                          );return activityEntries;
                                                         }).toList(),
                                                       ),
                                                     ],
@@ -921,7 +848,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               builder: (context, punchInOutState, _) {
                 final isLoading = punchInOutState?.isLoading ?? false;
                 if (isLoading) {
-                  return Container(color: Colors.black.withOpacity(0.2), child: const Center(child: CircularProgressIndicator()),);
+                  return Container(color: Colors.black.withValues(alpha: 0.2), child: const Center(child: CircularProgressIndicator()),);
                 }
                 return const SizedBox.shrink();
               },
@@ -930,14 +857,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Positioned.fill(
                 child: AbsorbPointer(
                   absorbing: true,
-                  child: Container(color: Colors.black.withOpacity(0.2), child: const Center(child: CircularProgressIndicator()),),
+                  child: Container(color: Colors.black.withValues(alpha: 0.2), child: const Center(child: CircularProgressIndicator()),),
                 ),
               ),
             if (_isBreakLoading)
               Positioned.fill(
                 child: AbsorbPointer(
                   absorbing: true,
-                  child: Container(color: Colors.black.withOpacity(0.2), child: const Center(child: CircularProgressIndicator()),),
+                  child: Container(color: Colors.black.withValues(alpha: 0.2), child: const Center(child: CircularProgressIndicator()),),
                 ),
               ),
           ],

@@ -11,10 +11,10 @@ class TaskDetailModal extends StatelessWidget {
   final bool isHistoryTask;
 
   const TaskDetailModal({
-    Key? key,
+    super.key,
     required this.task,
     this.isHistoryTask = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +72,7 @@ class TaskDetailModal extends StatelessWidget {
                 Divider(
                   height: 3.h,
                   thickness: 1.3,
-                  color: theme.colorScheme.primary.withOpacity(0.15),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
                 ),
                 _buildDetailRow(
                   context,

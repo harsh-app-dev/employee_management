@@ -5,7 +5,7 @@ import 'package:employee_management/features/presentation/screens/main_screen.da
 import 'package:flutter/cupertino.dart';
 
 class AppPages {
-  static const INITIAL = '/main';
+  static const initial = '/main';
 
   static final routes = <String, WidgetBuilder>{
     '/login': (context) => LoginScreen(),

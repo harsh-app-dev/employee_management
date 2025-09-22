@@ -4,7 +4,7 @@ import 'package:employee_management/features/presentation/screens/punch_history_
 import 'package:employee_management/features/presentation/screens/task_history_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({Key? key}) : super(key: key);
+  const HistoryScreen({super.key});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -12,7 +12,6 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
   @override
   void initState() {
     super.initState();
@@ -28,13 +27,12 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7),],
+              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7),],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -56,14 +54,8 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
           labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 16),
           tabs: [
-            Tab(
-              icon: Icon(Icons.access_time, size: 24),
-              text: AppStrings.punchHistory,
-            ),
-            Tab(
-              icon: Icon(Icons.assignment_turned_in, size: 24),
-              text: AppStrings.taskHistory,
-            ),
+            Tab(icon: Icon(Icons.access_time, size: 24), text: AppStrings.punchHistory,),
+            Tab(icon: Icon(Icons.assignment_turned_in, size: 24), text: AppStrings.taskHistory,),
           ],
         ),
       ),

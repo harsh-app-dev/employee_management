@@ -13,11 +13,11 @@ class TaskCard extends StatelessWidget {
   final bool isHistoryTask;
 
   const TaskCard({
-    Key? key,
+    super.key,
     required this.task,
     this.showTicketId = true,
     this.isHistoryTask = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +93,7 @@ class TaskCard extends StatelessWidget {
               Divider(
                 height: 3.h,
                 thickness: 1.3,
-                color: theme.colorScheme.primary.withOpacity(0.15),
+                color: theme.colorScheme.primary.withValues(alpha: 0.15),
               ),
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 1.2.h),

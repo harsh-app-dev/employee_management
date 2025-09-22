@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 
 class DocumentWebViewer extends StatelessWidget {
   final String filePath;
-  const DocumentWebViewer({Key? key, required this.filePath}) : super(key: key);
+  const DocumentWebViewer({super.key, required this.filePath});
 
   String get fileName => filePath.split('/').last;
 
@@ -54,12 +54,7 @@ class DocumentWebViewer extends StatelessWidget {
       children: [
         const Text(
           'Attachment',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            color: Colors.black54,
-            letterSpacing: 0.2,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54, letterSpacing: 0.2,),
         ),
         const SizedBox(height: 6),
         GestureDetector(
@@ -68,17 +63,10 @@ class DocumentWebViewer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
               color: bgColor,
-              border: Border.all(
-                color: borderColor,
-                width: 1.2,
-              ),
+              border: Border.all(color: borderColor, width: 1.2,),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
+                BoxShadow(color: Colors.green.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2),),
               ],
             ),
             child: Row(
@@ -91,27 +79,16 @@ class DocumentWebViewer extends StatelessWidget {
                     children: [
                       Text(
                         fileName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15,),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: iconColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
+                        decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6),),
                         child: Text(
                           fileType,
-                          style: TextStyle(
-                            color: iconColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                            letterSpacing: 0.5,
-                          ),
+                          style: TextStyle(color: iconColor, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5,),
                         ),
                       ),
                     ],

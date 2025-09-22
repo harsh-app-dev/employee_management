@@ -11,7 +11,6 @@ class AppStrings {
   static const String punchOut = 'Punch Out';
   static const String punchInSuccess = 'Punch In successful!';
   static const String punchOutSuccess = 'Punch Out successful!';
-
   static const String punchFailed = 'Punch In failed!';
   static const String taskOverview = 'Task Overview';
   static const String noTaskFound = 'No Task Found.';

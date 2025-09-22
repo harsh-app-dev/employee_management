@@ -2,7 +2,6 @@ import 'package:employee_management/features/presentation/screens/main_screen.da
 import 'package:employee_management/features/presentation/screens/punch_history_screen.dart';
 import 'package:flutter/material.dart';
 import '../../features/data/models/floor/profile_data.dart';
-import '../../features/presentation/screens/history_screen.dart';
 import '../../features/presentation/screens/profile_screen.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/features/presentation/state/profile_controller.dart';
@@ -11,6 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../features/presentation/screens/settings_screen.dart';
 
 class AppSideDrawer extends StatefulWidget {
+  const AppSideDrawer({super.key});
+
   @override
   State<AppSideDrawer> createState() => _AppSideDrawerState();
 }
@@ -43,7 +44,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
               gradient: LinearGradient(
                 colors: [
                   theme.colorScheme.primary,
-                  theme.colorScheme.primary.withOpacity(0.8),
+                  theme.colorScheme.primary.withValues(alpha: 0.8),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
