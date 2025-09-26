@@ -136,53 +136,69 @@ class _LeaveScreenState extends State<LeaveScreen> {
     }
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        drawer: AppSideDrawer(),
-        appBar: AppBar(
-          title: const Text('Leave Management', style: TextStyle(fontWeight: FontWeight.bold)),
-          centerTitle: true,
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.white,
-          elevation: 1,
-          bottom: TabBar(
-            tabs: const [
-              Tab(icon: Icon(Icons.history), text: 'My Leaves'),
-              Tab(icon: Icon(Icons.approval), text: 'Leave Requests'),
-            ],
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
-            indicatorWeight: 4,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
-          ),
-        ),
-        backgroundColor: const Color(0xFFF5F7FA),
-        body: TabBarView(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLeaveBalanceSection(),
-                  const SizedBox(height: 8),
-                  _buildFilterSection(),
-                  const SizedBox(height: 8),
-                  SizedBox(height: 500, child: _buildLeaveHistoryList()),
+      child: Builder(
+        builder: (context) {
+          final TabController tabController = DefaultTabController.of(context);
+
+          // 👇 Attach listener once
+          tabController.addListener(() {
+            if (mounted) setState(() {}); // rebuild when tab changes
+          });
+
+          return Scaffold(
+            drawer: AppSideDrawer(),
+            appBar: AppBar(
+              title: const Text(
+                'Leave Management',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              centerTitle: true,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 1,
+              bottom: const TabBar(
+                tabs: [
+                  Tab(icon: Icon(Icons.history), text: 'My Leaves'),
+                  Tab(icon: Icon(Icons.approval), text: 'Leave Requests'),
                 ],
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                indicatorColor: Colors.white,
+                indicatorWeight: 4,
+                labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
               ),
             ),
-            _StaticLeaveRequestTab(),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _showLeaveApplicationBottomSheet(),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.white,
-          elevation: 2,
-          child: const Icon(Icons.add, size: 28),
-        ),
+            backgroundColor: const Color(0xFFF5F7FA),
+            body: TabBarView(
+              children: [
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLeaveBalanceSection(),
+                      const SizedBox(height: 8),
+                      _buildFilterSection(),
+                      const SizedBox(height: 8),
+                      SizedBox(height: 500, child: _buildLeaveHistoryList()),
+                    ],
+                  ),
+                ),
+                _StaticLeaveRequestTab(),
+              ],
+            ),
+            floatingActionButton: tabController.index == 0
+                ? FloatingActionButton(
+              onPressed: () => _showLeaveApplicationBottomSheet(),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 2,
+              child: const Icon(Icons.add, size: 28),
+            )
+                : null,
+          );
+        },
       ),
     );
   }
@@ -1410,81 +1426,145 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
   }
 }
 
-class _StaticLeaveRequestTab extends StatelessWidget {
+class _StaticLeaveRequestTab extends StatefulWidget {
   const _StaticLeaveRequestTab();
 
   @override
+  State<_StaticLeaveRequestTab> createState() => _StaticLeaveRequestTabState();
+}
+
+class _StaticLeaveRequestTabState extends State<_StaticLeaveRequestTab> {
+  final List<Map<String, String>> staticRequests = [
+    {
+      'name': 'John Doe',
+      'type': 'Casual Leave',
+      'date': '12 Sep 2025',
+      'reason': 'Family function',
+      'status': 'Pending',
+    },
+    {
+      'name': 'Jane Smith',
+      'type': 'Sick Leave',
+      'date': '14 Sep 2025',
+      'reason': 'Fever',
+      'status': 'Pending',
+    },
+  ];
+
+  void _updateStatus(int index, String newStatus) {
+    setState(() {
+      staticRequests[index]['status'] = newStatus;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Leave $newStatus!"),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Approved':
+        return Colors.green;
+      case 'Rejected':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final staticRequests = [
-      {
-        'name': 'John Doe',
-        'type': 'Casual Leave',
-        'date': '12 Sep 2025',
-        'reason': 'Family function',
-        'status': 'Pending',
-      },
-      {
-        'name': 'Jane Smith',
-        'type': 'Sick Leave',
-        'date': '14 Sep 2025',
-        'reason': 'Fever',
-        'status': 'Pending',
-      },
-    ];
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: staticRequests.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final req = staticRequests[index];
+        final status = req['status']!;
+
         return Card(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 1,
+          elevation: 2,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                /// Header Row (Name + Status)
                 Row(
                   children: [
-                    Icon(Icons.person, color: Colors.blue),
+                    const Icon(Icons.person, color: Colors.blue),
                     const SizedBox(width: 8),
-                    Text(req['name']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      req['name']!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: _statusColor(status).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1),
+                        border: Border.all(
+                          color: _statusColor(status).withValues(alpha: 0.3),
+                          width: 1,
+                        ),
                       ),
-                      child: Text(req['status']!, style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w500)),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          color: _statusColor(status),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 8),
                 Text('Type: ${req['type']}'),
                 Text('Date: ${req['date']}'),
                 Text('Reason: ${req['reason']}'),
+
                 const SizedBox(height: 12),
+
+                /// Action Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Leave Approved! (Static)'), duration: Duration(seconds: 1)),
-                        );
-                      },
-                      icon: const Icon(Icons.check, size: 18),
-                      label: const Text('Approve'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    if (status == 'Pending' || status == 'Rejected') ...[
+                      ElevatedButton.icon(
+                        onPressed: () => _updateStatus(index, 'Approved'),
+                        icon: const Icon(Icons.check, size: 18),
+                        label: Text(status == 'Rejected' ? 'Re-Approve' : 'Approve'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                    ],
+                    if (status == 'Pending' || status == 'Approved')
+                      ElevatedButton.icon(
+                        onPressed: () => _updateStatus(index, 'Rejected'),
+                        icon: const Icon(Icons.close, size: 18),
+                        label: const Text('Reject'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        ),
+                      ),
                   ],
                 ),
               ],

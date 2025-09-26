@@ -52,7 +52,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
             ),
             margin: EdgeInsets.zero,
             padding: EdgeInsets.zero,
-            child: Container(
+            child: SizedBox(
               width: double.infinity,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +84,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 20.0, bottom: 10.0),
+                    padding: const EdgeInsets.only(left: 10.0, bottom: 10.0),
                     child: GestureDetector(
                       onTap: () {
                         Navigator.of(context).pop();
@@ -112,8 +112,9 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                               child: Text(
                                 _localProfile!.email,
                                 style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600
                                 ),
                               ),
                             ),

@@ -155,7 +155,7 @@ String getDeductionInitials(String type) {
 Future<bool> checkInternet(BuildContext context) async {
   final connectivityResult = await Connectivity().checkConnectivity();
 
-  if (connectivityResult == ConnectivityResult.none) {
+  if (connectivityResult.contains(ConnectivityResult.none)) {
     _showNoInternet(context);
     return false;
   }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:employee_management/core/configs/strings.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/core/utils/util.dart';
+import 'package:employee_management/features/presentation/screens/chat/chat_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -391,9 +392,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: AppSideDrawer(),
-      ),
+      drawer: Drawer(child: AppSideDrawer()),
       body: SafeArea(
         child: Stack(
           children: [
@@ -870,6 +869,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ChatSection()), // <-- your Chat screen
+          );
+        },
+        backgroundColor: theme.colorScheme.primary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: const Icon(Icons.chat, color: Colors.white, size: 32),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // bottom-right corner
+
     );
   }
 
