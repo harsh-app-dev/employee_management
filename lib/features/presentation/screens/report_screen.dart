@@ -1,11 +1,18 @@
+import 'package:employee_management/features/presentation/screens/punch_history_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../data/models/leave/leave_response.dart';
 import '../../../core/widgets/app_side_drawer.dart';
 import 'package:intl/intl.dart';
+import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
+import 'package:get_it/get_it.dart';
+import '../../../core/utils/network_result.dart';
+import '../../data/models/punch/response/attendence_response.dart';
 
 class ReportScreen extends StatelessWidget {
-  const ReportScreen({super.key});
+  ReportScreen({super.key});
+
+  final PunchHistoryUseCase _useCase = GetIt.I<PunchHistoryUseCase>();
 
   bool _isLeaveDay(DateTime day, Set<DateTime> approvedLeaveDays) {
     return approvedLeaveDays.any((leaveDay) =>
@@ -91,7 +98,7 @@ class ReportScreen extends StatelessWidget {
       }
     }
     int totalAbsent = absentDays.where((day) => day.month == now.month && day.year == now.year).length;
-    int totalPaidDays = totalWorkingDays - totalAbsent;
+    int totalPaidDays = 2;
 
     Map<String, int> leaveTypeCounts = {};
     for (final leave in leaveRequests.where((l) => l.status == 'Approved')) {
@@ -100,191 +107,59 @@ class ReportScreen extends StatelessWidget {
       }
     }
 
-    void showPunchDetailSheet(DateTime date) {
+    void showPunchDetailSheet(DateTime date) async {
       final theme = Theme.of(context);
-
-      final punchSessions = [
-        {'in': '09:00 AM', 'out': '11:30 AM', 'worked': '2h 30m'},
-        {'in': '12:00 PM', 'out': '02:00 PM', 'worked': '2h 0m'},
-        {'in': '02:30 PM', 'out': '06:00 PM', 'worked': '3h 30m'},
-      ];
-      final totalMinutes = [150, 120, 210].reduce((a, b) => a + b);
-      final totalHours = totalMinutes ~/ 60;
-      final totalMins = totalMinutes % 60;
-
-      final formattedDate = DateFormat('EEEE, d MMM yyyy').format(date);
-
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        builder: (context) => DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.6,
-          minChildSize: 0.6,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) => Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            ),
-            child: SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Handle bar
-                  Container(
-                    width: 50,
-                    height: 6,
-                    margin: const EdgeInsets.only(bottom: 18),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-
-                  // Date & Close button
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: theme.colorScheme.primary, size: 22),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          formattedDate,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  Divider(color: Colors.grey[300], thickness: 1.2, height: 20),
-
-                  const SizedBox(height: 10),
-
-                  // Punch Sessions List
-                  ...punchSessions.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final punch = entry.value;
-                    return Column(
-                      children: [
-                        Card(
-                          elevation: 2,
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.login, color: Colors.green[700], size: 22),
-                                    const SizedBox(width: 6),
-                                    Text('In: ${punch['in']}',
-                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                                    const Spacer(),
-                                    Icon(Icons.logout, color: Colors.red[700], size: 22),
-                                    const SizedBox(width: 6),
-                                    Text('Out: ${punch['out']}',
-                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    Icon(Icons.timer, color: theme.colorScheme.primary, size: 18),
-                                    const SizedBox(width: 6),
-                                    Text("Worked: ${punch['worked']}",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          color: theme.colorScheme.primary,
-                                        )),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Break separator with pierced effect
-                        if (idx < punchSessions.length - 1)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // The continuous line
-                                Divider(
-                                    color: Colors.grey[300],
-                                    thickness: 1,
-                                    height: 20
-                                ),
-                                // The "break" indicator that appears to pierce through the line
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white, // This creates the "pierced" effect
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    "Break",
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontStyle: FontStyle.italic,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    );
-                  }),
-
-                  const SizedBox(height: 20),
-
-                  // Total Worked
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 28),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.access_time, color: theme.colorScheme.primary, size: 22),
-                        const SizedBox(width: 10),
-                        Text(
-                          "Total Worked: $totalHours hrs $totalMins mins",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ),
-        ),
+      final result = await _useCase.callPunchDetail(
+        date: DateFormat('yyyy-MM-dd').format(date),
       );
+
+      if (result is NetworkSuccess<AttendanceResponse>) {
+        final attendanceDetails = result.data.attendances;
+        final formattedDate = DateFormat('EEEE, d MMM yyyy').format(date);
+
+        // Default punch in/out values
+        String punchInTime = '--:--';
+        String punchOutTime = '--:--';
+
+        for (var attendance in attendanceDetails) {
+          if (attendance.workLogs != null && attendance.workLogs!.isNotEmpty) {
+            for (var log in attendance.workLogs!) {
+              if (log.type == 'punch_in') punchInTime = log.time ?? '--:--';
+              if (log.type == 'punch_out') punchOutTime = log.time ?? '--:--';
+            }
+          }
+        }
+
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          builder: (context) {
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.6,
+              minChildSize: 0.6,
+              maxChildSize: 0.95,
+              builder: (context, scrollController) {
+                return AttendanceDetailSheet(
+                  attendanceDetails: attendanceDetails,
+                  punchIn: punchInTime,
+                  punchOut: punchOutTime,
+                  scrollController: scrollController,
+                  formattedDate: formattedDate,
+                );
+              },
+            );
+          },
+        );
+      } else {
+        // Handle error / empty state if needed
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No attendance data found.')),
+        );
+      }
     }
 
     // --- Sandwich Relief Section ---
@@ -439,7 +314,7 @@ class ReportScreen extends StatelessWidget {
                           _buildStatBlock(Icons.calendar_today, 'Working', totalWorkingDays, Colors.blue),
                           _buildStatBlock(Icons.check_circle, 'Present', 19, Colors.green),
                           _buildStatBlock(Icons.cancel, 'Absent', totalAbsent, Colors.red),
-                          _buildStatBlock(Icons.monetization_on, 'Paid', totalPaidDays, Colors.orange),
+                          _buildStatBlock(Icons.beach_access, 'Leave', totalPaidDays, Colors.orange),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -477,14 +352,6 @@ class ReportScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Color Indicators:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 16,

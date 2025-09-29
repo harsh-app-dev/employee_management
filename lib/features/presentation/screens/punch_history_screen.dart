@@ -369,6 +369,8 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
                                                           punchIn: punchInTime,
                                                           punchOut: punchOutTime,
                                                           scrollController: scrollController,
+                                                          formattedDate: DateFormat('EEEE, d MMM yyyy')
+                                                            .format(DateTime.parse(item.attendanceDate)),
                                                         );
                                                       },
                                                     );
