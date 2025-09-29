@@ -77,13 +77,16 @@ String formatDuration(Duration duration) {
 
   final hours = duration.inHours;
   final minutes = duration.inMinutes.remainder(60);
+  final seconds = duration.inSeconds.remainder(60);
 
   String result = '';
   if (hours > 0) result += '${hours}h ';
   if (minutes > 0) result += '${minutes}m ';
+  if (seconds > 0) result += '${seconds}s ';
 
   return result.trim();
 }
+
 
 String formatTime(String? time, {String? date}) {
   if (time == null || time.isEmpty) return '--:--';
