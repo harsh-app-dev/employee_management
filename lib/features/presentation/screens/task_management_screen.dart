@@ -131,14 +131,14 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.only(bottom: 1.5.h, left: 2.w),
+                  padding: EdgeInsets.only(bottom: 1.5.h, left: 3.w, top: 2.h),
                   child: Row(
                     children: [
-                      Icon(Icons.assignment_turned_in_rounded, color: theme.colorScheme.primary, size: 28),
+                      Icon(Icons.assignment_turned_in_rounded, color: theme.colorScheme.primary, size: 30),
                       SizedBox(width: 2.w),
                       Text(
                         AppStrings.taskOverview,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, letterSpacing: 0.5,),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24, letterSpacing: 0.5,),
                       ),
                     ],
                   ),
@@ -168,11 +168,38 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
                         );
                       } else {
                         return Center(
-                          child: SizedBox(
-                            height: 40.h,
-                            child: Center(
-                              child: Text('No task found.', style: TextStyle(fontSize: 20.dp), textAlign: TextAlign.center,),
-                            ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.task_alt_outlined,
+                                size: 80,
+                                color: Colors.grey.shade400,
+                              ),
+
+                              const SizedBox(height: 20,),
+
+                              Text(
+                                "No Task Found",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 22,
+                                  color: Colors.grey.shade700
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+
+                              const SizedBox(height: 8,),
+
+                              Text(
+                                "You don't have any tasks right now.\nAdd a new task to get started!",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         );
                       }

@@ -308,3 +308,55 @@ Duration parseDurationFromString(String durationStr) {
     return Duration();
   }
 }
+
+Color getStatusColor(String status) {
+  switch (status) {
+    case 'Approved':
+      return Colors.green;
+    case 'Rejected':
+      return Colors.red;
+    case 'Cancelled':
+      return Colors.grey;
+    default:
+      return Colors.orange;
+  }
+}
+
+IconData getLeaveTypeIcon(String type) {
+  switch (type) {
+    case 'Sick Leave':
+    case 'Medical Leave':
+      return Icons.sick;
+    case 'Casual Leave':
+      return Icons.beach_access;
+    case 'Half Day Leave':
+      return Icons.wb_sunny;
+    case 'Short Leave':
+      return Icons.timelapse;
+    case 'Emergency Leave':
+      return Icons.warning_amber_rounded;
+    case 'Maternity Leave':
+      return Icons.pregnant_woman;
+    case 'Paternity Leave':
+      return Icons.family_restroom;
+    case 'Wedding Leave':
+      return Icons.favorite;
+    case 'Bereavement Leave':
+      return Icons.sentiment_dissatisfied;
+    default:
+      return Icons.category;
+  }
+}
+
+Widget buildStatusIndicator(String status) {
+  final color = getStatusColor(status);
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+    ),
+    child: Text(status, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500,),),
+  );
+}

@@ -96,7 +96,7 @@ class _$AppDatabase extends AppDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `profile` (`id` TEXT NOT NULL, `first_name` TEXT NOT NULL, `last_name` TEXT NOT NULL, `email` TEXT NOT NULL, `dob` TEXT NOT NULL, `phoneNo` TEXT NOT NULL, `designation` TEXT NOT NULL, `organization` TEXT NOT NULL, `attendance_status` TEXT NOT NULL, PRIMARY KEY (`id`))');
+            'CREATE TABLE IF NOT EXISTS `profile` (`id` TEXT NOT NULL, `first_name` TEXT NOT NULL, `last_name` TEXT NOT NULL, `email` TEXT NOT NULL, `dob` TEXT NOT NULL, `phoneNo` TEXT NOT NULL, `designation` TEXT NOT NULL, `organization` TEXT NOT NULL, `is_active` TEXT NOT NULL, PRIMARY KEY (`id`))');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -127,7 +127,7 @@ class _$ProfileDao extends ProfileDao {
                   'phoneNo': item.phoneNo,
                   'designation': item.designation,
                   'organization': item.organization,
-                  'attendance_status': item.is_active
+                  'is_active': item.is_active
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -150,7 +150,7 @@ class _$ProfileDao extends ProfileDao {
             phoneNo: row['phoneNo'] as String,
             designation: row['designation'] as String,
             organization: row['organization'] as String,
-            is_active: row['attendance_status'] as String),
+            is_active: row['is_active'] as String),
         arguments: [id]);
   }
 
@@ -166,7 +166,7 @@ class _$ProfileDao extends ProfileDao {
             phoneNo: row['phoneNo'] as String,
             designation: row['designation'] as String,
             organization: row['organization'] as String,
-            is_active: row['attendance_status'] as String));
+            is_active: row['is_active'] as String));
   }
 
   @override

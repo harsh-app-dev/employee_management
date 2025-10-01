@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:employee_management/features/data/models/leave/leave_balance_response.dart';
 import 'package:injectable/injectable.dart';
 import 'package:employee_management/core/network/client/network_client.dart';
 import 'package:employee_management/core/utils/network_result.dart';
@@ -10,7 +10,9 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:employee_management/core/storage/local_storage.dart';
 import 'package:employee_management/core/storage/shared_preference_keys.dart';
+import '../models/leave/leave_approval_request.dart';
 import '../models/leave/leave_response.dart';
+import '../models/leave/leave_status_update.dart';
 
 @injectable
 class LeaveRepository {
@@ -19,20 +21,15 @@ class LeaveRepository {
 
   LeaveRepository(this._networkClient, this._localStorage);
 
-  Future<NetworkResult<Map<String, dynamic>>> fetchLeaveTypes() async {
-    return await _networkClient.get<Map<String, dynamic>>(
+  Future<NetworkResult<List<LeaveType>>> fetchLeaveTypes() async {
+    return await _networkClient.get<List<LeaveType>>(
       'leave/leave-types/',
       parser: (json) {
-        final leaveTypes = (json['leave_types'] as List)
+        // 'data' contains the list of leave types
+        final leaveTypes = (json['data'] as List)
             .map((e) => LeaveType.fromJson(e))
             .toList();
-        final halfDayOptions = (json['half_day_options'] as List)
-            .map((e) => HalfDayOption.fromJson(e))
-            .toList();
-        return {
-          'leaveTypes': leaveTypes,
-          'halfDayOptions': halfDayOptions,
-        };
+        return leaveTypes;
       },
     );
   }
@@ -59,133 +56,137 @@ class LeaveRepository {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     try {
       var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-applications/');
+      print('[POST] $uri');
+      print('Headers: {Authorization: Bearer $token, Accept: application/json}');
       var multipartRequest = http.MultipartRequest('POST', uri)
         ..headers.addAll({
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
-          'X-CSRFTOKEN': 'euRQJVDZBX8y5dhzWQZA4ig4knJTwag88YnsMB1b24QtpK1xlyYvGgRTNaQasgIK', // Add CSRF Token
+          'X-CSRFTOKEN': 'euRQJVDZBX8y5dhzWQZA4ig4knJTwag88YnsMB1b24QtpK1xlyYvGgRTNaQasgIK',
         });
 
-      // Add fields
-      multipartRequest.fields['start_date'] = DateFormat('yyyy-MM-dd').format(request.startDate);
-      multipartRequest.fields['end_date'] = DateFormat('yyyy-MM-dd').format(request.endDate);
-      multipartRequest.fields['hr'] = request.hrId;
-      multipartRequest.fields['leave_type'] = request.leaveTypeId;
+      multipartRequest.fields['leave_type'] = request.leaveType.toString();
+      multipartRequest.fields['from_date'] = DateFormat('yyyy-MM-dd').format(request.fromDate);
+      multipartRequest.fields['to_date'] = DateFormat('yyyy-MM-dd').format(request.toDate);
+      multipartRequest.fields['hr'] = request.hr;
       multipartRequest.fields['reason'] = request.reason;
-      multipartRequest.fields['is_half_day'] = request.isHalfDay.toString();
-
-      /*// Add list of managers using the key 'managers' as overwritten and send the last one only
-      for (int i = 0; i < request.managerIds.length; i++) {
-        multipartRequest.fields['managers'] = request.managerIds[i];
-      }*/
-
-     /* manager ID is send in a repeated key way
-      for (var managerId in request.managerIds) {
-        multipartRequest.fields.addAll({'managers': managerId});
-      }*/
-
-      // Add list of managers as comma-separated string
-      if (request.managerIds.isNotEmpty) {
-        multipartRequest.fields['managers'] = request.managerIds.join(',');
-      }
-
-
-
-      // Optional fields
-      if (request.halfDaySession != null) {
-        multipartRequest.fields['half_day_session'] = request.halfDaySession!;
-      }
-      if (request.startTime != null && request.startTime!.isNotEmpty) {
-        multipartRequest.fields['start_time'] = request.startTime!;
-        if (request.endTime != null && request.endTime!.isNotEmpty) {
-          multipartRequest.fields['end_time'] = request.endTime!;
-        }
-      }
-      // If startTime is null or empty, do not send start_time or end_time fields at all
-      else {
-        multipartRequest.fields['start_time'] = '';
-        multipartRequest.fields['end_time'] = '';
-      }
-
-      // Add attachment if it exists
-      if (request.attachment != null) {
-        multipartRequest.files.add(
-          await http.MultipartFile.fromPath(
-            'attachment',
-            request.attachment!.path,
-          ),
+      multipartRequest.fields['managers'] = request.managers.join(',');
+      // Send from_time as timestamp
+      if (request.fromTime != null && request.fromTime!.isNotEmpty) {
+        final timeParts = request.fromTime!.split(':');
+        final dt = DateTime(
+          request.fromDate.year,
+          request.fromDate.month,
+          request.fromDate.day,
+          int.parse(timeParts[0]),
+          int.parse(timeParts[1]),
         );
+        multipartRequest.fields['from_time'] = (dt.millisecondsSinceEpoch ~/ 1000).toString();
       }
-      
-      print('[POST] ${multipartRequest.url}');
-      print('Headers: ${multipartRequest.headers}');
-      print('Fields: ${multipartRequest.fields}');
+      // Send to_time as timestamp
+      if (request.toTime != null && request.toTime!.isNotEmpty) {
+        final timeParts = request.toTime!.split(':');
+        final dt = DateTime(
+          request.toDate.year,
+          request.toDate.month,
+          request.toDate.day,
+          int.parse(timeParts[0]),
+          int.parse(timeParts[1]),
+        );
+        multipartRequest.fields['to_time'] = (dt.millisecondsSinceEpoch ~/ 1000).toString();
+      }
+      if (request.attachment != null) {
+        multipartRequest.files.add(await http.MultipartFile.fromPath('attachment', request.attachment!.path));
+      }
+      multipartRequest.fields['status'] = 'Pending';
 
-      final response = await multipartRequest.send();
-      final responseBody = await response.stream.bytesToString();
-      print('Response: \\${response.statusCode} \\$responseBody');
+      print('Request Body: ${multipartRequest.fields} ${multipartRequest.files.map((f) => {'field': f.field, 'file': f.filename}).toList()}');
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return NetworkSuccess(json.decode(responseBody));
+      final streamedResponse = await multipartRequest.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      print('Response: ${response.statusCode} ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return NetworkSuccess(jsonDecode(response.body));
       } else {
-        return NetworkError(response.statusCode, responseBody);
+        return NetworkError(response.statusCode, 'Failed to apply leave: ${response.body}');
       }
     } catch (e) {
-      return NetworkError(-1, 'An error occurred: $e');
+      return NetworkError(-1, 'Exception: $e');
     }
   }
 
   Future<NetworkResult<List<LeaveResponse>>> fetchLeaveApplications() async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+
     try {
-      var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-history/');
-      // Log API request details
-      print('Hitting API: $uri');
-      print('Headers: {"Authorization: Bearer $token","Accept: application/json",}');
+      final uri = Uri.parse('${_networkClient.baseUrl}leave/leave-history/');
+
+      print('[GET] $uri');
+      print('Headers: {Authorization: Bearer $token, Accept: application/json}');
+
       final response = await http.get(
         uri,
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
-          'X-CSRFTOKEN': 'euRQJVDZBX8y5dhzWQZA4ig4knJTwag88YnsMB1b24QtpK1xlyYvGgRTNaQasgIK', // Add CSRF Token
+          'X-CSRFTOKEN': 'euRQJVDZBX8y5dhzWQZA4ig4knJTwag88YnsMB1b24QtpK1xlyYvGgRTNaQasgIK',
         },
       );
+
       print('Response Status: ${response.statusCode}');
       print('Response Body: ${response.body}');
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        final List<LeaveResponse> leaveRequests = data.map((item) {
-          return LeaveResponse(
-            id: item['id'].toString(),
-            dateRange: DateTimeRange(
-              start: DateTime.parse(item['start_date']),
-              end: DateTime.parse(item['end_date']),
-            ),
-            leaveType: item['leave_type'].toString(), // You may want to map this to name if available
-            reason: item['reason'] ?? '',
-            hr: item['hr_details'] != null ? '${item['hr_details']['first_name']} ${item['hr_details']['last_name']}' : '',
-            teamLead: item['manager_details'] != null && item['manager_details'].isNotEmpty
-              ? '${item['manager_details'][0]['first_name']} ${item['manager_details'][0]['last_name']}'
-              : '',
-            status: item['status'] ?? '',
-            appliedDate: DateTime.parse(item['applied_at']),
-            processedDate: null, // Not available in response
-            managerComment: null, // Not available in response
-            totalDays: double.tryParse(item['total_days'].toString()) ?? 1.0,
-            shortLeaveTime: item['start_time'] != null && item['end_time'] != null
-              ? '${item['start_time']} - ${item['end_time']}'
-              : null,
-            halfDayType: item['half_day_session'],
-            attachmentPath: item['attachment'],
-            leaveTypeName: item['leave_type_name'].toString(), // You may want to map this to name if available
 
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is! List) {
+          return NetworkError(-1, 'Invalid response format: Expected a list');
+        }
+
+        final leaveRequests = decoded.map<LeaveResponse>((item) {
+          return LeaveResponse(
+            id: item['id']?.toString() ?? '',
+            leaveType: item['leave_type'] is int
+                ? item['leave_type']
+                : int.tryParse(item['leave_type']?.toString() ?? '0') ?? 0,
+            leaveTypeName: item['leave_type_name']?.toString() ?? '',
+            fromTime: item['from_time'] != null ? item['from_time'].toString() : null,
+            toTime: item['to_time'] != null ? item['to_time'].toString() : null,
+            fromDate: item['from_date']?.toString() ?? '',
+            toDate: item['to_date']?.toString() ?? '',
+            appliedDate: item['applied_date']?.toString() ?? '',
+            managers: (item['managers'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+                [],
+            hr: item['hr']?.toString() ?? '',
+            reason: item['reason']?.toString() ?? '',
+            status: item['status']?.toString() ?? '',
+            attachment: item['attachment'] != null ? item['attachment'].toString() : null,
+            managerDetails: (item['manager_details'] as List<dynamic>? ?? [])
+                .map((e) => ManagerDetails.fromJson(e as Map<String, dynamic>))
+                .toList(),
+            userDetails: UserDetails.fromJson(
+                item['user_details'] as Map<String, dynamic>? ?? {}),
+            managerComment: (item['manager_comments'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+                [],
           );
         }).toList();
+
+        print('Filtered leaves count: ${leaveRequests.length}');
         return NetworkSuccess(leaveRequests);
       } else {
-        return NetworkError(response.statusCode,'Failed to fetch leave applications');
+        return NetworkError(
+          response.statusCode,
+          'Failed to fetch leave applications (${response.reasonPhrase})',
+        );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      print('Exception: $e');
+      print(stack);
       return NetworkError(-1, e.toString());
     }
   }
@@ -219,60 +220,188 @@ class LeaveRepository {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     try {
       var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-applications/$leaveId/');
-      var multipartRequest = http.MultipartRequest('PATCH', uri)
+      print('[PUT] $uri');
+      print('Headers: {Authorization: Bearer $token, Accept: application/json}');
+
+      var multipartRequest = http.MultipartRequest('PUT', uri)
         ..headers.addAll({
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
-          'Content-Type': 'multipart/form-data',
-          'X-CSRFTOKEN': 'dOcX7diDSJM2H2XQXatOKGUhnMYyTFm2xUHYr1pfOkKzrrB4rGQQpc3H09ayVAMz',
+          'X-CSRFTOKEN': 'euRQJVDZBX8y5dhzWQZA4ig4knJTwag88YnsMB1b24QtpK1xlyYvGgRTNaQasgIK',
         });
 
-      multipartRequest.fields['start_date'] = DateFormat('yyyy-MM-dd').format(request.startDate);
-      multipartRequest.fields['end_date'] = DateFormat('yyyy-MM-dd').format(request.endDate);
-      multipartRequest.fields['hr'] = request.hrId;
-      multipartRequest.fields['leave_type'] = request.leaveTypeId;
+      multipartRequest.fields['leave_type'] = request.leaveType.toString();
+      multipartRequest.fields['from_date'] = DateFormat('yyyy-MM-dd').format(request.fromDate);
+      multipartRequest.fields['to_date'] = DateFormat('yyyy-MM-dd').format(request.toDate);
+      multipartRequest.fields['hr'] = request.hr;
       multipartRequest.fields['reason'] = request.reason;
-      multipartRequest.fields['is_half_day'] = request.isHalfDay ? 'true' : '';
-      for (int i = 0; i < request.managerIds.length; i++) {
-        multipartRequest.fields['managers'] = request.managerIds[i];
-      }
-      if (request.halfDaySession != null) {
-        multipartRequest.fields['half_day_session'] = request.halfDaySession!;
-      }
-      if (request.startTime != null && request.startTime!.isNotEmpty) {
-        multipartRequest.fields['start_time'] = request.startTime!;
-        if (request.endTime != null && request.endTime!.isNotEmpty) {
-          multipartRequest.fields['end_time'] = request.endTime!;
-        }
-      }
-      // If startTime is null or empty, do not send start_time or end_time fields at all
-      else {
-        multipartRequest.fields['start_time'] = '';
-        multipartRequest.fields['end_time'] = '';
-      }
-      if (request.attachment != null) {
-        multipartRequest.files.add(
-          await http.MultipartFile.fromPath(
-            'attachment',
-            request.attachment!.path,
-          ),
+      multipartRequest.fields['managers'] = request.managers.join(',');
+
+      // Improved timestamp calculation with timezone awareness
+      if (request.fromTime != null && request.fromTime!.isNotEmpty) {
+        final timeParts = request.fromTime!.split(':');
+        final dt = DateTime(
+          request.fromDate.year,
+          request.fromDate.month,
+          request.fromDate.day,
+          int.parse(timeParts[0]),
+          int.parse(timeParts[1]),
         );
-      } else {
-        multipartRequest.fields['attachment'] = '';
+        // Use UTC to avoid timezone issues
+        final utcDt = dt.toUtc();
+        multipartRequest.fields['from_time'] = (utcDt.millisecondsSinceEpoch ~/ 1000).toString();
       }
-      print('[PATCH] ${multipartRequest.url}');
-      print('Headers: ${multipartRequest.headers}');
-      print('Fields: ${multipartRequest.fields}');
-      final response = await multipartRequest.send();
-      final responseBody = await response.stream.bytesToString();
-      print('Response: ${response.statusCode} $responseBody');
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return NetworkSuccess(json.decode(responseBody));
+
+      if (request.toTime != null && request.toTime!.isNotEmpty) {
+        final timeParts = request.toTime!.split(':');
+        final dt = DateTime(
+          request.toDate.year,
+          request.toDate.month,
+          request.toDate.day,
+          int.parse(timeParts[0]),
+          int.parse(timeParts[1]),
+        );
+        // Use UTC to avoid timezone issues
+        final utcDt = dt.toUtc();
+        multipartRequest.fields['to_time'] = (utcDt.millisecondsSinceEpoch ~/ 1000).toString();
+      }
+
+      // FIX: Only add attachment if it's a new file and exists
+      if (request.attachment != null && await request.attachment!.exists()) {
+        try {
+          multipartRequest.files.add(
+              await http.MultipartFile.fromPath('attachment', request.attachment!.path)
+          );
+          print('Adding attachment: ${request.attachment!.path}');
+        } catch (e) {
+          print('Warning: Could not attach file: $e');
+          // Continue without attachment rather than failing
+        }
       } else {
-        return NetworkError(response.statusCode, responseBody);
+        print('No attachment provided or file does not exist');
+      }
+
+      multipartRequest.fields['status'] = 'Pending';
+
+      print('Request Body: ${multipartRequest.fields} ${multipartRequest.files.map((f) => {'field': f.field, 'file': f.filename}).toList()}');
+
+      final streamedResponse = await multipartRequest.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('Response: ${response.statusCode} ${response.body}');
+
+      if (response.statusCode == 200) {
+        return NetworkSuccess(jsonDecode(response.body));
+      } else {
+        return NetworkError(response.statusCode, 'Failed to update leave: ${response.body}');
       }
     } catch (e) {
-      return NetworkError(-1, 'An error occurred: $e');
+      return NetworkError(-1, 'Exception: $e');
     }
+  }
+
+  Future<NetworkResult<List<LeaveApprovalRequest>>> fetchLeaveApprovalRequests() async {
+    final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+
+    try {
+      final uri = Uri.parse('${_networkClient.baseUrl}leave/leave-requests/');
+
+      print('[GET] $uri');
+      print('Headers: {Authorization: Bearer $token, Accept: application/json}');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'X-CSRFTOKEN': 'euRQJVDZBX8y5dhzWQZA4ig4knJTwag88YnsMB1b24QtpK1xlyYvGgRTNaQasgIK',
+        },
+      );
+
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is! List) {
+          return NetworkError(-1, 'Invalid response format: Expected a list');
+        }
+
+        final leaveRequests = decoded.map<LeaveApprovalRequest>((item) {
+          return LeaveApprovalRequest(
+            id: item['id']?.toString() ?? '',
+            requestedBy: item['requested_by']?.toString() ?? '',
+            leaveType: item['leave_type'] ?? 0, // int
+            fromDate: item['from_date']?.toString() ?? '',
+            toDate: item['to_date']?.toString() ?? '',
+            fromTime: item['from_time'] != null ? int.tryParse(item['from_time'].toString()) : null,
+            toTime: item['to_time'] != null ? int.tryParse(item['to_time'].toString()) : null,
+            reason: item['reason']?.toString() ?? '',
+            attachment: item['attachment'] != null ? item['attachment'].toString() : null,
+            status: item['status']?.toString() ?? '',
+            leaveTypeName: item['leave_type_name']?.toString() ?? '',
+
+          );
+        }).toList();
+
+        return NetworkSuccess(leaveRequests);
+      } else {
+        return NetworkError(
+          response.statusCode,
+          'Failed to fetch leave applications (${response.reasonPhrase})',
+        );
+      }
+    } catch (e, stack) {
+      print('Exception: $e');
+      print(stack);
+      return NetworkError(-1, e.toString());
+    }
+  }
+
+  Future<NetworkResult<void>> updateLeaveStatus({
+    required String leaveId,
+    required String action,
+    required String comments,
+  }) async {
+    final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+
+    try {
+      final uri = Uri.parse('${_networkClient.baseUrl}leave/leave-approve/$leaveId/');
+      print('[POST] $uri');
+      print('Headers: {Authorization: Bearer $token, Accept: application/json}');
+
+      final body = LeaveStatusUpdate(action: action, comments: comments).toJson();
+
+      final response = await http.post(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRFTOKEN': 'euRQJVDZBX8y5dhzWQZA4ig4knJTwag88YnsMB1b24QtpK1xlyYvGgRTNaQasgIK',
+        },
+        body: jsonEncode(body),
+      );
+
+      print('Response: ${response.statusCode} ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return NetworkSuccess(null);
+      } else {
+        return NetworkError(response.statusCode, 'Failed to update leave status: ${response.body}');
+      }
+    } catch (e) {
+      return NetworkError(-1, 'Exception: $e');
+    }
+  }
+
+  Future<NetworkResult<LeaveBalance>> fetchLeaveBalance() async {
+    final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+    return await _networkClient.get<LeaveBalance>(
+      "leave/leave-balance/",
+      headers: {"Authorization": "Bearer $token"},
+      parser: (json) => LeaveBalance.fromJson(json),
+    );
   }
 }

@@ -274,17 +274,34 @@ class _TaskHistoryScreenState extends State<TaskHistoryScreen> {
                         ),
                         Expanded(
                           child: _taskHistory.isEmpty
-                              ? const Center(child: Text(AppStrings.noCompletionTasks))
-                              : ListView.builder(
-                                  itemCount: _taskHistory.length,
-                                  itemBuilder: (context, taskIndex) {
-                                    final task = _taskHistory[taskIndex];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                      child: TaskCard(task: task, isHistoryTask: true,),
-                                    );
-                                  },
+                              ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.task_alt, size: 48, color: Colors.grey),
+                                const SizedBox(height: 12),
+                                Text(
+                                  AppStrings.noCompletionTasks,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey[600],
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
+                              ],
+                            ),
+                          )
+                              : ListView.builder(
+                            itemCount: _taskHistory.length,
+                            itemBuilder: (context, taskIndex) {
+                              final task = _taskHistory[taskIndex];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                child: TaskCard(task: task, isHistoryTask: true),
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),

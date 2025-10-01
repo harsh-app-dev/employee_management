@@ -1,77 +1,117 @@
-import 'package:flutter/material.dart';
+class ManagerDetails {
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String email;
+
+  ManagerDetails({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+  });
+
+  factory ManagerDetails.fromJson(Map<String, dynamic> json) {
+    return ManagerDetails(
+      id: json['id']?.toString() ?? '',
+      firstName: json['first_name']?.toString() ?? '',
+      lastName: json['last_name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+    );
+  }
+}
+
+class UserDetails {
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String email;
+
+  UserDetails({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+  });
+
+  factory UserDetails.fromJson(Map<String, dynamic> json) {
+    return UserDetails(
+      id: json['id']?.toString() ?? '',
+      firstName: json['first_name']?.toString() ?? '',
+      lastName: json['last_name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+    );
+  }
+
+  String get fullName => '$firstName $lastName';
+}
 
 class LeaveResponse {
   final String id;
-  final DateTimeRange dateRange;
-  final String leaveType;
-  final String reason;
-  final String? attachmentPath;
-  final String hr;
-  final String teamLead;
-  final String status;
-  final DateTime appliedDate;
-  final String? managerComment;
-  final DateTime? processedDate;
-  final double totalDays;
-  final String? shortLeaveTime;
-  final String? halfDayType;
-  final bool isNewlyApplied;
+  final int leaveType;
   final String leaveTypeName;
+  final String? fromTime;
+  final String? toTime;
+  final String fromDate;
+  final String toDate;
+  final String appliedDate;
+  final List<String> managers;
+  final String hr;
+  final String reason;
+  final String status;
+  final String? attachment;
+  final List<ManagerDetails> managerDetails;
+  final UserDetails userDetails;
+  final List<String> managerComment;
 
   LeaveResponse({
     required this.id,
-    required this.dateRange,
     required this.leaveType,
-    required this.reason,
-    this.attachmentPath,
-    required this.hr,
-    required this.teamLead,
-    this.status = 'Pending',
-    required this.appliedDate,
-    this.managerComment,
-    this.processedDate,
-    required this.totalDays,
-    this.shortLeaveTime,
-    this.halfDayType,
-    this.isNewlyApplied = false,
     required this.leaveTypeName,
+    this.fromTime,
+    this.toTime,
+    required this.fromDate,
+    required this.toDate,
+    required this.appliedDate,
+    required this.managers,
+    required this.hr,
+    required this.reason,
+    required this.status,
+    this.attachment,
+    required this.managerDetails,
+    required this.userDetails,
+    required this.managerComment
   });
 
-  LeaveResponse copyWith({
-    String? id,
-    DateTimeRange? dateRange,
-    String? leaveType,
-    String? reason,
-    String? attachmentPath,
-    String? hr,
-    String? teamLead,
-    String? status,
-    DateTime? appliedDate,
-    String? managerComment,
-    DateTime? processedDate,
-    double? totalDays,
-    String? shortLeaveTime,
-    String? halfDayType,
-    bool? isNewlyApplied,
-    String? leaveTypeName,
-  }) {
+  factory LeaveResponse.fromJson(Map<String, dynamic> json) {
     return LeaveResponse(
-      id: id ?? this.id,
-      dateRange: dateRange ?? this.dateRange,
-      leaveType: leaveType ?? this.leaveType,
-      reason: reason ?? this.reason,
-      attachmentPath: attachmentPath ?? this.attachmentPath,
-      hr: hr ?? this.hr,
-      teamLead: teamLead ?? this.teamLead,
-      status: status ?? this.status,
-      appliedDate: appliedDate ?? this.appliedDate,
-      managerComment: managerComment ?? this.managerComment,
-      processedDate: processedDate ?? this.processedDate,
-      totalDays: totalDays ?? this.totalDays,
-      shortLeaveTime: shortLeaveTime ?? this.shortLeaveTime,
-      halfDayType: halfDayType ?? this.halfDayType,
-      isNewlyApplied: isNewlyApplied ?? this.isNewlyApplied,
-      leaveTypeName: leaveTypeName ?? this.leaveTypeName,
+      id: json['id']?.toString() ?? '',
+      leaveType: json['leave_type'] is int
+          ? json['leave_type']
+          : int.tryParse(json['leave_type']?.toString() ?? '0') ?? 0,
+      leaveTypeName: json['leave_type_name']?.toString() ?? '',
+      fromTime: json['from_time']?.toString(),
+      toTime: json['to_time']?.toString(),
+      fromDate: json['from_date']?.toString() ?? '',
+      toDate: json['to_date']?.toString() ?? '',
+      appliedDate: json['applied_date']?.toString() ?? '',
+      managers: (json['managers'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList() ??
+          [],
+      hr: json['hr']?.toString() ?? '',
+      reason: json['reason']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      attachment: json['attachment']?.toString(),
+      managerDetails: (json['manager_details'] as List<dynamic>? ?? [])
+          .map((e) => ManagerDetails.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      userDetails: UserDetails.fromJson(
+          json['user_details'] as Map<String, dynamic>? ?? {}),
+      managerComment: (json['manager_comments'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList() ??
+          [],
     );
   }
 }

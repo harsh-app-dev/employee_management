@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:employee_management/core/configs/strings.dart';
 import 'package:employee_management/core/di/injectable_module.dart';
 import 'package:employee_management/core/utils/util.dart';
-import 'package:employee_management/features/presentation/screens/chat/chat_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -329,8 +328,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         _workedDuration = formatDuration(totalWorkDuration);
         _breakDuration = formatDuration(totalBreakDuration);
-        _firstPunchIn = punchInEvents.isNotEmpty ? punchInEvents.first.time ?? '--' : '--';
-        _lastPunchOut = punchOutEvents.isNotEmpty ? punchOutEvents.last.time ?? '--' : '--';
+        _firstPunchIn = punchInEvents.isNotEmpty ? formatTime(punchInEvents.first.time) : '--:--';
+        _lastPunchOut = punchOutEvents.isNotEmpty ? formatTime(punchOutEvents.last.time) : '--:--';
 
         _isBreakButtonEnabled = isPunchedIn;
         _isOnBreak = isOnBreak;
@@ -756,82 +755,99 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 if (activityEvents.isNotEmpty)
                                   Card(
                                     elevation: 10,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18),),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                                     margin: EdgeInsets.only(bottom: 3.h),
                                     color: theme.brightness == Brightness.light ? Colors.white : theme.cardColor,
-                                    child: SizedBox(
-                                      height: 325,
-                                      child: Padding(padding: const EdgeInsets.all(16.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Today's Activity Logs",
-                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.dp),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min, // allow height to shrink/grow
+                                        children: [
+                                          Text(
+                                            "Today's Activity Logs",
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.dp),
+                                          ),
+                                          Divider(
+                                            height: 24,
+                                            thickness: 1.3,
+                                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                                          ),
+                                          ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                              maxHeight: 250, // maximum height before scrolling
                                             ),
-                                            Divider(height: 24, thickness: 1.3, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),),
-
-                                            Expanded(
-                                              child: Scrollbar(
+                                            child: Scrollbar(
+                                              controller: scrollController,
+                                              thumbVisibility: true,
+                                              radius: const Radius.circular(10),
+                                              thickness: 6,
+                                              child: SingleChildScrollView(
                                                 controller: scrollController,
-                                                thumbVisibility: true,
-                                                radius: const Radius.circular(10),
-                                                thickness: 6,
-                                                child: SingleChildScrollView(
-                                                  controller: scrollController,
-                                                  child: Stack(
-                                                    children: [
-                                                      Positioned(left: 9, top: 10, bottom: 10, child: Container(width: 2, color: Colors.grey.shade300),),
-                                                      Column(
-                                                        children: activityEvents.expand((activity) {
-                                                          final List<Widget> activityEntries = [];
-                                                          final activityDate = _getActivityDate(activity);
-                                                          final activityTime = "${activityDate}T${activity.time}";
-                                                          activityEntries.add(
-                                                            Container(
-                                                              margin: const EdgeInsets.only(bottom: 4),
-                                                              child: Row(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Container(
-                                                                    width: 20,
-                                                                    height: 20,
-                                                                    decoration: BoxDecoration(
-                                                                      shape: BoxShape.circle,
-                                                                      color: getColorForType(activity.type),
-                                                                      border: Border.all(color: Colors.white, width: 3),
-                                                                    ),
+                                                child: Stack(
+                                                  children: [
+                                                    Positioned(
+                                                      left: 9,
+                                                      top: 10,
+                                                      bottom: 10,
+                                                      child: Container(width: 2, color: Colors.grey.shade300),
+                                                    ),
+                                                    Column(
+                                                      children: activityEvents.expand((activity) {
+                                                        final List<Widget> activityEntries = [];
+                                                        final activityDate = _getActivityDate(activity);
+                                                        final activityTime = "${activityDate}T${activity.time}";
+                                                        activityEntries.add(
+                                                          Container(
+                                                            margin: const EdgeInsets.only(bottom: 4),
+                                                            child: Row(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Container(
+                                                                  width: 20,
+                                                                  height: 20,
+                                                                  decoration: BoxDecoration(
+                                                                    shape: BoxShape.circle,
+                                                                    color: getColorForType(activity.type),
+                                                                    border: Border.all(color: Colors.white, width: 3),
                                                                   ),
-                                                                  const SizedBox(width: 16),
-                                                                  Expanded(
-                                                                    child: Column(
-                                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                                      children: [
-                                                                        Text(
-                                                                          getLabelForType(activity.type),
-                                                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
+                                                                ),
+                                                                const SizedBox(width: 16),
+                                                                Expanded(
+                                                                  child: Column(
+                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                    children: [
+                                                                      Text(
+                                                                        getLabelForType(activity.type),
+                                                                        style: const TextStyle(
+                                                                          fontWeight: FontWeight.bold,
+                                                                          fontSize: 16,
                                                                         ),
-                                                                        const SizedBox(height: 4),
-                                                                        Text(
-                                                                          _formatTime(activityTime),
-                                                                          style: TextStyle(fontSize: 14, color: Colors.grey.shade600,),
+                                                                      ),
+                                                                      const SizedBox(height: 4),
+                                                                      Text(
+                                                                        _formatTime(activityTime),
+                                                                        style: TextStyle(
+                                                                          fontSize: 14,
+                                                                          color: Colors.grey.shade600,
                                                                         ),
-                                                                      ],
-                                                                    ),
+                                                                      ),
+                                                                    ],
                                                                   ),
-                                                                ],
-                                                              ),
+                                                                ),
+                                                              ],
                                                             ),
-                                                          );return activityEntries;
-                                                        }).toList(),
-                                                      ),
-                                                    ],
-                                                  ),
+                                                          ),
+                                                        );
+                                                        return activityEntries;
+                                                      }).toList(),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   )
@@ -870,7 +886,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
 
-      floatingActionButton: FloatingActionButton(
+    /*  floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ChatSection()), // <-- your Chat screen
@@ -880,7 +896,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: const Icon(Icons.chat, color: Colors.white, size: 32),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // bottom-right corner
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // bottom-right corner*/
 
     );
   }
