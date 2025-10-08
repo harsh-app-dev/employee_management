@@ -24,7 +24,7 @@ class AttendanceDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final formattedDateStr = (formattedDate != null && formattedDate.isNotEmpty)
+    final formattedDateStr = (formattedDate.isNotEmpty)
         ? formattedDate
         : (attendanceDetails.isNotEmpty && attendanceDetails.first.attendanceDate != null)
         ? DateFormat('EEEE, d MMM yyyy')
@@ -82,7 +82,7 @@ class AttendanceDetailSheet extends StatelessWidget {
                   ),
                 ),
               ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 60),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -90,12 +90,12 @@ class AttendanceDetailSheet extends StatelessWidget {
                   Icon(Icons.event_busy, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
                   const Text(
-                    'No punch logs available',
+                    'Punch logs not available',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Your work activities will appear here',
+                    'Your punch activities will appear here',
                     style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],

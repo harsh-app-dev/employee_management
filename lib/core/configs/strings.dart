@@ -31,7 +31,7 @@ class AppStrings {
   static const String weekly = 'Weekly';
   static const String monthly = 'Monthly';
   static const String custom = 'Custom';
-  static const String noPunchEntries = 'No punch entries found for selected dates.';
+  static const String noPunchEntries = 'No punch records found for the selected dates.';
   static const String punchDetails = 'Punch Details';
   static const String viewAll = 'View All';
   static const String punchInLocation = 'Punch In Location';

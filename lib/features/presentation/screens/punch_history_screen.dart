@@ -289,7 +289,28 @@ class _PunchHistoryScreenState extends State<PunchHistoryScreen> {
               ),
               Expanded(
                 child: _isLoading && _punchHistory.isEmpty ? const Center(child: CircularProgressIndicator()) : _punchHistory.isEmpty
-                    ? const Center(child: Text(AppStrings.noPunchEntries)) : NotificationListener<ScrollNotification>(
+                    ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 50,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          AppStrings.noPunchEntries,
+                          style: TextStyle(fontSize: 20, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                    : NotificationListener<ScrollNotification>(
                   onNotification: (ScrollNotification scrollInfo) {
                     if (!_isLoading && scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 100 && _hasMore) {
                       _loadMore();

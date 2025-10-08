@@ -30,7 +30,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
   List<RoleUser> _managerList = [];
   bool _isLoadingLeaveTypes = true;
   bool _isLoadingRoles = true;
-  LeaveBalance? _leaveBalance;
+  List<LeaveBalance> _leaveBalances = [];
   final List<LeaveResponse> _leaveRequests = [];
   Map<DateTime, List<LeaveResponse>> _events = {};
   String _selectedStatusFilter = 'All';
@@ -92,16 +92,17 @@ class _LeaveScreenState extends State<LeaveScreen> {
       });
     }
   }
-
   Future<void> _fetchLeaveBalance() async {
     final leaveRepository = getIt<LeaveRepository>();
     final result = await leaveRepository.fetchLeaveBalance();
-    if (result is NetworkSuccess<LeaveBalance>) {
+
+    if (result is NetworkSuccess<List<LeaveBalance>>) {
       setState(() {
-        _leaveBalance = result.data;
+        _leaveBalances = result.data;
       });
     }
   }
+
 
   void _initializeEvents() {
     _events.clear();
@@ -220,46 +221,139 @@ class _LeaveScreenState extends State<LeaveScreen> {
   }
 
   Widget _buildLeaveBalanceSection() {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      elevation: 3,
-      color: const Color(0xFFF8FAFC),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            if (_leaveBalance != null) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _cleanBalanceItem(
-                      Icons.beach_access,
-                      'Casual Leave',
-                      num.tryParse(_leaveBalance!.leaveBalance) ?? 0,
-                      12, // If you have total from API, replace 12 with that value
-                      Colors.green,
-                    ),
-                  ),
-                  Expanded(
-                    child: _cleanBalanceItem(
-                      Icons.timer,
-                      'Short Leave',
-                      _leaveBalance!.shortLeave,
-                      1, // If you have total from API, replace 1 with that value
-                      Colors.orange,
-                    ),
-                  ),
-                ],
+    bool _showAllLeaves = false;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        // Guard: No data case
+        if (_leaveBalances.isEmpty) {
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            elevation: 4,
+            color: Colors.white,
+            child: const Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(
+                child: Text(
+                  'No Data Found',
+                  style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+                ),
               ),
-            ] else ...[
-              const Center(child: CircularProgressIndicator()),
-            ],
-          ],
-        ),
-      ),
+            ),
+          );
+        }
+
+        // Initially only show Casual and Short Leave
+        final visibleLeaves = _showAllLeaves
+            ? _leaveBalances
+            : _leaveBalances
+            .where((leave) =>
+        leave.leaveTypeName.toLowerCase() == 'casual leave' ||
+            leave.leaveTypeName.toLowerCase() == 'short leave')
+            .toList();
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          elevation: 4,
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: visibleLeaves.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 2.0, // Adjust height/width ratio as needed
+                  ),
+                  itemBuilder: (context, index) {
+                    final leave = visibleLeaves[index];
+
+                    IconData icon;
+                    Color color;
+
+                    switch (leave.leaveTypeName.toLowerCase()) {
+                      case 'casual leave':
+                        icon = Icons.beach_access;
+                        color = Colors.green;
+                        break;
+                      case 'short leave':
+                        icon = Icons.timer;
+                        color = Colors.orange;
+                        break;
+                      case 'wedding leave':
+                        icon = Icons.favorite;
+                        color = Colors.pink;
+                        break;
+                      case 'maternity leave':
+                        icon = Icons.pregnant_woman;
+                        color = Colors.red;
+                        break;
+                      case 'paternity leave':
+                        icon = Icons.child_friendly;
+                        color = Colors.teal;
+                        break;
+                      case 'bereavement leave':
+                        icon = Icons.sentiment_dissatisfied;
+                        color = Colors.purple;
+                        break;
+                      default:
+                        icon = Icons.calendar_today;
+                        color = Colors.blueGrey;
+                    }
+
+                    return _cleanBalanceItem(
+                      icon,
+                      leave.leaveTypeName,
+                      num.tryParse(leave.balance)?.toInt() ?? 0,
+                      0,
+                      color,
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 2),
+
+                // Show More / Show Less button
+                if (_leaveBalances.length > 2)
+                  Center(
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        backgroundColor: Colors.grey[100],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() => _showAllLeaves = !_showAllLeaves);
+                      },
+                      icon: Icon(
+                        _showAllLeaves ? Icons.expand_less : Icons.expand_more,
+                        size: 20,
+                        color: Colors.black87,
+                      ),
+                      label: Text(
+                        _showAllLeaves ? "Show Less" : "Show More",
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -573,7 +667,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       CircleAvatar(
                         backgroundColor: getStatusColor(leave.status).withValues(alpha: 0.13),
                         radius: 18,
-                        child: Icon(getLeaveTypeIcon(leave.leaveTypeName), color: getStatusColor(leave.leaveTypeName), size: 20),
+                        child: Icon(getLeaveTypeIcon(leave.leaveTypeName), color: getStatusColor(leave.status), size: 20),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -625,11 +719,15 @@ class _LeaveScreenState extends State<LeaveScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20)),),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
-        // final isEditable = leave.status == 'Pending';
-        final isEditable = !leave.fromDateTime.isBefore(DateTime.now()) && leave.status != "Cancelled";
+        final isEditable =
+            !leave.fromDateTime.isBefore(DateTime.now()) && leave.status != "Cancelled";
+
         if (isEditable) {
+          // Editable leave bottom sheet
           return DraggableScrollableSheet(
             initialChildSize: 0.9,
             minChildSize: 0.5,
@@ -637,11 +735,20 @@ class _LeaveScreenState extends State<LeaveScreen> {
             expand: false,
             builder: (context, scrollController) {
               return Container(
-                decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20)),),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
                 child: Column(
                   children: [
-                    Container(margin: const EdgeInsets.only(top: 8), width: 40, height: 4,
-                      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2),),
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -649,7 +756,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                         children: [
                           const Icon(Icons.edit, color: Colors.blue, size: 24),
                           const SizedBox(width: 8),
-                          const Text('Edit Leave', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
+                          const Text(
+                            'Edit Leave',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
                           const Spacer(),
                           IconButton(
                             onPressed: () => Navigator.pop(context),
@@ -671,9 +781,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               managerList: _managerList,
                               existingLeaveRequests: _leaveRequests,
                               onLeaveSubmitted: (request, {casualDeduct = 0, sickDeduct = 0, shortDeduct = 0}) {
-
-                                setState(() {_leaveRequests[index] = request;_initializeEvents();});
-
+                                setState(() {
+                                  _leaveRequests[index] = request;
+                                  _initializeEvents();
+                                });
                                 Navigator.pop(context);
                                 showGlobalSnackBar('Leave request updated successfully!');
                               },
@@ -685,15 +796,19 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               width: double.infinity,
                               height: 45,
                               child: ElevatedButton.icon(
-                                onPressed: leave.status == 'Cancelled' ? null : () async {
+                                onPressed: leave.status == 'Cancelled'
+                                    ? null
+                                    : () async {
                                   showDialog(
                                     context: context,
                                     barrierDismissible: false,
-                                    builder: (context) => const Center(child: CircularProgressIndicator()),
+                                    builder: (context) =>
+                                    const Center(child: CircularProgressIndicator()),
                                   );
                                   final leaveRepository = getIt<LeaveRepository>();
                                   final result = await leaveRepository.withdrawLeave(leave.id);
-                                  Navigator.of(context, rootNavigator: true).pop(); // Hide loader
+                                  Navigator.of(context, rootNavigator: true)
+                                      .pop(); // Hide loader
                                   if (result is NetworkSuccess) {
                                     setState(() {
                                       _leaveRequests[index] = LeaveResponse(
@@ -713,7 +828,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
                                         managerDetails: leave.managerDetails,
                                         userDetails: leave.userDetails,
                                         managerComment: leave.managerComment,
-
                                       );
                                       _initializeEvents();
                                     });
@@ -729,22 +843,28 @@ class _LeaveScreenState extends State<LeaveScreen> {
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: leave.status == 'Cancelled' ? Colors.grey : Colors.red, foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  backgroundColor:
+                                  leave.status == 'Cancelled' ? Colors.grey : Colors.red,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
                               ),
                             ),
-
                           ],
                         ),
                       ),
-                    ), const SizedBox(height: 16),
+                    ),
+                    const SizedBox(height: 16),
                   ],
                 ),
               );
             },
           );
         }
+
+        // Non-editable leave bottom sheet
         return Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: DraggableScrollableSheet(
@@ -755,57 +875,102 @@ class _LeaveScreenState extends State<LeaveScreen> {
             builder: (context, scrollController) {
               return SingleChildScrollView(
                 controller: scrollController,
-                child: Padding( padding: const EdgeInsets.all(20),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Center(
-                        child: Container(margin: const EdgeInsets.only(top: 8), width: 40, height: 4,
-                          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2),),
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
-                          Icon(getLeaveTypeIcon(leave.leaveTypeName), color: getStatusColor(leave.leaveTypeName), size: 28),
+                          Icon(
+                            getLeaveTypeIcon(leave.leaveTypeName),
+                            color: getStatusColor(leave.status),
+                            size: 28,
+                          ),
                           const SizedBox(width: 10),
-                          Text(leave.leaveTypeName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),),
-
+                          Text(
+                            leave.leaveTypeName,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
                           const Spacer(),
                           buildStatusIndicator(leave.status),
-                          IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context),),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      Text('Date Range:', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('${leave.fromDate} - ${leave.toDate}'),
+                      Text('Date Range:', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(_formatLeaveDateRange(leave)),
+                      // Show time for Half Day or Short Leave
+                      if (leave.leaveTypeName.toLowerCase().contains('short')) ...[
+                        const SizedBox(height: 16),
+                        const Text('Time:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          formatLeaveTimeFromTimestamp(
+                            int.tryParse(leave.fromTime ?? ''),
+                            int.tryParse(leave.toTime ?? ''),
+                          ),
+                          style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        ),
+                      ],
+
+
+                      if (leave.leaveTypeName.toLowerCase().contains('half')) ...[
+                        const SizedBox(height: 16),
+                      Text('Time:', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        formatLeaveTimeFromTimestamp(int.tryParse(leave.fromTime ?? ''), int.tryParse(leave.toTime ?? '')),
+                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        ),
+                      ],
+
                       const SizedBox(height: 10),
-                      Text('Reason:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Reason:', style: const TextStyle(fontWeight: FontWeight.bold)),
                       Text(leave.reason),
                       const SizedBox(height: 10),
-                      Text('Applied Date:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Applied Date:', style: const TextStyle(fontWeight: FontWeight.bold)),
                       Text(leave.appliedDate),
                       const SizedBox(height: 10),
                       if (leave.attachment != null)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Attachment:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('Attachment:', style: const TextStyle(fontWeight: FontWeight.bold)),
                             DocumentWebViewer(filePath: leave.attachment!),
                             const SizedBox(height: 10),
                           ],
                         ),
-                      Text('HR:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('HR:', style: const TextStyle(fontWeight: FontWeight.bold)),
                       Text(leave.hr),
                       const SizedBox(height: 10),
-                      Text('Managers:', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text(leave.managerDetails.isNotEmpty ? leave.managerDetails.map((m) => '${m.firstName} ${m.lastName}').join(', ') : 'No manager assigned',),
+                      Text('Managers:', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        leave.managerDetails.isNotEmpty
+                            ? leave.managerDetails
+                            .map((m) => '${m.firstName} ${m.lastName}')
+                            .join(', ')
+                            : 'No manager assigned',
+                      ),
                       const SizedBox(height: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Manager Comment:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text('Manager Comment:', style: const TextStyle(fontWeight: FontWeight.bold)),
                           Text(leave.managerComment.join(', ')),
                           const SizedBox(height: 10),
                         ],
@@ -819,6 +984,28 @@ class _LeaveScreenState extends State<LeaveScreen> {
         );
       },
     );
+  }
+
+// --- Helper to format timestamp in seconds ---
+  String formatLeaveTimeFromTimestamp(int? from, [int? to, bool isShortLeave = true]) {
+    if (from == null) return 'Time: Not available';
+
+    DateTime fromTime = DateTime.fromMillisecondsSinceEpoch(from * 1000, isUtc: true).toLocal();
+    String fromStr = DateFormat('hh:mm a').format(fromTime);
+
+    if (isShortLeave && to != null) {
+      DateTime toTime = DateTime.fromMillisecondsSinceEpoch(to * 1000, isUtc: true).toLocal();
+      String toStr = DateFormat('hh:mm a').format(toTime);
+      return '$fromStr to $toStr';
+    }
+
+    return fromStr;
+  }
+
+// --- Helper to format full date range ---
+  String _formatLeaveDateRange(LeaveResponse leave) {
+    // fallback if needed
+    return '${leave.fromDate} - ${leave.toDate}';
   }
 }
 
@@ -857,7 +1044,6 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
   bool _isSubmitting = false;
   TimeOfDay? _shortLeaveStartTime;
   TimeOfDay? _shortLeaveEndTime;
-  String? _selectedHalf;
 
   int get _totalDays {
     if (_dateRange == null) return 0;
@@ -1009,7 +1195,6 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
                   _dateRange = null;
                 }
                 _selectedLeaveType = value;
-                if (value != 'Half Day Leave') _selectedHalf = null;
               });
             },
             validator: (value) =>
@@ -1211,66 +1396,72 @@ class _LeaveApplicationFormState extends State<_LeaveApplicationForm> {
               return null;
             },
             builder: (field) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DropdownButtonHideUnderline(
-                    child: DropdownButton2(
-                      isExpanded: true,
-                      customButton: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Team Lead(s) *',
-                          border: const OutlineInputBorder(),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          errorText: field.errorText,
-                        ),
-                        child: Text(
-                          _selectedManagers.isEmpty ? 'Select one or more managers' : _selectedManagers.map((e) => e.fullName).join(', '),
-                          style: const TextStyle(fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+              return DropdownButtonHideUnderline(
+                child: DropdownButton2(
+                  isExpanded: true,
+                  customButton: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Team Lead(s) *',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.person_outline),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 16, // matches your screenshot
                       ),
-                      dropdownStyleData: DropdownStyleData(
-                        maxHeight: 200,
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), color: Colors.white, border: Border.all(color: Colors.grey),),
-                      ),
-                      onChanged: (_) {},
-                      items: widget.managerList.map((manager) {
-                        return DropdownMenuItem(
-                          value: manager,
-                          child: StatefulBuilder(
-                            builder: (context, setStateSB) {
-                              final isSelected = _selectedManagers.any((m) => m.id == manager.id);
-                              return CheckboxListTile(
-                                dense: true,
-                                value: isSelected,
-                                title: Text(manager.fullName, style: const TextStyle(fontSize: 14)),
-                                controlAffinity: ListTileControlAffinity.leading,
-                                contentPadding: EdgeInsets.zero,
-                                onChanged: (checked) {
-                                  setState(() {
-                                    if (checked == true) {
-                                      _selectedManagers.add(manager);
-                                    } else {
-                                      _selectedManagers.removeWhere((m) => m.id == manager.id);
-                                    }
-                                    field.didChange(_selectedManagers);
-                                  });
-                                  setStateSB(() {});
-                                },
-                              );
-                            },
+                      errorText: field.errorText,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _selectedManagers.isEmpty
+                              ? const Text('Select one or more managers', style: TextStyle(fontSize: 14, color: Colors.black54,), overflow: TextOverflow.ellipsis,)
+                              : Text(_selectedManagers.map((e) => e.fullName).join(', '),
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        );
-                      }).toList(),
-                      iconStyleData: const IconStyleData(icon: Icon(Icons.arrow_drop_down), iconSize: 24,),
+                        ),
+                        const Icon(Icons.arrow_drop_down, color: Colors.black54,), // aligned with text
+                      ],
                     ),
                   ),
-                ],
+                  dropdownStyleData: DropdownStyleData(
+                    maxHeight: 250,
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), color: Colors.white, border: Border.all(color: Colors.grey.shade300),),
+                  ),
+                  onChanged: (_) {}, // required but unused
+                  items: widget.managerList.map((manager) {
+                    return DropdownMenuItem(
+                      value: manager,
+                      child: StatefulBuilder(
+                        builder: (context, setStateSB) {
+                          final isSelected =
+                          _selectedManagers.any((m) => m.id == manager.id);
+                          return CheckboxListTile(
+                            dense: true,
+                            value: isSelected,
+                            title: Text(manager.fullName, style: const TextStyle(fontSize: 14),),
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            onChanged: (checked) {
+                              setState(() {
+                                if (checked == true) {
+                                  _selectedManagers.add(manager);
+                                } else {
+                                  _selectedManagers.removeWhere((m) => m.id == manager.id);
+                                }
+                                field.didChange(_selectedManagers);
+                              });
+                              setStateSB(() {});
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
               );
             },
           ),
-
           const SizedBox(height: 12),
           TextFormField(
             controller: _reasonController,

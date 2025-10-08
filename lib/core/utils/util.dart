@@ -360,3 +360,18 @@ Widget buildStatusIndicator(String status) {
     child: Text(status, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500,),),
   );
 }
+
+String formatLeaveTimeFromTimestamp(int? from, [int? to, bool isShortLeave = true]) {
+  if (from == null) return 'Time: Not available';
+
+  DateTime fromTime = DateTime.fromMillisecondsSinceEpoch(from * 1000, isUtc: true).toLocal();
+  String fromStr = DateFormat('hh:mm a').format(fromTime);
+
+  if (isShortLeave && to != null) {
+    DateTime toTime = DateTime.fromMillisecondsSinceEpoch(to * 1000, isUtc: true).toLocal();
+    String toStr = DateFormat('hh:mm a').format(toTime);
+    return '$fromStr to $toStr';
+  }
+
+  return fromStr;
+}

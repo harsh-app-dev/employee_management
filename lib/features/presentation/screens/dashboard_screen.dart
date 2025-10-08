@@ -706,6 +706,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     flex: 1,
                                                     child: ElevatedButton.icon(
                                                       onPressed: (isActive) ? () async {
+                                                        if (!await checkInternet(context)) return;
+
                                                         if (!_isOnBreak) {
                                                           setState(() { _isBreakLoading = true; });
                                                           await _submitDebouncer.run(() async {

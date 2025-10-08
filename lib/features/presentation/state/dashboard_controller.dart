@@ -22,11 +22,16 @@ class DashboardController {
   final ValueNotifier<ApiState<SubmitTasksResponse>> submitTasksApiState =
       ValueNotifier(ApiState.initial());
 
-  Future<void> fetchTasks() async {
+  String? _lastFetchedDate;
+
+
+  Future<void> fetchTasks({required String startDate}) async {
+    _lastFetchedDate = startDate; // save last used date
+
     tasksApiState.value = ApiState.loading();
 
     try {
-      final result = await _taskUseCase();
+      final result = await _taskUseCase(startDate);
 
       if (result is NetworkSuccess<TaskResponse>) {
         tasksApiState.value = ApiState.success(result.data);
@@ -42,6 +47,7 @@ class DashboardController {
     }
   }
 
+
   Future<void> submitTasks(TaskResponse tasks) async {
     submitTasksApiState.value = ApiState.loading();
     try {
@@ -52,7 +58,9 @@ class DashboardController {
 
       if (result is NetworkSuccess<SubmitTasksResponse>) {
         submitTasksApiState.value = ApiState.success(result.data);
-        await fetchTasks();
+        if (_lastFetchedDate != null) {
+          await fetchTasks(startDate: _lastFetchedDate!);
+        }
       } else if (result is NetworkError<SubmitTasksResponse>) {
         submitTasksApiState.value = ApiState.error(result.message);
       } else {

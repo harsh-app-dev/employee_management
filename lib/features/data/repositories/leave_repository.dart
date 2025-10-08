@@ -396,12 +396,18 @@ class LeaveRepository {
     }
   }
 
-  Future<NetworkResult<LeaveBalance>> fetchLeaveBalance() async {
+  Future<NetworkResult<List<LeaveBalance>>> fetchLeaveBalance() async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
-    return await _networkClient.get<LeaveBalance>(
+
+    return await _networkClient.get<List<LeaveBalance>>(
       "leave/leave-balance/",
       headers: {"Authorization": "Bearer $token"},
-      parser: (json) => LeaveBalance.fromJson(json),
+      parser: (json) {
+        // Ensure JSON is a list
+        final List<dynamic> list = json as List<dynamic>;
+        return list.map((e) => LeaveBalance.fromJson(e)).toList();
+      },
     );
   }
+
 }

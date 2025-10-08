@@ -20,6 +20,8 @@ import 'package:employee_management/features/data/models/floor/profile_dao.dart'
     as _i271;
 import 'package:employee_management/features/data/models/floor/profile_database.dart'
     as _i1065;
+import 'package:employee_management/features/data/repositories/attendance_report_repository.dart'
+    as _i303;
 import 'package:employee_management/features/data/repositories/auth_repository.dart'
     as _i106;
 import 'package:employee_management/features/data/repositories/leave_repository.dart'
@@ -34,6 +36,8 @@ import 'package:employee_management/features/data/repositories/submit_tasks_repo
     as _i802;
 import 'package:employee_management/features/data/repositories/task_repository.dart'
     as _i498;
+import 'package:employee_management/features/domain/use_cases/attendance_report_use_case.dart'
+    as _i525;
 import 'package:employee_management/features/domain/use_cases/login_use_case.dart'
     as _i255;
 import 'package:employee_management/features/domain/use_cases/logout_use_case.dart'
@@ -91,6 +95,11 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1067.LogoutRepository(gh<_i1007.LocalStorage>()));
     gh.factory<_i427.LogoutUseCase>(
         () => _i427.LogoutUseCase(gh<_i1067.LogoutRepository>()));
+    gh.factory<_i303.AttendanceReportRepository>(
+        () => _i303.AttendanceReportRepository(
+              gh<_i431.NetworkClient>(),
+              gh<_i1007.LocalStorage>(),
+            ));
     gh.factory<_i106.AuthRepository>(() => _i106.AuthRepository(
           gh<_i431.NetworkClient>(),
           gh<_i1007.LocalStorage>(),
@@ -115,6 +124,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i431.NetworkClient>(),
           gh<_i1007.LocalStorage>(),
         ));
+    gh.factory<_i525.AttendanceReportUseCase>(() =>
+        _i525.AttendanceReportUseCase(gh<_i303.AttendanceReportRepository>()));
     gh.factory<_i513.TaskHistoryUseCase>(
         () => _i513.TaskHistoryUseCase(gh<_i498.TaskRepository>()));
     gh.factory<_i238.TaskUseCase>(
