@@ -40,9 +40,13 @@ class FirebaseMessagingService {
     // Optionally handle background messages (must be a top-level function)
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
+
+  Future<String?> getToken() async {
+    return await _messaging.getToken();
+  }
 }
 
 // Top-level function for background messages
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('Handling a background message: ${message.messageId}');
-} 
+}

@@ -27,19 +27,13 @@ class AttendanceDetailSheet extends StatelessWidget {
     final formattedDateStr = (formattedDate.isNotEmpty)
         ? formattedDate
         : (attendanceDetails.isNotEmpty && attendanceDetails.first.attendanceDate != null)
-        ? DateFormat('EEEE, d MMM yyyy')
-        .format(DateTime.parse(attendanceDetails.first.attendanceDate!))
+        ? DateFormat('EEEE, d MMM yyyy').format(DateTime.parse(attendanceDetails.first.attendanceDate!))
         : '';
 
     // If no punch logs
     if (attendanceDetails.isEmpty || _getAllWorkLogsSorted(attendanceDetails).isEmpty) {
       return Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-        ),
+        padding: EdgeInsets.only(left: 16, right: 16, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 16,),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,38 +43,22 @@ class AttendanceDetailSheet extends StatelessWidget {
                 width: 40,
                 height: 5,
                 margin: const EdgeInsets.only(bottom: 18),
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(8),),
               ),
             ),
             Row(
               children: [
                 Icon(Icons.access_time, color: theme.colorScheme.primary, size: 28),
                 const SizedBox(width: 8),
-                Text(
-                  'Punch Detail',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                ),
+                Text('Punch Detail', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
                 Spacer(),
-                IconButton(
-                  icon: Icon(Icons.close, color: theme.colorScheme.primary),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+                IconButton(icon: Icon(Icons.close, color: theme.colorScheme.primary), onPressed: () => Navigator.of(context).pop(),),
               ],
             ),
             if (formattedDateStr.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 4, bottom: 12),
-                child: Text(
-                  formattedDateStr,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[700],
-                  ),
-                ),
+                child: Text(formattedDateStr, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey[700],),),
               ),
             const SizedBox(height: 60),
             Center(
@@ -89,15 +67,9 @@ class AttendanceDetailSheet extends StatelessWidget {
                 children: [
                   Icon(Icons.event_busy, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Punch logs not available',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
+                  const Text('Punch logs not available', style: TextStyle(fontSize: 18, color: Colors.grey),),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Your punch activities will appear here',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
+                  const Text('Your punch activities will appear here', style: TextStyle(fontSize: 14, color: Colors.grey),),
                 ],
               ),
             ),
@@ -110,12 +82,7 @@ class AttendanceDetailSheet extends StatelessWidget {
     final allWorkLogs = _getAllWorkLogsSorted(attendanceDetails);
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
+      padding: EdgeInsets.only(left: 16, right: 16, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 16,),
       child: ListView(
         controller: scrollController,
         shrinkWrap: true,
@@ -125,10 +92,7 @@ class AttendanceDetailSheet extends StatelessWidget {
               width: 40,
               height: 5,
               margin: const EdgeInsets.only(bottom: 18),
-              decoration: BoxDecoration(
-                color: Colors.grey[400],
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(8),),
             ),
           ),
           Column(
@@ -138,10 +102,7 @@ class AttendanceDetailSheet extends StatelessWidget {
                 children: [
                   Icon(Icons.access_time, color: theme.colorScheme.primary, size: 28),
                   const SizedBox(width: 8),
-                  Text(
-                    'Punch Details',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                  ),
+                  Text('Punch Details', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
                   Spacer(),
                   IconButton(
                     icon: Icon(Icons.close, color: theme.colorScheme.primary),
@@ -154,54 +115,34 @@ class AttendanceDetailSheet extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 4, bottom: 12),
                   child: Text(
                     formattedDateStr,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey[700],),
                   ),
                 ),
             ],
           ),
-          Divider(
-            height: 24,
-            thickness: 1.3,
-            color: theme.colorScheme.primary.withValues(alpha: 0.15),
-          ),
+
+          Divider(height: 24, thickness: 1.3, color: theme.colorScheme.primary.withValues(alpha: 0.15),),
+
           _buildCompleteTimeline(allWorkLogs, attendanceDetails.first.attendanceDate),
-          Divider(
-            height: 28,
-            thickness: 1.3,
-            color: theme.colorScheme.primary.withValues(alpha: 0.15),
-          ),
+
+          Divider(height: 28, thickness: 1.3, color: theme.colorScheme.primary.withValues(alpha: 0.15),),
+
           Row(
             children: [
               Icon(Icons.timer, color: theme.colorScheme.primary, size: 18),
               const SizedBox(width: 1),
-              Text(
-                'Worked Hrs: ',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
+              Text('Worked Hrs: ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),),
               Text(
                 _calculateTotalWorkHours(attendanceDetails),
-                style: TextStyle(
-                  fontSize: 15,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
+                style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.7),),
               ),
               const SizedBox(width: 10),
               Icon(Icons.pause_circle_filled, color: Colors.orange, size: 18),
               const SizedBox(width: 1),
-              Text(
-                'Break Hrs: ',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
+              Text('Break Hrs: ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),),
               Text(
                 _calculateTotalBreakHours(attendanceDetails),
-                style: TextStyle(
-                  fontSize: 15,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
+                style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.7),),
               ),
             ],
           ),
@@ -228,7 +169,6 @@ class AttendanceDetailSheet extends StatelessWidget {
         return 0;
       }
     });
-
     return allWorkLogs;
   }
 
@@ -273,15 +213,9 @@ class AttendanceDetailSheet extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                getLabelForType(log.type),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
-                              ),
+                              Text(getLabelForType(log.type), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),),
                               const SizedBox(height: 4),
-                              Text(
-                                log.time != null ? _formatTime(log.time!, parentDate) : '--:--',
-                                style: TextStyle(fontSize: 14, color: Colors.grey.shade600,),
-                              ),
+                              Text(log.time != null ? _formatTime(log.time!, parentDate) : '--:--', style: TextStyle(fontSize: 14, color: Colors.grey.shade600,),),
                             ],
                           ),
                         ),

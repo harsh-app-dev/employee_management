@@ -42,10 +42,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
           DrawerHeader(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primary,
-                  theme.colorScheme.primary.withValues(alpha: 0.8),
-                ],
+                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.8),],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -63,22 +60,14 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                     child: GestureDetector(
                       onTap: () {
                         Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => ProfileScreen()),
-                        );
+                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProfileScreen()),);
                       },
                       child: CircleAvatar(
                         radius: 36,
                         backgroundColor: Colors.white,
                         child: Text(
-                          _localProfile != null
-                              ? getInitials(_localProfile!.first_name, _localProfile!.last_name)
-                              : '?',
-                          style: TextStyle(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 32,
-                          ),
+                          _localProfile != null ? getInitials(_localProfile!.first_name, _localProfile!.last_name) : '?',
+                          style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 32,),
                         ),
                       ),
                     ),
@@ -88,34 +77,21 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                     child: GestureDetector(
                       onTap: () {
                         Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => ProfileScreen()),
-                        );
+                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProfileScreen()),);
                       },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _localProfile != null
-                                ? ('${_localProfile!.first_name} ${_localProfile!.last_name}').trim()
-                                : '--',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
+                            _localProfile != null ? ('${_localProfile!.first_name} ${_localProfile!.last_name}').trim() : '--',
+                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: 0.5,),
                           ),
                           if (_localProfile?.email != null && _localProfile!.email.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 2.0),
                               child: Text(
                                 _localProfile!.email,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600
-                                ),
+                                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
                               ),
                             ),
                         ],
@@ -135,9 +111,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   title: Text('Dashboard'),
                   onTap: () {
                     Navigator.of(context).pop();
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => MainScreen()),
-                    );
+                    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()),);
                   },
                 ),
                 ListTile(
@@ -145,9 +119,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   title: Text('History'),
                   onTap: () {
                     Navigator.of(context).pop();
-                    Navigator.of(
-                      context,
-                    ).push(MaterialPageRoute(builder: (_) => PunchHistoryScreen()));
+                    Navigator.of(context,).push(MaterialPageRoute(builder: (_) => PunchHistoryScreen()));
                   },
                 ),
                 ListTile(
@@ -155,9 +127,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   title: Text('Settings'),
                   onTap: () {
                     Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => SettingsScreen()),
-                    );
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => SettingsScreen()),);
                   },
                 ),
                 ListTile(
@@ -173,9 +143,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   onTap: () async {
                     final url = Uri.parse('https://sparkbrains.in/privacy-policy/');
                     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Could not open the Privacy Policy.')),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open the Privacy Policy.')),);
                     }
                   },
                 ),
@@ -185,9 +153,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   onTap: () async {
                     final url = Uri.parse('https://sparkbrains.in/about-us/');
                     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Could not open the About page.')),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open the About page.')),);
                     }
                   },
                 ),
@@ -206,18 +172,12 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold,),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),),
                 ),
                 onPressed: () async {
                   await _profileController.logout();
-                  getIt<GlobalKey<NavigatorState>>().currentState
-                      ?.pushNamedAndRemoveUntil('/login', (route) => false);
+                  getIt<GlobalKey<NavigatorState>>().currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
                 },
               ),
             ),

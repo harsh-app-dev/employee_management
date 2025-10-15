@@ -9,7 +9,7 @@ class TaskUseCase {
 
   TaskUseCase(this._taskRepository);
 
-  Future<NetworkResult<TaskResponse>> call() {
-    return _taskRepository.fetchTasks();
+  Future<NetworkResult<TaskResponse>> call(String startDate) {
+    return _taskRepository.fetchTasks(startDate: startDate);
   }
 }

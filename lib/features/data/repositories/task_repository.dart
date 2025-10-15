@@ -13,14 +13,16 @@ class TaskRepository {
 
   TaskRepository(this._networkClient, this._localStorage);
 
-  Future<NetworkResult<TaskResponse>> fetchTasks() async {
+  Future<NetworkResult<TaskResponse>> fetchTasks({required String startDate}) async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
+
     return await _networkClient.get<TaskResponse>(
-      "task/task/",
+      "task/task?start_date=$startDate",
       headers: {"Authorization": "Bearer $token"},
       parser: (json) => TaskResponse.fromJson(json),
     );
   }
+
 
   Future<NetworkResult<TaskHistoryResponse>> fetchTaskHistory(
     String userId, {

@@ -9,6 +9,7 @@ class AttendanceReportResponse {
   final List<Holiday> upcomingHolidays;
   final List<String> shortLeaveDates;
   final List<String> halfDayLeaveDates;
+  final List<String> presentDates;
 
   AttendanceReportResponse({
     required this.totalWorkingDays,
@@ -21,6 +22,8 @@ class AttendanceReportResponse {
     required this.upcomingHolidays,
     required this.shortLeaveDates,
     required this.halfDayLeaveDates,
+    required this.presentDates,
+
   });
 
   factory AttendanceReportResponse.fromJson(Map<String, dynamic> json) {
@@ -39,6 +42,7 @@ class AttendanceReportResponse {
           .toList(),
       halfDayLeaveDates: List<String>.from(json['half_day_leave_dates'] ?? []),
       shortLeaveDates: List<String>.from(json['short_leave_dates'] ?? []),
+      presentDates: List<String>.from(json['present_dates'] ?? []),
     );
   }
 
@@ -47,7 +51,7 @@ class AttendanceReportResponse {
 class UpcomingLeave {
   final String fromDate;
   final String toDate;
-  final int days;
+  final double days;
   final String leaveType;
 
   UpcomingLeave({
@@ -61,7 +65,7 @@ class UpcomingLeave {
     return UpcomingLeave(
       fromDate: json['from_date'] ?? '',
       toDate: json['to_date'] ?? '',
-      days: json['days'] ?? 0,
+      days: (json['days'] ?? 0).toDouble(),
       leaveType: json['leave_type'] ?? '',
     );
   }

@@ -186,10 +186,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         for (var log in allTodaysWorkLogs) {
           try {
-
             if (log.time != null && log.time!.isNotEmpty) {
               DateTime? eventDateTime;
-
               try {
                 String? logDate;
                 for (var attendance in records) {
@@ -306,11 +304,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         breakStartEvents.sort((a, b) => (a.time ?? '').compareTo(b.time ?? ''));
         breakEndEvents.sort((a, b) => (a.time ?? '').compareTo(b.time ?? ''));
 
-        bool isPunchedIn = punchInEvents.isNotEmpty &&
-            (punchOutEvents.isEmpty || punchOutEvents.last.time!.compareTo(punchInEvents.last.time!) < 0);
+        bool isPunchedIn = punchInEvents.isNotEmpty && (punchOutEvents.isEmpty || punchOutEvents.last.time!.compareTo(punchInEvents.last.time!) < 0);
 
-        bool isOnBreak = breakStartEvents.isNotEmpty &&
-            (breakEndEvents.isEmpty || breakEndEvents.last.time!.compareTo(breakStartEvents.last.time!) < 0);
+        bool isOnBreak = breakStartEvents.isNotEmpty && (breakEndEvents.isEmpty || breakEndEvents.last.time!.compareTo(breakStartEvents.last.time!) < 0);
 
         Duration totalWorkDuration = Duration();
         Duration totalBreakDuration = Duration();
@@ -385,9 +381,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white, size: 30,),
             tooltip: 'Notifications',
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationScreen()),);
-            },
+            onPressed: () {Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationScreen()),);},
           ),
         ],
       ),
@@ -493,10 +487,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 children: [
                                                   Icon(Icons.pause_circle_filled, color: Colors.orange),
                                                   SizedBox(width: 2.w),
-                                                  Text(
-                                                    '${AppStrings.breakHrs}: ',
-                                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange,),
-                                                  ),
+                                                  Text('${AppStrings.breakHrs}: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange,),),
                                                   Text(
                                                     _breakDuration != '--' ? _breakDuration : '00:00:00',
                                                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.dp, color: Colors.orange,),
@@ -527,7 +518,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 onPressed = () async {
 
                                                   if (!await checkInternet(context)) return;
-
                                                   final confirm = await showPunchConfirmationDialog(context, isPunchOut: true);
                                                   if(!confirm) return;
 
@@ -590,10 +580,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                                                   final XFile? image = await _picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front,);
                                                   if (image != null) {
-                                                    setState(() {
-                                                      _selfieImage = File(image.path);
-                                                      _isApiLoading = true;
-                                                    });
+                                                    setState(() {_selfieImage = File(image.path);_isApiLoading = true;});
                                                     await _submitDebouncer.run(() async {
                                                       await _punchController.punchInOut('punch_in', punchPhoto: _selfieImage);
                                                       if (!mounted) return;
@@ -689,10 +676,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     child: ElevatedButton.icon(
                                                       onPressed: onPressed,
                                                       icon: Icon(buttonIcon, size: 22.dp, color: Colors.white,),
-                                                      label: Text(
-                                                        buttonText,
-                                                        style: TextStyle(fontSize: 16.dp, fontWeight: FontWeight.bold, color: Colors.white),
-                                                      ),
+                                                      label: Text(buttonText, style: TextStyle(fontSize: 16.dp, fontWeight: FontWeight.bold, color: Colors.white),),
                                                       style: ElevatedButton.styleFrom(
                                                           backgroundColor: buttonColor,
                                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -764,21 +748,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       padding: const EdgeInsets.all(16.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min, // allow height to shrink/grow
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            "Today's Activity Logs",
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.dp),
-                                          ),
-                                          Divider(
-                                            height: 24,
-                                            thickness: 1.3,
-                                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                                          ),
+                                          Text("Today's Activity Logs", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.dp),),
+                                          Divider(height: 24, thickness: 1.3, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),),
                                           ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              maxHeight: 250, // maximum height before scrolling
-                                            ),
+                                            constraints: BoxConstraints(maxHeight: 250,),
                                             child: Scrollbar(
                                               controller: scrollController,
                                               thumbVisibility: true,
@@ -788,12 +763,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 controller: scrollController,
                                                 child: Stack(
                                                   children: [
-                                                    Positioned(
-                                                      left: 9,
-                                                      top: 10,
-                                                      bottom: 10,
-                                                      child: Container(width: 2, color: Colors.grey.shade300),
-                                                    ),
+                                                    Positioned(left: 9, top: 10, bottom: 10, child: Container(width: 2, color: Colors.grey.shade300),),
                                                     Column(
                                                       children: activityEvents.expand((activity) {
                                                         final List<Widget> activityEntries = [];
@@ -821,18 +791,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                                     children: [
                                                                       Text(
                                                                         getLabelForType(activity.type),
-                                                                        style: const TextStyle(
-                                                                          fontWeight: FontWeight.bold,
-                                                                          fontSize: 16,
-                                                                        ),
+                                                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
                                                                       ),
                                                                       const SizedBox(height: 4),
                                                                       Text(
                                                                         _formatTime(activityTime),
-                                                                        style: TextStyle(
-                                                                          fontSize: 14,
-                                                                          color: Colors.grey.shade600,
-                                                                        ),
+                                                                        style: TextStyle(fontSize: 14, color: Colors.grey.shade600,),
                                                                       ),
                                                                     ],
                                                                   ),

@@ -11,6 +11,9 @@ class NetworkClient {
   final String baseUrl;
   final http.Client _client = http.Client();
 
+  String? deviceId;
+  String? fcmToken;
+
   // Default headers
   static const Map<String, String> _defaultHeaders = {
     'accept': '*/*',
@@ -19,12 +22,19 @@ class NetworkClient {
         '5OtGmZanAgPHuHg1tScbBiOiWx2xiLS6jrJ7KLMnvVaLas84OkKeI8Th9qqIEFUv',
   };
 
-  NetworkClient({required this.baseUrl});
+  NetworkClient({required this.baseUrl, this.deviceId});
 
   Uri _buildUri(String endpoint) => Uri.parse('$baseUrl$endpoint');
 
   Map<String, String> _mergeHeaders(Map<String, String>? headers) {
-    return {..._defaultHeaders, if (headers != null) ...headers};
+    final merged = {..._defaultHeaders, if (headers != null) ...headers};
+    if (deviceId != null && deviceId!.isNotEmpty) {
+      merged['Device-ID'] = deviceId!;
+    }
+    if (fcmToken != null && fcmToken!.isNotEmpty) {
+      merged['FCM-Token'] = fcmToken!;
+    }
+    return merged;
   }
 
   Future<NetworkResult<T>> get<T>(
@@ -34,7 +44,7 @@ class NetworkClient {
   }) async {
     final uri = _buildUri(endpoint);
     final mergedHeaders = _mergeHeaders(headers);
-    print('[GET] $uri');
+    AppLogger.instance.i('[GET] $uri'); // Info log for the request
     print('Headers: $mergedHeaders');
     try {
       final response = await _client.get(uri, headers: mergedHeaders).timeout(

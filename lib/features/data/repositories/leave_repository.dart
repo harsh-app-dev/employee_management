@@ -55,10 +55,11 @@ class LeaveRepository {
   Future<NetworkResult<dynamic>> applyLeave(LeaveApplyRequest request) async {
     final token = _localStorage.getString(SharedPreferenceKeys.tokenKey);
     try {
-      var uri = Uri.parse('${_networkClient.baseUrl}leave/leave-applications/');
+      final uri = Uri.parse('${_networkClient.baseUrl}leave/leave-applications/');
       print('[POST] $uri');
       print('Headers: {Authorization: Bearer $token, Accept: application/json}');
-      var multipartRequest = http.MultipartRequest('POST', uri)
+
+      final multipartRequest = http.MultipartRequest('POST', uri)
         ..headers.addAll({
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -71,7 +72,9 @@ class LeaveRepository {
       multipartRequest.fields['hr'] = request.hr;
       multipartRequest.fields['reason'] = request.reason;
       multipartRequest.fields['managers'] = request.managers.join(',');
-      // Send from_time as timestamp
+      multipartRequest.fields['status'] = 'Pending';
+
+      // from_time
       if (request.fromTime != null && request.fromTime!.isNotEmpty) {
         final timeParts = request.fromTime!.split(':');
         final dt = DateTime(
@@ -83,7 +86,8 @@ class LeaveRepository {
         );
         multipartRequest.fields['from_time'] = (dt.millisecondsSinceEpoch ~/ 1000).toString();
       }
-      // Send to_time as timestamp
+
+      // to_time
       if (request.toTime != null && request.toTime!.isNotEmpty) {
         final timeParts = request.toTime!.split(':');
         final dt = DateTime(
@@ -95,12 +99,16 @@ class LeaveRepository {
         );
         multipartRequest.fields['to_time'] = (dt.millisecondsSinceEpoch ~/ 1000).toString();
       }
-      if (request.attachment != null) {
-        multipartRequest.files.add(await http.MultipartFile.fromPath('attachment', request.attachment!.path));
-      }
-      multipartRequest.fields['status'] = 'Pending';
 
-      print('Request Body: ${multipartRequest.fields} ${multipartRequest.files.map((f) => {'field': f.field, 'file': f.filename}).toList()}');
+      // attachment
+      if (request.attachment != null) {
+        multipartRequest.files.add(
+          await http.MultipartFile.fromPath('attachment', request.attachment!.path),
+        );
+      }
+
+      print('Request Body: ${multipartRequest.fields} '
+          '${multipartRequest.files.map((f) => {'field': f.field, 'file': f.filename}).toList()}');
 
       final streamedResponse = await multipartRequest.send();
       final response = await http.Response.fromStream(streamedResponse);
@@ -109,7 +117,26 @@ class LeaveRepository {
       if (response.statusCode == 201 || response.statusCode == 200) {
         return NetworkSuccess(jsonDecode(response.body));
       } else {
-        return NetworkError(response.statusCode, 'Failed to apply leave: ${response.body}');
+        // Extract only the error message
+        String errorMessage;
+        try {
+          final errorJson = jsonDecode(response.body);
+          // Assuming the first field contains the message
+          if (errorJson is Map && errorJson.values.isNotEmpty) {
+            final firstValue = errorJson.values.first;
+            if (firstValue is List && firstValue.isNotEmpty) {
+              errorMessage = firstValue[0].toString();
+            } else {
+              errorMessage = firstValue.toString();
+            }
+          } else {
+            errorMessage = response.body;
+          }
+        } catch (_) {
+          errorMessage = response.body;
+        }
+
+        return NetworkError(response.statusCode, errorMessage);
       }
     } catch (e) {
       return NetworkError(-1, 'Exception: $e');

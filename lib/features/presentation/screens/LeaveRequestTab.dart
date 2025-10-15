@@ -34,9 +34,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
     if (result is NetworkSuccess<List<LeaveApprovalRequest>>) {
       setState(() => leaveRequests = result.data);
     } else if (result is NetworkError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to fetch leaves')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to fetch leaves')),);
     }
     setState(() => isLoading = false);
   }
@@ -93,10 +91,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '$action Leave',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+                Text('$action Leave', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
                 const SizedBox(height: 16),
                 TextField(
                   controller: commentsController,
@@ -137,11 +132,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
   }
 
   Future<void> _updateStatus(String leaveId, String newStatus, {String comments = ''}) async {
-    final result = await _leaveRepository.updateLeaveStatus(
-      leaveId: leaveId,
-      action: newStatus,
-      comments: comments,
-    );
+    final result = await _leaveRepository.updateLeaveStatus(leaveId: leaveId, action: newStatus, comments: comments,);
 
     if (result is NetworkSuccess) {
       _fetchLeaveRequests();
@@ -262,8 +253,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
 */
             // Leave List
             Expanded(
-              child: _filteredRequests.isEmpty
-                  ? Center(
+              child: _filteredRequests.isEmpty ? Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
@@ -272,8 +262,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
                     Text('No leave requests found', style: TextStyle(fontSize: 24)),
                   ],
                 ),
-              )
-                  : ListView.separated(
+              ) : ListView.separated(
                 padding: const EdgeInsets.all(12),
                 itemCount: _filteredRequests.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -293,8 +282,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
                             children: [
                               const Icon(Icons.person, color: Colors.blue),
                               const SizedBox(width: 8),
-                              Text(leave.requestedBy,
-                                  style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text(leave.requestedBy, style: const TextStyle(fontWeight: FontWeight.bold)),
                               const Spacer(),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -303,10 +291,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: _statusColor(status).withValues(alpha: 0.3)),
                                 ),
-                                child: Text(status,
-                                    style: TextStyle(
-                                        color: _statusColor(status), fontWeight: FontWeight.w600)),
-                              ),
+                                child: Text(status, style: TextStyle(color: _statusColor(status), fontWeight: FontWeight.w600)),),
                             ],
                           ),
                           const SizedBox(height: 6),
@@ -324,9 +309,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.green,
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8)),
-                                  ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),
                                 ),
                                 const SizedBox(width: 10),
                                 ElevatedButton.icon(
@@ -336,8 +319,7 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8)),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
                                 ),
                               ],
@@ -351,13 +333,9 @@ class _LeaveRequestTabState extends State<LeaveRequestTab> {
             ),
           ],
         ),
-
         // Loader overlay
         if (isLoading)
-          Container(
-            color: Colors.black45,
-            child: const Center(child: CircularProgressIndicator()),
-          ),
+          Container(color: Colors.black45, child: const Center(child: CircularProgressIndicator()),),
       ],
     );
   }

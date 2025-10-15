@@ -28,13 +28,19 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
   @override
   void initState() {
     super.initState();
-    _controller.fetchTasks();
+    final today = DateTime.now();
+    _controller.fetchTasks(startDate: _formatDate(today));
   }
 
   void _onDateChanged(DateTime newDate) {
-    setState(() {_selectedDate = newDate;});
-    _controller.fetchTasks();
+    setState(() => _selectedDate = newDate);
+    _controller.fetchTasks(startDate: _formatDate(newDate));
   }
+
+  String _formatDate(DateTime date) {
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+  }
+
 
   @override
   Widget build(BuildContext context) {

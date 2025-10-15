@@ -45,9 +45,7 @@ class _ReportScreenState extends State<ReportScreen> {
       _error = null;
     });
     final date = DateTime(month.year, month.month, 1);
-    final result = await _attendanceReportUseCase.call(
-      date: DateFormat('yyyy-MM-dd').format(date),
-    );
+    final result = await _attendanceReportUseCase.call(date: DateFormat('yyyy-MM-dd').format(date),);
     if (result is NetworkSuccess<AttendanceReportResponse>) {
       setState(() {
         _reportData = result.data;
@@ -63,47 +61,36 @@ class _ReportScreenState extends State<ReportScreen> {
 
   bool _isLeaveDay(DateTime day, Set<DateTime> approvedLeaveDays) {
     return approvedLeaveDays.any((leaveDay) =>
-    leaveDay.day == day.day &&
-        leaveDay.month == day.month &&
-        leaveDay.year == day.year);
+    leaveDay.day == day.day && leaveDay.month == day.month && leaveDay.year == day.year);
   }
 
   bool _isAbsentDay(DateTime day, List<DateTime> absentDays) {
     return absentDays.any((absentDay) =>
-    absentDay.day == day.day &&
-        absentDay.month == day.month &&
-        absentDay.year == day.year);
+    absentDay.day == day.day && absentDay.month == day.month && absentDay.year == day.year);
   }
 
   bool _isHoliday(DateTime day, List<DateTime> holidayDays) {
     return holidayDays.any((holiday) =>
-    holiday.day == day.day &&
-        holiday.month == day.month &&
-        holiday.year == day.year);
+    holiday.day == day.day && holiday.month == day.month && holiday.year == day.year);
   }
 
   bool _isHalfDay(DateTime day, List<DateTime> halfDays) {
     return halfDays.any((halfDay) =>
-    halfDay.day == day.day &&
-        halfDay.month == day.month &&
-        halfDay.year == day.year);
+    halfDay.day == day.day && halfDay.month == day.month && halfDay.year == day.year);
   }
 
   bool _isShortLeave(DateTime day, List<DateTime> shortLeaves) {
     return shortLeaves.any((shortLeave) =>
-    shortLeave.day == day.day &&
-        shortLeave.month == day.month &&
-        shortLeave.year == day.year);
+    shortLeave.day == day.day && shortLeave.month == day.month && shortLeave.year == day.year);
   }
 
-  bool _isWeekend(DateTime day) {
-    return day.weekday == 6 || day.weekday == 7;
+  bool _isPresentDay(DateTime day, Set<DateTime> presentDays) {
+    return presentDays.any((presentDay) =>
+    presentDay.day == day.day && presentDay.month == day.month && presentDay.year == day.year);
   }
 
   void showPunchDetailSheet(DateTime date) async {
-    final result = await _useCase.callPunchDetail(
-      date: DateFormat('yyyy-MM-dd').format(date),
-    );
+    final result = await _useCase.callPunchDetail(date: DateFormat('yyyy-MM-dd').format(date),);
 
     if (result is NetworkSuccess<AttendanceResponse>) {
       final attendanceDetails = result.data.attendances;
@@ -124,9 +111,7 @@ class _ReportScreenState extends State<ReportScreen> {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30)),),
         builder: (context) {
           return DraggableScrollableSheet(
             expand: false,
@@ -146,9 +131,7 @@ class _ReportScreenState extends State<ReportScreen> {
         },
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No attendance data found.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No attendance data found.')),);
     }
   }
 
@@ -173,12 +156,12 @@ class _ReportScreenState extends State<ReportScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              // ✅ Sandwich Relief Card
+              // Sandwich Relief Card
               _buildSandwichReliefCard(theme),
 
               const SizedBox(height: 12),
 
-              // ✅ Stats & Upcoming Leaves Card
+              // Stats & Upcoming Leaves Card
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                 elevation: 6,
@@ -193,29 +176,25 @@ class _ReportScreenState extends State<ReportScreen> {
                 ),
               ),
 
-              // ✅ Legend
+              // Legend
               _buildLegend(theme),
 
               const SizedBox(height: 12),
 
-              // ✅ Calendar
+              // Calendar
               SizedBox(
                 height: 400,
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                child: _isLoading ? const Center(child: CircularProgressIndicator())
                     : TableCalendar(
-                  firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDay: DateTime.now().add(const Duration(days: 365)),
+                  firstDay: DateTime.now().subtract(const Duration(days: 365 * 4)),
+                  lastDay: DateTime.now().add(const Duration(days: 365 * 4)),
                   focusedDay: _focusedMonth,
                   calendarFormat: CalendarFormat.month,
-                  availableCalendarFormats: const {
-                    CalendarFormat.month: 'Month',
-                  },
+                  availableCalendarFormats: const {CalendarFormat.month: 'Month',},
                   onFormatChanged: (format) {},
                   onPageChanged: _onCalendarPageChanged,
                   onDaySelected: (selected, focused) => showPunchDetailSheet(selected),
                   calendarBuilders: _buildCalendarBuilders(),
-
                   headerStyle: const HeaderStyle(
                     titleCentered: true,
                     formatButtonVisible: false,
@@ -332,15 +311,12 @@ class _ReportScreenState extends State<ReportScreen> {
           tilePadding: EdgeInsets.zero,
           iconColor: theme.colorScheme.primary,
           collapsedIconColor: theme.colorScheme.primary,
-          title: Text(
-            'Upcoming Leaves & Holidays',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary),
-          ),
+          title: Text('Upcoming Leaves & Holidays', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary),),
           childrenPadding: const EdgeInsets.only(left: 0, right: 0, bottom: 8),
           children: [
             if (_reportData?.upcomingHolidays != null && _reportData!.upcomingHolidays.isNotEmpty)
               ..._reportData!.upcomingHolidays.map((holiday) => ListTile(
-                leading: Icon(Icons.flag, color: Colors.deepOrange[700], size: 20),
+                leading: Icon(Icons.celebration, color: Colors.deepOrange[700], size: 20),
                 title: Text('Holiday - ${holiday.name}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                 subtitle: Text(DateFormat('EEE, d MMM yyyy').format(DateTime.parse(holiday.date)), style: const TextStyle(fontSize: 12)),
               )),
@@ -389,15 +365,16 @@ class _ReportScreenState extends State<ReportScreen> {
     final List<DateTime> holidayDays = _reportData?.upcomingHolidays.map((h) => DateTime.parse(h.date)).toList() ?? [];
     final List<DateTime> halfDays = _reportData?.halfDayLeaveDates.map((d) => DateTime.parse(d)).toList() ?? [];  //change absent date to halfday dates
     final List<DateTime> shortLeave = _reportData?.shortLeaveDates.map((d) => DateTime.parse(d)).toList() ?? [];  //change absent date to halfday dates
+    final Set<DateTime> presentDays = _reportData?.presentDates.map((d) => DateTime.parse(d)).toSet() ?? {};
 
     return CalendarBuilders(
       defaultBuilder: (context, day, focusedDay) {
-        final bool isWeekendDay = _isWeekend(day);
         final bool isHolidayDay = _isHoliday(day, holidayDays);
         final bool isLeaveDay = _isLeaveDay(day, leaveDays);
         final bool isAbsentDay = _isAbsentDay(day, absentDays);
         final bool isHalfDay = _isHalfDay(day, halfDays);
         final bool isShortLeave = _isShortLeave(day, shortLeave);
+        final bool isPresentDay = _isPresentDay(day, presentDays);
 
         Color bgColor;
         Color textColor;
@@ -415,10 +392,6 @@ class _ReportScreenState extends State<ReportScreen> {
           bgColor = Colors.transparent;
           textColor = Colors.white;
           child = const Icon(Icons.celebration, size: 30, color: Colors.deepPurpleAccent); // pop icon
-        } else if (isWeekendDay) {
-          bgColor = Colors.grey.withValues(alpha: 0.2);
-          textColor = Colors.grey[900]!;
-          child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
         }else if (isHalfDay) {
           bgColor = Colors.teal.shade500.withValues(alpha: 0.2);
           textColor = Colors.teal[900]!;
@@ -427,14 +400,13 @@ class _ReportScreenState extends State<ReportScreen> {
           bgColor = Colors.blue.withValues(alpha: 0.2);
           textColor = Colors.blue[900]!;
           child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
-        } else {
-          if (_reportData == null || day.isAfter(now)) {
-            bgColor = Colors.grey.withValues(alpha: 0.2);
+        }  else if (isPresentDay) {
+          bgColor = Colors.green.withValues(alpha: 0.3);
+          textColor = Colors.green[900]!;
+          child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
+        }else {
+            bgColor = Colors.grey.withValues(alpha: 0.2); // Present
             textColor = Colors.grey[900]!;
-          } else {
-            bgColor = Colors.green.withValues(alpha: 0.3); // Present
-            textColor = Colors.green[900]!;
-          }
           child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
         }
 
@@ -442,11 +414,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
         return Container(
           margin: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: bgColor,
-            border: isToday ? Border.all(color: const Color(0xFF388E3C), width: 2.5) : null,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: bgColor, border: isToday ? Border.all(color: const Color(0xFF388E3C), width: 2.5) : null,),
           alignment: Alignment.center,
           child: child,
         );
@@ -464,11 +432,7 @@ class _ReportScreenState extends State<ReportScreen> {
           Container(
             width: 16,
             height: 16,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade300),
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300),),
           ),
         const SizedBox(width: 6),
         Text(label, style: const TextStyle(fontSize: 14)),

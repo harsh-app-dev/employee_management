@@ -10,6 +10,8 @@ import 'core/configs/themes/theme.dart';
 import 'core/widgets/network_dialog.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:employee_management/core/services/firebase_messaging_service.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:employee_management/core/network/client/network_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +20,15 @@ void main() async {
   await configureDependencies();
   registerGlobalDependencies();
   await getIt<LocalStorage>().init();
+
+  // Set deviceId for NetworkClient
+  final deviceInfo = await DeviceInfoPlugin().androidInfo;
+  getIt<NetworkClient>().deviceId = deviceInfo.id;
+
+  // Set FCM token for NetworkClient
+  final fcmToken = await FirebaseMessagingService().getToken();
+  getIt<NetworkClient>().fcmToken = fcmToken;
+
   isLoggedIn.value =
       getIt<LocalStorage>().getBool(SharedPreferenceKeys.loggedInKey) ?? false;
   Get.put(ThemeController()); // Ensure ThemeController is registered before runApp
