@@ -36,8 +36,8 @@ class ProfileResponse {
     _email = json['email'];
     _dateOfBirth = json['date_of_birth'];
     _contactNumber = json['contact_number'];
-    _designation = json['designation'] != null ? json['designation'].toString() : null;
-    _organization = json['Organisation'] != null ? json['Organisation'].toString() : null;
+    _designation = json['designation']?.toString();
+    _organization = json['Organisation']?.toString();
     _isActive = json['attendance_status']?.toString();
   }
 

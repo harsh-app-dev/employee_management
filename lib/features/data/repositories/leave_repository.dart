@@ -178,8 +178,8 @@ class LeaveRepository {
                 ? item['leave_type']
                 : int.tryParse(item['leave_type']?.toString() ?? '0') ?? 0,
             leaveTypeName: item['leave_type_name']?.toString() ?? '',
-            fromTime: item['from_time'] != null ? item['from_time'].toString() : null,
-            toTime: item['to_time'] != null ? item['to_time'].toString() : null,
+            fromTime: item['from_time']?.toString(),
+            toTime: item['to_time']?.toString(),
             fromDate: item['from_date']?.toString() ?? '',
             toDate: item['to_date']?.toString() ?? '',
             appliedDate: item['applied_date']?.toString() ?? '',
@@ -190,7 +190,7 @@ class LeaveRepository {
             hr: item['hr']?.toString() ?? '',
             reason: item['reason']?.toString() ?? '',
             status: item['status']?.toString() ?? '',
-            attachment: item['attachment'] != null ? item['attachment'].toString() : null,
+            attachment: item['attachment']?.toString(),
             managerDetails: (item['manager_details'] as List<dynamic>? ?? [])
                 .map((e) => ManagerDetails.fromJson(e as Map<String, dynamic>))
                 .toList(),
@@ -365,7 +365,7 @@ class LeaveRepository {
             fromTime: item['from_time'] != null ? int.tryParse(item['from_time'].toString()) : null,
             toTime: item['to_time'] != null ? int.tryParse(item['to_time'].toString()) : null,
             reason: item['reason']?.toString() ?? '',
-            attachment: item['attachment'] != null ? item['attachment'].toString() : null,
+            attachment: item['attachment']?.toString(),
             status: item['status']?.toString() ?? '',
             leaveTypeName: item['leave_type_name']?.toString() ?? '',
 

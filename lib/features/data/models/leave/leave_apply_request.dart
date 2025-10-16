@@ -33,7 +33,7 @@ class LeaveApplyRequest {
       "reason": reason,
       "from_time": fromTime,
       "to_time": toTime,
-      "attachment": attachment != null ? attachment!.path : null,
+      "attachment": attachment?.path,
       "status": "Pending", // default as in Swagger example
     };
   }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:employee_management/core/utils/network_result.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
@@ -44,7 +43,7 @@ class NetworkClient {
   }) async {
     final uri = _buildUri(endpoint);
     final mergedHeaders = _mergeHeaders(headers);
-    AppLogger.instance.i('[GET] $uri'); // Info log for the request
+    print('[GET] $uri'); // Info log for the request
     print('Headers: $mergedHeaders');
     try {
       final response = await _client.get(uri, headers: mergedHeaders).timeout(

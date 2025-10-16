@@ -597,7 +597,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               '${leave.fromDate} - ${leave.toDate}\n(${leave.totalDays.toStringAsFixed(1)} day${leave.totalDays != 1 ? 's' : ''})',
                               style: const TextStyle(fontSize: 12, color: Colors.black54),
                             ),
-                            if (leave.managerDetails != null && leave.managerDetails.isNotEmpty)
+                            if (leave.managerDetails.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(top: 4.0),
                                 child: Row(
