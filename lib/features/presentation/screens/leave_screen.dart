@@ -59,7 +59,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
     }
   }
 
-
   void _fetchUsersByRole() async {
     final leaveRepository = getIt<LeaveRepository>();
     final result = await leaveRepository.fetchUsersByRole();
@@ -197,8 +196,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   LeaveRequestTab(),
                 ],
               ),
-              floatingActionButton: tabController.index == 0
-                ? FloatingActionButton(
+              floatingActionButton: tabController.index == 0 ? FloatingActionButton(
               onPressed: () => _showLeaveApplicationBottomSheet(),
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
@@ -232,10 +230,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
         }
 
         // Initially only show Casual and Short Leave
-        final visibleLeaves = _showAllLeaves
-            ? _leaveBalances
-            : _leaveBalances.where((leave) =>
-        leave.leaveTypeName.toLowerCase() == 'casual leave' || leave.leaveTypeName.toLowerCase() == 'short leave').toList();
+        final visibleLeaves = _showAllLeaves ? _leaveBalances
+            : _leaveBalances.where((leave) => leave.leaveTypeName.toLowerCase() == 'casual leave' || leave.leaveTypeName.toLowerCase() == 'short leave').toList();
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
@@ -262,7 +258,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
                     IconData icon;
                     Color color;
-
                     switch (leave.leaveTypeName.toLowerCase()) {
                       case 'casual leave':
                         icon = Icons.beach_access;
@@ -494,11 +489,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 const SizedBox(width: 10),
                 IconButton(
                   onPressed: () {
-                    setState(() {
-                      _selectedStatusFilter = 'All';
-                      _selectedTypeFilter = 'All';
-                      _selectedDateFilter = null;
-                    });
+                    setState(() {_selectedStatusFilter = 'All'; _selectedTypeFilter = 'All'; _selectedDateFilter = null;});
                   },
                   icon: const Icon(Icons.refresh, size: 22),
                   tooltip: 'Clear All',
@@ -680,10 +671,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               managerList: _managerList,
                               existingLeaveRequests: _leaveRequests,
                               onLeaveSubmitted: (request, {casualDeduct = 0, sickDeduct = 0, shortDeduct = 0}) {
-                                setState(() {
-                                  _leaveRequests[index] = request;
-                                  _initializeEvents();
-                                });
+                                setState(() {_leaveRequests[index] = request; _initializeEvents();});
                                 Navigator.pop(context);
                                 showGlobalSnackBar('Leave request updated successfully!');
                               },
@@ -695,8 +683,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               width: double.infinity,
                               height: 45,
                               child: ElevatedButton.icon(
-                                onPressed: leave.status == 'Cancelled'
-                                    ? null : () async {
+                                onPressed: leave.status == 'Cancelled' ? null : () async {
                                   showDialog(
                                     context: context,
                                     barrierDismissible: false,
@@ -798,14 +785,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                         const SizedBox(height: 16),
                         const Text('Time:', style: TextStyle(fontWeight: FontWeight.bold)),
                         Text(
-                          formatLeaveTimeFromTimestamp(
-                            int.tryParse(leave.fromTime ?? ''),
-                            int.tryParse(leave.toTime ?? ''),
-                          ),
+                          formatLeaveTimeFromTimestamp(int.tryParse(leave.fromTime ?? ''), int.tryParse(leave.toTime ?? ''),),
                           style: const TextStyle(fontSize: 14, color: Colors.black87),
                         ),
                       ],
-
 
                       if (leave.leaveTypeName.toLowerCase().contains('half')) ...[
                         const SizedBox(height: 16),

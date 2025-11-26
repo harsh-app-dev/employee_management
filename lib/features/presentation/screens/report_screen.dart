@@ -2,214 +2,166 @@ import 'package:employee_management/features/presentation/screens/punch_history_
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/widgets/app_side_drawer.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:employee_management/features/domain/use_cases/punch_history_use_case.dart';
-import 'package:get_it/get_it.dart';
-import '../../../core/utils/network_result.dart';
-import '../../data/models/punch/response/attendence_response.dart';
-import '../../data/models/report/attendance_report_response.dart';
+import '../../domain/use_cases/punch_history_use_case.dart';
 import '../../domain/use_cases/attendance_report_use_case.dart';
+import '../../data/models/punch/response/attendence_response.dart';
+import '../state/getx/report_controller.dart';
 
-class ReportScreen extends StatefulWidget {
-  const ReportScreen({super.key});
+class ReportScreen extends StatelessWidget {
+  ReportScreen({super.key});
 
-  @override
-  State<ReportScreen> createState() => _ReportScreenState();
-}
+  // Initialize the controller using GetX
 
-class _ReportScreenState extends State<ReportScreen> {
-  final PunchHistoryUseCase _useCase = GetIt.I<PunchHistoryUseCase>();
-  final AttendanceReportUseCase _attendanceReportUseCase = GetIt.I<AttendanceReportUseCase>();
+  final ReportController controller = Get.put(
+    ReportController(
+      punchUseCase: Get.find<PunchHistoryUseCase>(),
+      reportUseCase: Get.find<AttendanceReportUseCase>(),
+    ),
+  );
 
-  AttendanceReportResponse? _reportData;
-  bool _isLoading = true;
-  String? _error;
-  DateTime _focusedMonth = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchReportDataForMonth(_focusedMonth);
-  }
-
-  void _onCalendarPageChanged(DateTime focusedDay) {
-    setState(() {
-      _focusedMonth = DateTime(focusedDay.year, focusedDay.month, 1);
-    });
-    _fetchReportDataForMonth(_focusedMonth);
-  }
-
-  Future<void> _fetchReportDataForMonth(DateTime month) async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    final date = DateTime(month.year, month.month, 1);
-    final result = await _attendanceReportUseCase.call(date: DateFormat('yyyy-MM-dd').format(date),);
-    if (result is NetworkSuccess<AttendanceReportResponse>) {
-      setState(() {
-        _reportData = result.data;
-        _isLoading = false;
-      });
-    } else if (result is NetworkError) {
-      setState(() {
-        _error = (result as NetworkError).message;
-        _isLoading = false;
-      });
-    }
-  }
-
-  bool _isLeaveDay(DateTime day, Set<DateTime> approvedLeaveDays) {
-    return approvedLeaveDays.any((leaveDay) =>
-    leaveDay.day == day.day && leaveDay.month == day.month && leaveDay.year == day.year);
-  }
-
-  bool _isAbsentDay(DateTime day, List<DateTime> absentDays) {
-    return absentDays.any((absentDay) =>
-    absentDay.day == day.day && absentDay.month == day.month && absentDay.year == day.year);
-  }
-
-  bool _isHoliday(DateTime day, List<DateTime> holidayDays) {
-    return holidayDays.any((holiday) =>
-    holiday.day == day.day && holiday.month == day.month && holiday.year == day.year);
-  }
-
-  bool _isHalfDay(DateTime day, List<DateTime> halfDays) {
-    return halfDays.any((halfDay) =>
-    halfDay.day == day.day && halfDay.month == day.month && halfDay.year == day.year);
-  }
-
-  bool _isShortLeave(DateTime day, List<DateTime> shortLeaves) {
-    return shortLeaves.any((shortLeave) =>
-    shortLeave.day == day.day && shortLeave.month == day.month && shortLeave.year == day.year);
-  }
-
-  bool _isPresentDay(DateTime day, Set<DateTime> presentDays) {
-    return presentDays.any((presentDay) =>
-    presentDay.day == day.day && presentDay.month == day.month && presentDay.year == day.year);
-  }
-
-  void showPunchDetailSheet(DateTime date) async {
-    final result = await _useCase.callPunchDetail(date: DateFormat('yyyy-MM-dd').format(date),);
-
-    if (result is NetworkSuccess<AttendanceResponse>) {
-      final attendanceDetails = result.data.attendances;
-      final formattedDate = DateFormat('EEEE, d MMM yyyy').format(date);
-
-      String punchInTime = '--:--';
-      String punchOutTime = '--:--';
-
-      for (var attendance in attendanceDetails) {
-        if (attendance.workLogs != null && attendance.workLogs!.isNotEmpty) {
-          for (var log in attendance.workLogs!) {
-            if (log.type == 'punch_in') punchInTime = log.time ?? '--:--';
-            if (log.type == 'punch_out') punchOutTime = log.time ?? '--:--';
-          }
-        }
-      }
-
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30)),),
-        builder: (context) {
-          return DraggableScrollableSheet(
-            expand: false,
-            initialChildSize: 0.6,
-            minChildSize: 0.6,
-            maxChildSize: 0.95,
-            builder: (context, scrollController) {
-              return AttendanceDetailSheet(
-                attendanceDetails: attendanceDetails,
-                punchIn: punchInTime,
-                punchOut: punchOutTime,
-                scrollController: scrollController,
-                formattedDate: formattedDate,
-              );
-            },
-          );
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No attendance data found.')),);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Refresh API every time this widget is built
+    controller.fetchReportData(controller.focusedMonth.value);
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        drawer: AppSideDrawer(),
+        drawer: const AppSideDrawer(),
         appBar: AppBar(
-          title: const Text('Report', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Report',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           centerTitle: true,
           backgroundColor: theme.colorScheme.primary,
           foregroundColor: Colors.white,
           elevation: 0,
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-
-              // Sandwich Relief Card
-              _buildSandwichReliefCard(theme),
-
-              const SizedBox(height: 12),
-
-              // Stats & Upcoming Leaves Card
-              Card(
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                elevation: 6,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                child: Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _error != null
-                      ? Center(child: Text('Error: $_error', style: const TextStyle(color: Colors.red)))
-                      : _buildStatsAndUpcoming(theme),
-                ),
-              ),
-
-              // Legend
-              _buildLegend(theme),
-
-              const SizedBox(height: 12),
-
-              // Calendar
-              SizedBox(
-                height: 400,
-                child: _isLoading ? const Center(child: CircularProgressIndicator())
-                    : TableCalendar(
-                  firstDay: DateTime.now().subtract(const Duration(days: 365 * 4)),
-                  lastDay: DateTime.now().add(const Duration(days: 365 * 4)),
-                  focusedDay: _focusedMonth,
-                  calendarFormat: CalendarFormat.month,
-                  availableCalendarFormats: const {CalendarFormat.month: 'Month',},
-                  onFormatChanged: (format) {},
-                  onPageChanged: _onCalendarPageChanged,
-                  onDaySelected: (selected, focused) => showPunchDetailSheet(selected),
-                  calendarBuilders: _buildCalendarBuilders(),
-                  headerStyle: const HeaderStyle(
-                    titleCentered: true,
-                    formatButtonVisible: false,
-                    titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    leftChevronVisible: true,
-                    rightChevronVisible: true,
+        body: Obx(
+              () => SingleChildScrollView(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSandwichReliefCard(theme),
+                const SizedBox(height: 12),
+                Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  elevation: 6,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14.0),
+                    child: controller.isLoading.value
+                        ? const Center(child: CircularProgressIndicator())
+                        : controller.error.value != null
+                        ? Center(
+                        child: Text(
+                          'Error: ${controller.error.value}',
+                          style: const TextStyle(color: Colors.red),
+                        ))
+                        : _buildStatsAndUpcoming(theme),
                   ),
                 ),
-              ),
-            ],
+                _buildLegend(theme),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 400,
+                  child: controller.isLoading.value
+                      ? const Center(child: CircularProgressIndicator())
+                      : TableCalendar(
+                    firstDay: DateTime.now()
+                        .subtract(const Duration(days: 365 * 4)),
+                    lastDay: DateTime.now()
+                        .add(const Duration(days: 365 * 4)),
+                    focusedDay: controller.focusedMonth.value,
+                    calendarFormat: CalendarFormat.month,
+                    availableCalendarFormats: const {
+                      CalendarFormat.month: 'Month'
+                    },
+                    onFormatChanged: (_) {},
+                    onPageChanged: controller.onCalenderPageChanged,
+                    onDaySelected: (selected, focused) async {
+                      final punchData =
+                      await controller.getPunchDetails(selected);
+                      if (punchData != null) {
+                        _showPunchDetailSheet(
+                            context, selected, punchData);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content:
+                              Text('No attendance data found.')),
+                        );
+                      }
+                    },
+                    calendarBuilders: _buildCalendarBuilders(),
+                    headerStyle: const HeaderStyle(
+                      titleCentered: true,
+                      formatButtonVisible: false,
+                      titleTextStyle: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+
+  // Punch Detail Bottom Sheet
+  void _showPunchDetailSheet(BuildContext context, DateTime date, AttendanceResponse data) {
+    final formattedDate = DateFormat('EEEE, d MMM yyyy').format(date);
+
+    String punchInTime = '--:--';
+    String punchOutTime = '--:--';
+
+    for (var attendance in data.attendances) {
+      if (attendance.workLogs != null && attendance.workLogs!.isNotEmpty) {
+        for (var log in attendance.workLogs!) {
+          if (log.type == 'punch_in') punchInTime = log.time ?? '--:--';
+          if (log.type == 'punch_out') punchOutTime = log.time ?? '--:--';
+        }
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.6,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return AttendanceDetailSheet(
+              attendanceDetails: data.attendances,
+              punchIn: punchInTime,
+              punchOut: punchOutTime,
+              scrollController: scrollController,
+              formattedDate: formattedDate,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ------------------------- UI Widgets ----------------------------
 
   Widget _buildSandwichReliefCard(ThemeData theme) {
     final DateTime sandwichStart = DateTime(DateTime.now().year, 9, 1);
@@ -291,43 +243,49 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildStatsAndUpcoming(ThemeData theme) {
+    final data = controller.reportData.value;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Stats
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildStatBlock(Icons.calendar_today, 'Working', (_reportData?.totalWorkingDays ?? 0).toDouble(), Colors.grey.shade700),
-            _buildStatBlock(Icons.check_circle, 'Present', (_reportData?.presentDays ?? 0).toDouble(), Colors.green),
-            _buildStatBlock(Icons.cancel, 'Absent', (_reportData?.absentDays ?? 0).toDouble(), Colors.red),
-            _buildStatBlock(Icons.beach_access, 'Leave', (_reportData?.leaveDays ?? 0).toDouble(), Colors.orange),
-
+            _buildStatBlock(Icons.calendar_today, 'Working', (data?.totalWorkingDays ?? 0).toDouble(), Colors.grey.shade700),
+            _buildStatBlock(Icons.check_circle, 'Present', (data?.presentDays ?? 0).toDouble(), Colors.green),
+            _buildStatBlock(Icons.cancel, 'Absent', (data?.absentDays ?? 0).toDouble(), Colors.red),
+            _buildStatBlock(Icons.beach_access, 'Leave', (data?.leaveDays ?? 0).toDouble(), Colors.orange),
           ],
         ),
         const SizedBox(height: 12),
-        // Upcoming Leaves & Holidays
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
           iconColor: theme.colorScheme.primary,
           collapsedIconColor: theme.colorScheme.primary,
-          title: Text('Upcoming Leaves & Holidays', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary),),
+          title: Text(
+            'Upcoming Leaves & Holidays',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary),
+          ),
           childrenPadding: const EdgeInsets.only(left: 0, right: 0, bottom: 8),
           children: [
-            if (_reportData?.upcomingHolidays != null && _reportData!.upcomingHolidays.isNotEmpty)
-              ..._reportData!.upcomingHolidays.map((holiday) => ListTile(
+            if (data?.upcomingHolidays != null && data!.upcomingHolidays.isNotEmpty)
+              ...data.upcomingHolidays.map((holiday) => ListTile(
                 leading: Icon(Icons.celebration, color: Colors.deepOrange[700], size: 20),
-                title: Text('Holiday - ${holiday.name}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                subtitle: Text(DateFormat('EEE, d MMM yyyy').format(DateTime.parse(holiday.date)), style: const TextStyle(fontSize: 12)),
+                title: Text('Holiday - ${holiday.name}',
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: Text(DateFormat('EEE, d MMM yyyy').format(DateTime.parse(holiday.date)),
+                    style: const TextStyle(fontSize: 12)),
               )),
-            if (_reportData?.upcomingLeaves != null && _reportData!.upcomingLeaves.isNotEmpty)
-              ..._reportData!.upcomingLeaves.map((leave) => ListTile(
+            if (data?.upcomingLeaves != null && data!.upcomingLeaves.isNotEmpty)
+              ...data.upcomingLeaves.map((leave) => ListTile(
                 leading: Icon(Icons.beach_access, color: Colors.blue[700], size: 20),
-                title: Text(leave.leaveType, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                subtitle: Text("${DateFormat('EEE, d MMM yyyy').format(DateTime.parse(leave.fromDate))} to ${DateFormat('EEE, d MMM yyyy').format(DateTime.parse(leave.toDate))}", style: const TextStyle(fontSize: 12)),
+                title: Text(leave.leaveType,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: Text(
+                    "${DateFormat('EEE, d MMM yyyy').format(DateTime.parse(leave.fromDate))} to ${DateFormat('EEE, d MMM yyyy').format(DateTime.parse(leave.toDate))}",
+                    style: const TextStyle(fontSize: 12)),
               )),
-            if ((_reportData?.upcomingHolidays == null || _reportData!.upcomingHolidays.isEmpty) &&
-                (_reportData?.upcomingLeaves == null || _reportData!.upcomingLeaves.isEmpty))
+            if ((data?.upcomingHolidays == null || data!.upcomingHolidays.isEmpty) &&
+                (data?.upcomingLeaves == null || data!.upcomingLeaves.isEmpty))
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text('No upcoming leaves or holidays.', style: TextStyle(color: Colors.grey[600])),
@@ -338,9 +296,31 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  Widget _buildStatBlock(IconData icon, String label, double value, Color color) {
+    return Container(
+      width: 70,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 8, spreadRadius: 1)],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 6),
+          Text('$value', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLegend(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.only(left: 10, right : 10, top: 25),
       child: Wrap(
         spacing: 12,
         runSpacing: 8,
@@ -357,109 +337,75 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  CalendarBuilders _buildCalendarBuilders() {
-    final now = DateTime.now();
-
-    final List<DateTime> absentDays = _reportData?.absentDates.map((d) => DateTime.parse(d)).toList() ?? [];
-    final Set<DateTime> leaveDays = _reportData?.leaveDates.map((d) => DateTime.parse(d)).toSet() ?? {};
-    final List<DateTime> holidayDays = _reportData?.upcomingHolidays.map((h) => DateTime.parse(h.date)).toList() ?? [];
-    final List<DateTime> halfDays = _reportData?.halfDayLeaveDates.map((d) => DateTime.parse(d)).toList() ?? [];  //change absent date to halfday dates
-    final List<DateTime> shortLeave = _reportData?.shortLeaveDates.map((d) => DateTime.parse(d)).toList() ?? [];  //change absent date to halfday dates
-    final Set<DateTime> presentDays = _reportData?.presentDates.map((d) => DateTime.parse(d)).toSet() ?? {};
-
-    return CalendarBuilders(
-      defaultBuilder: (context, day, focusedDay) {
-        final bool isHolidayDay = _isHoliday(day, holidayDays);
-        final bool isLeaveDay = _isLeaveDay(day, leaveDays);
-        final bool isAbsentDay = _isAbsentDay(day, absentDays);
-        final bool isHalfDay = _isHalfDay(day, halfDays);
-        final bool isShortLeave = _isShortLeave(day, shortLeave);
-        final bool isPresentDay = _isPresentDay(day, presentDays);
-
-        Color bgColor;
-        Color textColor;
-        Widget child;
-
-        if (isAbsentDay) {
-          bgColor = Colors.red.withValues(alpha: 0.3);
-          textColor = Colors.red[900]!;
-          child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
-        } else if (isLeaveDay) {
-          bgColor = Colors.orange.withValues(alpha: 0.3);
-          textColor = Colors.orange[900]!;
-          child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
-        } else if (isHolidayDay) {
-          bgColor = Colors.transparent;
-          textColor = Colors.white;
-          child = const Icon(Icons.celebration, size: 30, color: Colors.deepPurpleAccent); // pop icon
-        }else if (isHalfDay) {
-          bgColor = Colors.teal.shade500.withValues(alpha: 0.2);
-          textColor = Colors.teal[900]!;
-          child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
-        } else if (isShortLeave) {
-          bgColor = Colors.blue.withValues(alpha: 0.2);
-          textColor = Colors.blue[900]!;
-          child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
-        }  else if (isPresentDay) {
-          bgColor = Colors.green.withValues(alpha: 0.3);
-          textColor = Colors.green[900]!;
-          child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
-        }else {
-            bgColor = Colors.grey.withValues(alpha: 0.2); // Present
-            textColor = Colors.grey[900]!;
-          child = Text('${day.day}', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 16));
-        }
-
-        final bool isToday = day.year == now.year && day.month == now.month && day.day == now.day;
-
-        return Container(
-          margin: const EdgeInsets.all(6),
-          decoration: BoxDecoration(shape: BoxShape.circle, color: bgColor, border: isToday ? Border.all(color: const Color(0xFF388E3C), width: 2.5) : null,),
-          alignment: Alignment.center,
-          child: child,
-        );
-      },
-    );
-  }
-
   Widget _buildColorIndicator(Color color, String label, {IconData? icon}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null)
-          Icon(icon, size: 18, color: color)
-        else
-          Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300),),
-          ),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 14)),
+        icon != null
+            ? Icon(icon, color: color, size: 16)
+            : Container(width: 16, height: 16, color: color, margin: const EdgeInsets.only(right: 4)),
+        Text(label, style: const TextStyle(fontSize: 13)),
       ],
     );
   }
 
-}
+  CalendarBuilders _buildCalendarBuilders() {
+    final data = controller.reportData.value;
 
-Widget _buildStatBlock(IconData icon, String label, double value, Color color) {
-  return Container(
-    width: 70,
-    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.09),
-      borderRadius: BorderRadius.circular(14),
-      boxShadow: [BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 8, spreadRadius: 1)],
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(height: 6),
-        Text('$value', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
-        const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500)),
-      ],
-    ),
-  );
+    final List<DateTime> absentDays =
+        data?.absentDates.map((d) => DateTime.parse(d)).toList() ?? [];
+    final Set<DateTime> leaveDays =
+        data?.leaveDates.map((d) => DateTime.parse(d)).toSet() ?? {};
+    final List<DateTime> holidayDays =
+        data?.upcomingHolidays.map((h) => DateTime.parse(h.date)).toList() ?? [];
+    final List<DateTime> halfDays =
+        data?.halfDayLeaveDates.map((d) => DateTime.parse(d)).toList() ?? [];
+    final List<DateTime> shortLeaves =
+        data?.shortLeaveDates.map((d) => DateTime.parse(d)).toList() ?? [];
+    final Set<DateTime> presentDays =
+        data?.presentDates.map((d) => DateTime.parse(d)).toSet() ?? {};
+
+    return CalendarBuilders(
+      defaultBuilder: (context, day, focusedDay) {
+        Widget dayWidget;
+        if (controller.isHoliday(day, holidayDays)) {
+          dayWidget = Center(
+            child: Icon(
+              Icons.celebration,
+              color: Colors.purple[700],
+              size: 24,
+            ),
+          );
+        } else {
+          // Other day types: colored circle with date
+          Color? bgColor;
+          if (controller.isLeaveDay(day, leaveDays)) {
+            bgColor = Colors.orange[200];
+          } else if (controller.isAbsentDay(day, absentDays)) {
+            bgColor = Colors.red[200];
+          } else if (controller.isHalfDay(day, halfDays)) {
+            bgColor = Colors.teal[200];
+          } else if (controller.isShortLeave(day, shortLeaves)) {
+            bgColor = Colors.blue[200];
+          } else if (controller.isPresentDay(day, presentDays)) {
+            bgColor = Colors.green[200];
+          }
+
+          dayWidget = Center(
+            child: Container(
+              decoration: bgColor != null
+                  ? BoxDecoration(color: bgColor, shape: BoxShape.circle)
+                  : null,
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              child: Text(day.day.toString()),
+            ),
+          );
+        }
+
+        return dayWidget;
+      },
+    );
+  }
 }

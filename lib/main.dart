@@ -13,6 +13,11 @@ import 'package:employee_management/core/services/firebase_messaging_service.dar
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:employee_management/core/network/client/network_client.dart';
 
+import 'features/data/repositories/attendance_report_repository.dart';
+import 'features/data/repositories/punch_repository.dart';
+import 'features/domain/use_cases/attendance_report_use_case.dart';
+import 'features/domain/use_cases/punch_history_use_case.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -32,6 +37,9 @@ void main() async {
   isLoggedIn.value =
       getIt<LocalStorage>().getBool(SharedPreferenceKeys.loggedInKey) ?? false;
   Get.put(ThemeController()); // Ensure ThemeController is registered before runApp
+  Get.put(PunchHistoryUseCase(getIt<PunchRepository>()));
+  Get.put(AttendanceReportUseCase(getIt<AttendanceReportRepository>()));
+
   runApp(
     FlutterSizer(
       builder: (context, orientation, deviceType) {
